@@ -79,7 +79,7 @@ static BOOL isDownloadFlied = NO;
 				[DYYYManager downloadMedia:heifURL
 						 mediaType:MediaTypeHeic
 						completion:^(BOOL success){
-						  [DYYYManager showToast:@"表情包已保存到相册"];
+						  [DYYYManager showToast:@"表情包已儲存至照片App"];
 						}];
 				return;
 			}
@@ -104,7 +104,7 @@ static BOOL isDownloadFlied = NO;
 
 // 添加保存按钮
 - (void)layoutSubviews {
-	%orig;
+ 	%orig;
 	static char kHasSaveButtonKey;
 	BOOL DYYYForceDownloadPreviewEmotion = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYForceDownloadPreviewEmotion"];
 	if (DYYYForceDownloadPreviewEmotion) {
@@ -114,22 +114,22 @@ static BOOL isDownloadFlied = NO;
 			[saveButton setImage:downloadIcon forState:UIControlStateNormal];
 			[saveButton setTintColor:[UIColor whiteColor]];
 			saveButton.backgroundColor = [UIColor colorWithRed:0.0 green:0.5 blue:0.9 alpha:0.5];
-
+			
 			saveButton.layer.shadowColor = [UIColor blackColor].CGColor;
 			saveButton.layer.shadowOffset = CGSizeMake(0, 2);
 			saveButton.layer.shadowOpacity = 0.3;
 			saveButton.layer.shadowRadius = 3;
-
+			
 			saveButton.translatesAutoresizingMaskIntoConstraints = NO;
 			[self addSubview:saveButton];
 			CGFloat buttonSize = 24.0;
 			saveButton.layer.cornerRadius = buttonSize / 2;
-
+			
 			[NSLayoutConstraint activateConstraints:@[
 				[saveButton.bottomAnchor constraintEqualToAnchor:self.bottomAnchor constant:-15], [saveButton.rightAnchor constraintEqualToAnchor:self.rightAnchor constant:-10],
 				[saveButton.widthAnchor constraintEqualToConstant:buttonSize], [saveButton.heightAnchor constraintEqualToConstant:buttonSize]
 			]];
-
+			
 			saveButton.userInteractionEnabled = YES;
 			[saveButton addTarget:self action:@selector(dyyy_saveButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 			objc_setAssociatedObject(self, &kHasSaveButtonKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
@@ -142,7 +142,7 @@ static BOOL isDownloadFlied = NO;
 	// 获取表情包URL
 	AWEIMEmoticonModel *emoticonModel = self.model;
 	if (!emoticonModel) {
-		[DYYYManager showToast:@"无法获取表情包信息"];
+		[DYYYManager showToast:@"無法取得表情包資訊"];
 		return;
 	}
 
@@ -166,7 +166,7 @@ static BOOL isDownloadFlied = NO;
 	}
 
 	if (!urlString) {
-		[DYYYManager showToast:@"无法获取表情包链接"];
+		[DYYYManager showToast:@"無法取得表情包連結"];
 		return;
 	}
 
@@ -175,9 +175,9 @@ static BOOL isDownloadFlied = NO;
 			 mediaType:MediaTypeHeic
 			completion:^(BOOL success){
 			  if (success) {
-				  [DYYYManager showToast:@"表情包已保存到相册"];
+				  [DYYYManager showToast:@"表情包已儲存至照片App"];
 			  } else {
-				  [DYYYManager showToast:@"表情包保存失败"];
+				  [DYYYManager showToast:@"表情包儲存失敗"];
 			  }
 			}];
 }
