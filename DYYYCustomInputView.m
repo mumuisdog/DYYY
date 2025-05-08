@@ -40,13 +40,13 @@
         self.inputTextField = [[UITextField alloc] initWithFrame:CGRectMake(20, 64, 260, 40)];
         self.inputTextField.backgroundColor = isDarkMode ? [UIColor colorWithRed:45/255.0 green:45/255.0 blue:45/255.0 alpha:1.0] : [UIColor colorWithRed:245/255.0 green:245/255.0 blue:245/255.0 alpha:1.0];
         self.inputTextField.textColor = isDarkMode ? [UIColor colorWithRed:230/255.0 green:230/255.0 blue:235/255.0 alpha:1.0] : [UIColor colorWithRed:45/255.0 green:47/255.0 blue:56/255.0 alpha:1.0];
-        
+
         // 使用自定义占位符文本，根据模式设置占位符颜色
-        NSString *placeholderString = placeholder.length > 0 ? placeholder : @"请输入内容";
+        NSString *placeholderString = placeholder.length > 0 ? placeholder : @"請輸入內容";
         UIColor *placeholderColor = isDarkMode ? [UIColor colorWithRed:160/255.0 green:160/255.0 blue:165/255.0 alpha:1.0] : [UIColor colorWithRed:124/255.0 green:124/255.0 blue:130/255.0 alpha:1.0];
         self.inputTextField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:placeholderString 
                                                                                     attributes:@{NSForegroundColorAttributeName: placeholderColor}];
-        
+
         self.inputTextField.leftView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 10, 40)];
         self.inputTextField.leftViewMode = UITextFieldViewModeAlways;
         self.inputTextField.layer.cornerRadius = 8;
@@ -54,7 +54,7 @@
         self.inputTextField.delegate = self;
         self.inputTextField.returnKeyType = UIReturnKeyDone;
         self.inputTextField.keyboardAppearance = isDarkMode ? UIKeyboardAppearanceDark : UIKeyboardAppearanceLight;
-        
+
         // 设置默认文本
         if (defaultText && defaultText.length > 0) {
             self.inputTextField.text = defaultText;
@@ -83,14 +83,14 @@
         
         // 按钮之间的分割线，根据模式设置颜色
         UIView *buttonSeparator = [[UIView alloc] initWithFrame:CGRectMake(149.5, 0, 0.5, 55.5)];
-        buttonSeparator.backgroundColor = isDarkMode ? [UIColor colorWithRed:60/255.0 green:60/255.0 blue:60/255.0 alpha:1.0] : [UIColor colorWithRed:230/255.0 green:230/255.0 blue:230/255.0 alpha:1.0];
+        buttonSeparator.backgroundColor = [UIColor colorWithRed:230/255.0 green:230/255.0 blue:230/255.0 alpha:1.0];
         [buttonContainer addSubview:buttonSeparator];
         
         // 确认按钮 - 根据模式设置颜色
         self.confirmButton = [UIButton buttonWithType:UIButtonTypeSystem];
         self.confirmButton.frame = CGRectMake(150, 0, 150, 55.5);
         self.confirmButton.backgroundColor = [UIColor clearColor];
-        [self.confirmButton setTitle:@"确定" forState:UIControlStateNormal];
+        [self.confirmButton setTitle:@"確定" forState:UIControlStateNormal];
         UIColor *confirmColor = isDarkMode ? [UIColor colorWithRed:230/255.0 green:230/255.0 blue:235/255.0 alpha:1.0] : [UIColor colorWithRed:45/255.0 green:47/255.0 blue:56/255.0 alpha:1.0];
         [self.confirmButton setTitleColor:confirmColor forState:UIControlStateNormal];
         [self.confirmButton addTarget:self action:@selector(confirmTapped) forControlEvents:UIControlEventTouchUpInside];
