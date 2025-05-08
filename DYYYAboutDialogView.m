@@ -6,7 +6,7 @@
 - (instancetype)initWithTitle:(NSString *)title message:(NSString *)message {
     if (self = [super initWithFrame:UIScreen.mainScreen.bounds]) {
         self.backgroundColor = [UIColor colorWithWhite:0 alpha:0.2];
-        
+
         // 判断当前深色/浅色模式
         BOOL isDarkMode = [DYYYManager isDarkMode];
         
@@ -33,7 +33,7 @@
         CGFloat contentHeight = titleHeight + actualTextHeight + buttonHeight + buttonPadding;
         BOOL needsScrolling = textHeight > maxTextHeight;
         
-        // 创建内容视图 - 根据模式选择背景色
+       // 创建内容视图 - 根据模式选择背景色
         self.contentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 300, contentHeight)];
         self.contentView.center = CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2);
         self.contentView.backgroundColor = isDarkMode ? [UIColor colorWithRed:30/255.0 green:30/255.0 blue:30/255.0 alpha:1.0] : [UIColor whiteColor];
@@ -70,7 +70,7 @@
         [attributedString addAttribute:NSParagraphStyleAttributeName 
                                  value:paragraphStyle 
                                  range:NSMakeRange(0, message.length)];
-        
+
         // 根据模式设置整体文本颜色
         UIColor *messageTextColor = isDarkMode ? [UIColor colorWithRed:180/255.0 green:180/255.0 blue:185/255.0 alpha:1.0] : [UIColor colorWithRed:124/255.0 green:124/255.0 blue:130/255.0 alpha:1.0];
         [attributedString addAttribute:NSForegroundColorAttributeName 
@@ -84,15 +84,15 @@
                                      value:@"https://t.me/vita_app" 
                                      range:telegramRange];
         }
-        
-        NSRange githubRange = [message rangeOfString:@"仓库地址 Wtrwx/DYYY"];
+
+        NSRange githubRange = [message rangeOfString:@"倉庫地址 Wtrwx/DYYY"];
         if (githubRange.location != NSNotFound) {
             [attributedString addAttribute:NSLinkAttributeName 
                                      value:@"https://github.com/Wtrwx/DYYY" 
                                      range:githubRange];
         }
 
-        NSRange huamiGithubRange = [message rangeOfString:@"开源地址 huami1314/DYYY"];
+        NSRange huamiGithubRange = [message rangeOfString:@"開源地址 huami1314/DYYY"];
         if (huamiGithubRange.location != NSNotFound) {
             [attributedString addAttribute:NSLinkAttributeName 
                                      value:@"https://github.com/huami1314/DYYY" 
@@ -113,22 +113,22 @@
         };
         
         [self.contentView addSubview:self.messageTextView];
-        
+
         // 添加内容和按钮之间的分割线，调整位置和颜色
         UIView *contentButtonSeparator = [[UIView alloc] initWithFrame:CGRectMake(0, contentHeight - buttonHeight, 300, 0.5)];
         contentButtonSeparator.backgroundColor = isDarkMode ? [UIColor colorWithRed:60/255.0 green:60/255.0 blue:60/255.0 alpha:1.0] : [UIColor colorWithRed:230/255.0 green:230/255.0 blue:230/255.0 alpha:1.0];
         [self.contentView addSubview:contentButtonSeparator];
-        
+
         // 确认按钮 - 根据模式调整颜色
         self.confirmButton = [UIButton buttonWithType:UIButtonTypeSystem];
         self.confirmButton.frame = CGRectMake(0, contentHeight - buttonHeight + 0.5, 300, 53); 
         self.confirmButton.backgroundColor = [UIColor clearColor];
-        [self.confirmButton setTitle:@"确定" forState:UIControlStateNormal];
+        [self.confirmButton setTitle:@"確定" forState:UIControlStateNormal];
         UIColor *confirmButtonColor = isDarkMode ? [UIColor colorWithRed:230/255.0 green:230/255.0 blue:235/255.0 alpha:1.0] : [UIColor colorWithRed:45/255.0 green:47/255.0 blue:56/255.0 alpha:1.0];
         [self.confirmButton setTitleColor:confirmButtonColor forState:UIControlStateNormal];
         [self.confirmButton addTarget:self action:@selector(confirmTapped) forControlEvents:UIControlEventTouchUpInside];
         [self.contentView addSubview:self.confirmButton];
-        
+
         self.messageTextView.textAlignment = NSTextAlignmentCenter;
     }
     return self;
@@ -137,7 +137,7 @@
 - (void)show {
     UIWindow *window = [UIApplication sharedApplication].keyWindow;
     [window addSubview:self];
-    
+
     [UIView animateWithDuration:0.12 animations:^{
         self.contentView.alpha = 1.0;
         self.contentView.transform = CGAffineTransformIdentity;
