@@ -35,7 +35,7 @@ void ensureABTestDataLoaded(void) {
 		  NSError *error = nil;
 		  [fileManager createDirectoryAtPath:dyyyFolderPath withIntermediateDirectories:YES attributes:nil error:&error];
 		  if (error) {
-			  NSLog(@"[DYYY] 创建DYYY目录失败: %@", error.localizedDescription);
+			  NSLog(@"[DYYY] 建立DYYY目錄失敗: %@", error.localizedDescription);
 		  }
 	  }
 
@@ -172,7 +172,7 @@ static NSMutableDictionary *gCaseCache = nil;
 
         return nil;
     }
- 
+
     return %orig;
 }
 
@@ -194,7 +194,7 @@ static NSMutableDictionary *gCaseCache = nil;
 
             gABTestDataFixed = YES;
         } else {
-            NSLog(@"[DYYY] 无法设置ABTest数据: manager=%@, data=%@", manager, gFixedABTestData ? @"已加载" : @"未加载");
+            NSLog(@"[DYYY] 無法設定ABTest數據: manager=%@, data=%@", manager, gFixedABTestData ? @"已載入" : @"未載入");
         }
     });
 }
