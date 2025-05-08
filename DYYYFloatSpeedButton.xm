@@ -55,7 +55,7 @@
 	return self;
 }
 - (void)setupGestureRecognizers {
-	// 移除所有现有手势识别器，避免重复添加
+ 	// 移除所有现有手势识别器，避免重复添加
 	for (UIGestureRecognizer *recognizer in [self.gestureRecognizers copy]) {
 		[self removeGestureRecognizer:recognizer];
 	}
@@ -638,7 +638,7 @@ void updateSpeedButtonUI() {
 
 	if (currentVideoController) {
 		[currentVideoController adjustPlaybackSpeed:newSpeed];
-		speedApplied = YES;
+		speedApplied = YES;		
 	} else {
 		UIViewController *vc = [self firstAvailableUIViewController];
 		while (vc && ![vc isKindOfClass:%c(AWEAwemePlayVideoViewController)]) {
@@ -646,9 +646,9 @@ void updateSpeedButtonUI() {
 		}
 
 		if ([vc isKindOfClass:%c(AWEAwemePlayVideoViewController)]) {
-			currentVideoController = (AWEAwemePlayVideoViewController *)vc;
-			[currentVideoController adjustPlaybackSpeed:newSpeed];
-			speedApplied = YES;
+			AWEAwemePlayVideoViewController *videoVC = (AWEAwemePlayVideoViewController *)vc;
+			[videoVC adjustPlaybackSpeed:newSpeed];
+			currentVideoController = videoVC;
 		}
 	}
 	
@@ -666,7 +666,7 @@ void updateSpeedButtonUI() {
 				[currentFeedVideoController adjustPlaybackSpeed:newSpeed];
 			} else {
 				// 两种控制器都找不到时显示提示
-				[DYYYManager showToast:@"无法找到视频控制器"];
+				[DYYYManager showToast:@"無法找到影片控制器"];
 			}
 		}
 	}
