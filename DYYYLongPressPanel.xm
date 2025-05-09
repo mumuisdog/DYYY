@@ -148,8 +148,8 @@ for (id group in originalArray) {
                 newGroup.isDYYYCustomGroup = YES;			
                 newGroup.groupType = groupModel.groupType;
                 newGroup.isModern = YES;
-            newGroup.groupArr = filteredGroupArr;
-            [modifiedArray addObject:newGroup];
+                newGroup.groupArr = filteredGroupArr;
+                [modifiedOriginalGroups addObject:newGroup];
         }
     }
 }
