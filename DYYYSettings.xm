@@ -1764,7 +1764,7 @@ NSMutableArray<AWESettingItemModel *> *modernpanels = [NSMutableArray array];
 		    // 获取当前热更新状态
 		    abTestBlockEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYABTestBlockEnabled"];
 		    AWESettingItemModel *disableHotUpdateItem = [[%c(AWESettingItemModel) alloc] init];
-		    disableHotUpdateItem.identifier = @"abTestBlockEnabled";
+		    disableHotUpdateItem.identifier = @"aBTestBlockEnabled";
 		    disableHotUpdateItem.title = @"禁用下發配置";
 		    disableHotUpdateItem.detail = @"";
 		    disableHotUpdateItem.type = 1000;
@@ -1999,6 +1999,11 @@ NSMutableArray<AWESettingItemModel *> *modernpanels = [NSMutableArray array];
 			      @"detail" : @"",
 			      @"cellType" : @6,
 			      @"imageName" : @"ic_gearsimplify_outlined_20"},
+			    @{@"identifier" : @"DYYYPanelcells",
+			      @"title" : @"啟用新面板單元格",
+			      @"detail" : @"",
+			      @"cellType" : @6,
+			      @"imageName" : @"ic_gearsimplify_outlined_20"},				  
 			    @{@"identifier" : @"DYYYEnableSaveAvatar",
 			      @"title" : @"啟用儲存他人頭像",
 			      @"detail" : @"",
