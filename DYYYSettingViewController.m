@@ -295,6 +295,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
          ],
         @[
             [DYYYSettingItem itemWithTitle:@"啟用新版玻璃面板" key:@"DYYYisEnableModern" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"啟用新面板單元格" key:@"DYYYPanelcells" type:DYYYSettingItemTypeSwitch],			
             [DYYYSettingItem itemWithTitle:@"長按面板儲存影片" key:@"DYYYLongPressSaveVideo" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"長按面板儲存封面" key:@"DYYYLongPressSaveCover" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"長按面板儲存音訊" key:@"DYYYLongPressSaveAudio" type:DYYYSettingItemTypeSwitch],
