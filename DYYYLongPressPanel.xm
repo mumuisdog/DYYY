@@ -159,10 +159,6 @@ if (enableSaveVideo && self.awemeModel.awemeType != 68) {
             [DYYYManager downloadMedia:url
                                 mediaType:MediaTypeVideo
                                 completion:^(BOOL success){
-                                    if (success) {
-                                    } else {
-                                        [DYYYManager showToast:@"影片儲存已取消"];
-                                    }
                             }];
 							
         }
@@ -214,10 +210,6 @@ if (enableSaveCurrentImage && self.awemeModel.awemeType == 68 && self.awemeModel
                     [DYYYManager downloadMedia:downloadURL
                                     mediaType:MediaTypeImage
                                     completion:^(BOOL success){
-                                        if (success) {
-                                        } else {
-                                            [DYYYManager showToast:@"圖片儲存已取消"];
-                                        }
                                     }];
                 } else {
                     [DYYYManager showToast:@"沒有找到合適格式的圖片"];
@@ -348,10 +340,6 @@ if (enableSaveAllImages && self.awemeModel.awemeType == 68 && self.awemeModel.al
                 [DYYYManager downloadMedia:url
                                 mediaType:MediaTypeImage
                                 completion:^(BOOL success){
-                                    if (success) {
-                                    } else {
-                                        [DYYYManager showToast:@"封面儲存已取消"];
-                                    }
                                 }];
             }
             AWELongPressPanelManager *panelManager = [%c(AWELongPressPanelManager) shareInstance];
@@ -844,10 +832,6 @@ if (enableSaveVideo && self.awemeModel.awemeType != 68) {
             [DYYYManager downloadMedia:url
                                 mediaType:MediaTypeVideo
                                 completion:^(BOOL success){
-                                    if (success) {
-                                    } else {
-                                        [DYYYManager showToast:@"影片儲存已取消"];
-                                    }
                             }];
         }
         AWELongPressPanelManager *panelManager = [%c(AWELongPressPanelManager) shareInstance];
@@ -871,10 +855,6 @@ if (enableSaveCover && self.awemeModel.awemeType != 68) {
             [DYYYManager downloadMedia:url
                                 mediaType:MediaTypeImage
                                 completion:^(BOOL success){
-                                    if (success) {
-                                    } else {
-                                        [DYYYManager showToast:@"封面儲存已取消"];
-                                    }
                             }];
         }
         AWELongPressPanelManager *panelManager = [%c(AWELongPressPanelManager) shareInstance];
@@ -935,10 +915,6 @@ if (enableSaveCurrentImage && self.awemeModel.awemeType == 68 && self.awemeModel
             [DYYYManager downloadMedia:url
                                 mediaType:MediaTypeImage
                                 completion:^(BOOL success){
-                                    if (success) {
-                                    } else {
-                                        [DYYYManager showToast:@"圖片儲存已取消"];
-                                    }
                             }];
         }
         AWELongPressPanelManager *panelManager = [%c(AWELongPressPanelManager) shareInstance];
