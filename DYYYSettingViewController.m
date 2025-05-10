@@ -318,7 +318,8 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
          ],
         @[
             [DYYYSettingItem itemWithTitle:@"啟用雙擊打開評論" key:@"DYYYEnableDoubleOpenComment" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"啟用雙擊打開選單" key:@"DYYYEnableDoubleOpenAlertController" type:DYYYSettingItemTypeSwitch],			
+            [DYYYSettingItem itemWithTitle:@"啟用雙擊打開選單" key:@"DYYYEnableDoubleOpenAlertController" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"啟用自動勾選原圖" key:@"DYYYisAutoSelectOriginalPhoto" type:DYYYSettingItemTypeSwitch],			
             [DYYYSettingItem itemWithTitle:@"啟用儲存他人頭像" key:@"DYYYEnableSaveAvatar" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"接口解析儲存媒體" key:@"DYYYInterfaceDownload" type:DYYYSettingItemTypeTextField placeholder:@"不填關閉"],
             [DYYYSettingItem itemWithTitle:@"接口顯示解析度選項" key:@"DYYYShowAllVideoQuality" type:DYYYSettingItemTypeSwitch],
