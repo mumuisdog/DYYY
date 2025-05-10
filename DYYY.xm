@@ -15,9 +15,7 @@
 
 #import "DYYYConstants.h"
 
-%group needDelays
-
-%hook AWEAwemePlayVideoViewController
+%hook AWEDPlayerFeedPlayerViewController
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
 	float defaultSpeed = [[NSUserDefaults standardUserDefaults] floatForKey:@"DYYYDefaultSpeed"];
@@ -30,6 +28,18 @@
 }
 
 %end
+
+%hook AWEAwemePlayVideoViewController
+
+- (void)setIsAutoPlay:(BOOL)arg0 {
+	float defaultSpeed = [[NSUserDefaults standardUserDefaults] floatForKey:@"DYYYDefaultSpeed"];
+
+	if (defaultSpeed > 0 && defaultSpeed != 1) {
+		[self setVideoControllerPlaybackRate:defaultSpeed];
+	}
+
+	%orig(arg0);
+}
 
 %end
 
@@ -196,6 +206,46 @@
 }
 %end
 
+// 设置修改顶栏标题
+%hook AWEHPTopTabItemTextContentView
+
+- (void)layoutSubviews {
+	%orig;
+
+	NSString *topTitleConfig = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYModifyTopTabText"];
+	if (topTitleConfig.length == 0)
+		return;
+
+	NSArray *titlePairs = [topTitleConfig componentsSeparatedByString:@"#"];
+
+	NSString *accessibilityLabel = nil;
+	if ([self.superview respondsToSelector:@selector(accessibilityLabel)]) {
+		accessibilityLabel = self.superview.accessibilityLabel;
+	}
+	if (accessibilityLabel.length == 0)
+		return;
+
+	for (NSString *pair in titlePairs) {
+		NSArray *components = [pair componentsSeparatedByString:@"="];
+		if (components.count != 2)
+			continue;
+
+		NSString *originalTitle = components[0];
+		NSString *newTitle = components[1];
+
+		if ([accessibilityLabel isEqualToString:originalTitle]) {
+			if ([self respondsToSelector:@selector(setContentText:)]) {
+				[self setContentText:newTitle];
+			} else {
+				[self setValue:newTitle forKey:@"contentText"];
+			}
+			break;
+		}
+	}
+}
+
+%end
+
 %hook AWEDanmakuContentLabel
 - (void)setTextColor:(UIColor *)textColor {
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYEnableDanmuColor"]) {
@@ -351,20 +401,6 @@
 	[button.superview.window.rootViewController dismissViewControllerAnimated:YES completion:nil];
 }
 %end
-
-%end
-
-%hook AWEDPlayerFeedPlayerViewController
-
-- (void)setIsAutoPlay:(BOOL)arg0 {
-	float defaultSpeed = [[NSUserDefaults standardUserDefaults] floatForKey:@"DYYYDefaultSpeed"];
-
-	if (defaultSpeed > 0 && defaultSpeed != 1) {
-		[self setVideoControllerPlaybackRate:defaultSpeed];
-	}
-
-	%orig(arg0);
-}
 
 %end
 
@@ -564,16 +600,6 @@
 	} else {
 		%orig;
 	}
-}
-
-// 確保即使進度條隱藏也可以拖動
-- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
-	// 如果隱藏影片進度但顯示進度時長，擴大判斷區域以便於用戶互動
-	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideVideoProgress"] && [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisShowScheduleDisplay"]) {
-		CGRect expandedBounds = CGRectInset(self.bounds, -20, -20);
-		return CGRectContainsPoint(expandedBounds, point);
-	}
-	return %orig;
 }
 
 // MARK: 影片顯示進度條以及影片進度秒數
@@ -1412,7 +1438,7 @@
 	containerView.backgroundColor = [UIColor clearColor];
 
 	float userRadius = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYNotificationCornerRadius"] floatValue];
-	if (userRadius < 0 || userRadius > 50) {
+	if (!userRadius || userRadius < 0 || userRadius > 50) {
 		userRadius = 12;
 	}
 
@@ -1567,6 +1593,7 @@
     return %orig; 	
 }
 %end
+
 %hook VEHDRDetectionUtils
 + (BOOL)isHDRVideo:(id)arg0 {
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableHDR"]) {
@@ -1581,6 +1608,7 @@
     return %orig; 
 }
 %end
+
 %hook BmfFilterSDR2HDR
 - (VideoFrame *)process:(VideoFrame *)frame {
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableHDR"]) {
@@ -1590,52 +1618,9 @@
 }
 %end
 
-// 设置修改顶栏标题
-%hook AWEHPTopTabItemTextContentView
-
-- (void)layoutSubviews {
-	%orig;
-
-	NSString *topTitleConfig = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYModifyTopTabText"];
-	if (topTitleConfig.length == 0)
-		return;
-
-	NSArray *titlePairs = [topTitleConfig componentsSeparatedByString:@"#"];
-
-	NSString *accessibilityLabel = nil;
-	if ([self.superview respondsToSelector:@selector(accessibilityLabel)]) {
-		accessibilityLabel = self.superview.accessibilityLabel;
-	}
-	if (accessibilityLabel.length == 0)
-		return;
-
-	for (NSString *pair in titlePairs) {
-		NSArray *components = [pair componentsSeparatedByString:@"="];
-		if (components.count != 2)
-			continue;
-
-		NSString *originalTitle = components[0];
-		NSString *newTitle = components[1];
-
-		if ([accessibilityLabel isEqualToString:originalTitle]) {
-			if ([self respondsToSelector:@selector(setContentText:)]) {
-				[self setContentText:newTitle];
-			} else {
-				[self setValue:newTitle forKey:@"contentText"];
-			}
-			break;
-		}
-	}
-}
-
-%end
-
 %ctor {
 	%init(DYYYSettingsGesture);
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"]) {
 		%init;
-		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-		  %init(needDelays);
-		});
 	}
 }
