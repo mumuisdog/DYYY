@@ -1074,7 +1074,7 @@ static void showUserAgreementAlert() {
 			      @"cellType" : @6,
 			      @"imageName" : @"ic_eyeslash_outlined_16"},
 			    @{@"identifier" : @"DYYYHideGroupInputActionBar",
-			      @"title" : @"隱藏群聊頁工具列",
+			      @"title" : @"隱藏聊天頁工具欄",
 			      @"detail" : @"",
 			      @"cellType" : @6,
 			      @"imageName" : @"ic_eyeslash_outlined_16"},
@@ -2627,7 +2627,6 @@ NSMutableArray<AWESettingItemModel *> *modernpanels = [NSMutableArray array];
 		  cleanCacheItem.cellType = 26;
 		  cleanCacheItem.colorStyle = 0;
 		  cleanCacheItem.isEnable = YES;
-
 		  cleanCacheItem.cellTappedBlock = ^{
 		    [DYYYBottomAlertView showAlertWithTitle:@"清理快取"
 						    message:@"確定要清理快取嗎？\n這將刪除臨時檔案和快取"
@@ -2636,40 +2635,26 @@ NSMutableArray<AWESettingItemModel *> *modernpanels = [NSMutableArray array];
 					       cancelAction:nil
 					      confirmAction:^{
 						NSFileManager *fileManager = [NSFileManager defaultManager];
-						NSError *error = nil;
 						NSUInteger totalSize = 0;
 
+						// 临时目录
 						NSString *tempDir = NSTemporaryDirectory();
 
+						// Library目录下的缓存目录
 						NSArray<NSString *> *customDirs = @[ @"Caches", @"BDByteCast", @"kitelog" ];
 						NSString *libraryDir = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES).firstObject;
 
-						NSMutableArray<NSString *> *allPaths = [NSMutableArray arrayWithObjects:tempDir, nil];
+						NSMutableArray<NSString *> *allPaths = [NSMutableArray arrayWithObject:tempDir];
 						for (NSString *sub in customDirs) {
-							NSString *full = [libraryDir stringByAppendingPathComponent:sub];
-							[allPaths addObject:full];
+							NSString *fullPath = [libraryDir stringByAppendingPathComponent:sub];
+							if ([fileManager fileExistsAtPath:fullPath]) {
+								[allPaths addObject:fullPath];
+							}
 						}
 
+						// 遍历所有目录并清理
 						for (NSString *basePath in allPaths) {
-							if (![fileManager fileExistsAtPath:basePath]) {
-								continue;
-							}
-							NSDirectoryEnumerator<NSString *> *enumerator = [fileManager enumeratorAtPath:basePath];
-							NSString *relPath = nil;
-							while ((relPath = [enumerator nextObject])) {
-								NSString *fullPath = [basePath stringByAppendingPathComponent:relPath];
-
-								NSDictionary<NSFileAttributeKey, id> *attrs = [fileManager attributesOfItemAtPath:fullPath error:nil];
-								if (attrs) {
-									totalSize += [attrs fileSize];
-								}
-
-								NSError *delErr = nil;
-								[fileManager removeItemAtPath:fullPath error:&delErr];
-								if (delErr) {
-									NSLog(@"刪除失敗 %@: %@", fullPath, delErr);
-								}
-							}
+							totalSize += [DYYYUtils clearDirectoryContents:basePath];
 						}
 
 						float sizeInMB = totalSize / 1024.0 / 1024.0;
