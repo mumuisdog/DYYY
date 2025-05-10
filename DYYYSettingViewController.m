@@ -180,7 +180,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
             [DYYYSettingItem itemWithTitle:@"設定我的標題" key:@"DYYYSelfTitle" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"]
         ],
         @[
-            [DYYYSettingItem itemWithTitle:@"隱藏全螢幕觀看" key:@"DYYYisHiddenEntry" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏免流提示" key:@"DYYYHideFreeFlowToast" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏底欄商城" key:@"DYYYHideShopButton" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏底欄訊息" key:@"DYYYHideMessageButton" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏底欄朋友" key:@"DYYYHideFriendsButton" type:DYYYSettingItemTypeSwitch],
@@ -249,14 +249,15 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
             [DYYYSettingItem itemWithTitle:@"隱藏直播廣場" key:@"DYYYHideLivePlayground" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏禮物展館" key:@"DYYYHideGiftPavilion" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏頂欄紅點" key:@"DYYYHideTopBarBadge" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隱藏退出清除螢幕" key:@"DYYYHideLiveRoomClear" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隱藏投螢幕按鈕" key:@"DYYYHideLiveRoomMirroring" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏投影按鈕" key:@"DYYYHideLiveRoomMirroring" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏直播發現" key:@"DYYYHideLiveDiscovery" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏直播點歌" key:@"DYYYHideKTVSongIndicator" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏流量提醒" key:@"DYYYHideCellularAlert" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏紅包懸浮" key:@"DYYYHidePendantGroup" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏聊天評論" key:@"DYYYHideChatCommentBg" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隱藏章節進度" key:@"DYYYHideChapterProgress" type:DYYYSettingItemTypeSwitch],			
+            [DYYYSettingItem itemWithTitle:@"隱藏章節進度" key:@"DYYYHideChapterProgress" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏全螢幕觀看" key:@"DYYYisHiddenEntry" type:DYYYSettingItemTypeSwitch],			
+            [DYYYSettingItem itemWithTitle:@"隱藏退出清除螢幕" key:@"DYYYHideLiveRoomClear" type:DYYYSettingItemTypeSwitch],			
             [DYYYSettingItem itemWithTitle:@"隱藏鍵盤AI" key:@"DYYYHidekeyboardai" type:DYYYSettingItemTypeSwitch]
         ],
         @[
