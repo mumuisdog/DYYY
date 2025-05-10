@@ -943,6 +943,11 @@ static void showUserAgreementAlert() {
 		    // 【视频播放界面】分类
 		    NSMutableArray<AWESettingItemModel *> *videoUiItems = [NSMutableArray array];
 		    NSArray *videoUiSettings = @[
+				@{@"identifier" : @"DYYYHideFreeFlowToast",
+			      @"title" : @"隱藏免流提示",
+			      @"detail" : @"",
+			      @"cellType" : @6,
+			      @"imageName" : @"ic_eyeslash_outlined_16"},			
 			    @{@"identifier" : @"DYYYHideLOTAnimationView",
 			      @"title" : @"隱藏頭像加號",
 			      @"detail" : @"",
