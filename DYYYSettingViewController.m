@@ -243,7 +243,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
             [DYYYSettingItem itemWithTitle:@"隱藏關注頂端" key:@"DYYYHidenLiveView" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏同城頂端" key:@"DYYYHideMenuView" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏群直播中" key:@"DYYYGroupLiving" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隱藏群工具列" key:@"DYYYHideGroupInputActionBar" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏聊天底欄" key:@"DYYYHideGroupInputActionBar" type:DYYYSettingItemTypeSwitch],			
             [DYYYSettingItem itemWithTitle:@"隱藏新增朋友" key:@"DYYYHideButton" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏日常按鈕" key:@"DYYYHideFamiliar" type:DYYYSettingItemTypeSwitch],			
             [DYYYSettingItem itemWithTitle:@"隱藏直播廣場" key:@"DYYYHideLivePlayground" type:DYYYSettingItemTypeSwitch],
