@@ -2160,7 +2160,7 @@ for (NSDictionary *dict in hotUpdateSettings) {
                 
                 BOOL success = [[NSFileManager defaultManager] copyItemAtPath:sourcePath toPath:destPath error:&error];
                 
-                NSString *message = success ? @"配置文件已匯入，請停用下發配置，重啟抖音生效" : [NSString stringWithFormat:@"匯入失敗: %@", error.localizedDescription];
+                NSString *message = success ? @"配置已匯入，重啟抖音生效" : [NSString stringWithFormat:@"匯入失敗: %@", error.localizedDescription];
                 [DYYYManager showToast:message];
                 
                 if (success) {
