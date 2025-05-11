@@ -12,10 +12,11 @@
 @end
 
 BOOL abTestBlockEnabled = NO;
+BOOL abTestPatchEnabled = NO;
 NSDictionary *gFixedABTestData = nil;
 dispatch_once_t onceToken;
 BOOL gDataLoaded = NO;
-BOOL gFileExists = NO;  // 新增变量：标记文件是否存在
+BOOL gFileExists = NO;
 static NSDate *lastLoadAttemptTime = nil;
 static const NSTimeInterval kMinLoadInterval = 60.0;
 BOOL gABTestDataFixed = NO;
@@ -170,18 +171,22 @@ static NSMutableDictionary *gCaseCache = nil;
         return %orig;
     }
 
-    if (abTestBlockEnabled && arg1) {
+    if ((abTestBlockEnabled || abTestPatchEnabled) && arg1) {
         if (!gDataLoaded) {
             ensureABTestDataLoaded();
         }
         if (!gFileExists) {
-            return nil;
+            return %orig; 
         }		
         NSString *key = (NSString *)arg1;
         id localValue = [gFixedABTestData objectForKey:key];
         
         if (localValue) {
             return localValue;
+        }
+
+        if (abTestPatchEnabled) {
+            return %orig;
         }
 
         return nil;
@@ -195,10 +200,11 @@ static NSMutableDictionary *gCaseCache = nil;
 %ctor {
     %init;
     abTestBlockEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYABTestBlockEnabled"];
+    abTestPatchEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYABTestPatchEnabled"];
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         AWEABTestManager *manager = [%c(AWEABTestManager) sharedManager];
-        if (manager && gFixedABTestData) {
+        if (manager && gFixedABTestData && abTestBlockEnabled && !abTestPatchEnabled) {
             [manager setAbTestData:gFixedABTestData];
 
             if ([manager respondsToSelector:@selector(_saveABTestData:)]) {
@@ -207,7 +213,10 @@ static NSMutableDictionary *gCaseCache = nil;
 
             gABTestDataFixed = YES;
         } else {
-            NSLog(@"[DYYY] 無法設定ABTest數據: manager=%@, data=%@", manager, gFixedABTestData ? @"已載入" : @"未載入");
+            NSLog(@"[DYYY] 無法設定ABTest數據: manager=%@, data=%@, 模式=%@", 
+                manager, 
+                gFixedABTestData ? @"已載入" : @"未載入",
+                abTestPatchEnabled ? @"補丁模式" : (abTestBlockEnabled ? @"完全替換模式" : @"未啟用"));			
         }
     });
 }
