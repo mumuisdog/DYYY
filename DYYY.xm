@@ -21,8 +21,8 @@
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYfollowTips"]) {
 
 		dispatch_async(dispatch_get_main_queue(), ^{
-		  [DYYYBottomAlertView showAlertWithTitle:@"关注确认"
-						  message:@"是否确认关注？"
+		  [DYYYBottomAlertView showAlertWithTitle:@"關注確認"
+						  message:@"是否確認關注？"
 					     cancelAction:nil
 					    confirmAction:^{
 					      %orig(gesture);
@@ -353,7 +353,7 @@
 
 				if (settingVC.modalPresentationStyle == UIModalPresentationFullScreen) {
 					UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-					[closeButton setTitle:@"关闭" forState:UIControlStateNormal];
+					[closeButton setTitle:@"關閉" forState:UIControlStateNormal];
 					closeButton.translatesAutoresizingMaskIntoConstraints = NO;
 
 					[settingVC.view addSubview:closeButton];
@@ -433,10 +433,10 @@
 
 		UIBlurEffectStyle blurStyle = isDarkMode ? UIBlurEffectStyleDark : UIBlurEffectStyleLight;
 
-		// 动态获取用户设置的透明度
+		// 動態獲取用戶設置的透明度
 		float userTransparency = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYCommentBlurTransparent"] floatValue];
 		if (userTransparency <= 0 || userTransparency > 1) {
-			userTransparency = 0.5; // 默认值0.5（半透明）
+			userTransparency = 0.5; // 預設值0.5（半透明）
 		}
 
 		if (!existingBlurView) {
@@ -444,7 +444,7 @@
 			UIVisualEffectView *blurEffectView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
 			blurEffectView.frame = self.view.bounds;
 			blurEffectView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-			blurEffectView.alpha = userTransparency; // 设置为用户自定义透明度
+			blurEffectView.alpha = userTransparency; // 設置為用戶自訂透明度
 			blurEffectView.tag = 999;
 
 			UIView *overlayView = [[UIView alloc] initWithFrame:self.view.bounds];
@@ -458,7 +458,7 @@
 			UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:blurStyle];
 			[existingBlurView setEffect:blurEffect];
 
-			existingBlurView.alpha = userTransparency; // 动态更新已有视图的透明度
+			existingBlurView.alpha = userTransparency; // 動態更新已有視圖的透明度
 
 			for (UIView *subview in existingBlurView.contentView.subviews) {
 				if (subview.tag != 999) {
@@ -551,12 +551,12 @@
 - (id)touchUpInsideBlock {
 	id r = %orig;
 
-	// 只有收藏按钮才显示确认弹窗
+	// 只有收藏按鈕才顯示確認彈窗
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYcollectTips"] && [self.accessibilityLabel isEqualToString:@"收藏"]) {
 
 		dispatch_async(dispatch_get_main_queue(), ^{
-		  [DYYYBottomAlertView showAlertWithTitle:@"收藏确认"
-						  message:@"是否确认/取消收藏？"
+		  [DYYYBottomAlertView showAlertWithTitle:@"收藏確認"
+						  message:@"是否確認/取消收藏？"
 					     cancelAction:nil
 					    confirmAction:^{
 					      if (r && [r isKindOfClass:NSClassFromString(@"NSBlock")]) {
@@ -565,7 +565,7 @@
 					    }];
 		});
 
-		return nil; // 阻止原始 block 立即执行
+		return nil; // 阻止原始 block 立即執行
 	}
 
 	return r;
@@ -589,7 +589,7 @@
 	if (!parentView)
 		return;
 
-	if ([scheduleStyle isEqualToString:@"进度条两侧左右"]) {
+	if ([scheduleStyle isEqualToString:@"進度條兩側左右"]) {
 		// 尝试获取标签
 		UILabel *leftLabel = [parentView viewWithTag:10001];
 		UILabel *rightLabel = [parentView viewWithTag:10002];
@@ -660,10 +660,10 @@ static CGFloat rightLabelRightMargin = -1;
 		}
 
 		NSString *scheduleStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
-		BOOL showRemainingTime = [scheduleStyle isEqualToString:@"进度条右侧剩余"];
-		BOOL showCompleteTime = [scheduleStyle isEqualToString:@"进度条右侧完整"];
-		BOOL showLeftRemainingTime = [scheduleStyle isEqualToString:@"进度条左侧剩余"];
-		BOOL showLeftCompleteTime = [scheduleStyle isEqualToString:@"进度条左侧完整"];
+		BOOL showRemainingTime = [scheduleStyle isEqualToString:@"進度條右側剩餘"];
+		BOOL showCompleteTime = [scheduleStyle isEqualToString:@"進度條右側完整"];
+		BOOL showLeftRemainingTime = [scheduleStyle isEqualToString:@"進度條左側剩餘"];
+		BOOL showLeftCompleteTime = [scheduleStyle isEqualToString:@"進度條左側完整"];
 
 		NSString *labelColorHex = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYProgressLabelColor"];
 		UIColor *labelColor = [UIColor whiteColor];
@@ -775,10 +775,10 @@ static CGFloat rightLabelRightMargin = -1;
 			}
 		}
 		NSString *scheduleStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
-		BOOL showRemainingTime = [scheduleStyle isEqualToString:@"进度条右侧剩余"];
-		BOOL showCompleteTime = [scheduleStyle isEqualToString:@"进度条右侧完整"];
-		BOOL showLeftRemainingTime = [scheduleStyle isEqualToString:@"进度条左侧剩余"];
-		BOOL showLeftCompleteTime = [scheduleStyle isEqualToString:@"进度条左侧完整"];
+		BOOL showRemainingTime = [scheduleStyle isEqualToString:@"進度條右側剩餘"];
+		BOOL showCompleteTime = [scheduleStyle isEqualToString:@"進度條右側完整"];
+		BOOL showLeftRemainingTime = [scheduleStyle isEqualToString:@"進度條左側剩餘"];
+		BOOL showLeftCompleteTime = [scheduleStyle isEqualToString:@"進度條左側完整"];
 
 		// 更新左标签
 		if (arg1 >= 0 && leftLabel) {
@@ -851,7 +851,7 @@ static CGFloat rightLabelRightMargin = -1;
 - (void)applyCustomProgressStyle {
 	NSString *scheduleStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
 
-	if ([scheduleStyle isEqualToString:@"进度条两侧左右"]) {
+	if ([scheduleStyle isEqualToString:@"進度條兩側左右"]) {
 		for (UIView *subview in self.subviews) {
 			if ([subview class] == [UIView class]) {
 				subview.hidden = YES;
@@ -874,7 +874,7 @@ static CGFloat rightLabelRightMargin = -1;
 	for (UIView *subview in [self subviews]) {
 		if ([subview isKindOfClass:[UILabel class]]) {
 			UILabel *label = (UILabel *)subview;
-			if ([label.text isEqualToString:@"首页"]) {
+			if ([label.text isEqualToString:@"首頁"]) {
 				if (indexTitle.length > 0) {
 					[label setText:indexTitle];
 					[self setNeedsLayout];
@@ -886,7 +886,7 @@ static CGFloat rightLabelRightMargin = -1;
 					[self setNeedsLayout];
 				}
 			}
-			if ([label.text isEqualToString:@"消息"]) {
+			if ([label.text isEqualToString:@"訊息"]) {
 				if (msgTitle.length > 0) {
 					[label setText:msgTitle];
 					[self setNeedsLayout];
@@ -990,7 +990,7 @@ static CGFloat rightLabelRightMargin = -1;
 					NSString *displayLocation = @"未知";
 
 					if (countryName.length > 0) {
-						if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:@"中国"] && ![countryName isEqualToString:localName]) {
+						if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:@"中國"] && ![countryName isEqualToString:localName]) {
 							// 国外位置：国家 + 州/省 + 地点
 							displayLocation = [NSString stringWithFormat:@"%@ %@ %@", countryName, adminName1, localName];
 						} else if (localName.length > 0 && ![countryName isEqualToString:localName]) {
@@ -1007,18 +1007,18 @@ static CGFloat rightLabelRightMargin = -1;
 					dispatch_async(dispatch_get_main_queue(), ^{
 					  NSString *currentText = label.text ?: @"";
 
-					  if ([currentText containsString:@"IP属地："]) {
-						  NSRange range = [currentText rangeOfString:@"IP属地："];
+					  if ([currentText containsString:@"IP位置："]) {
+						  NSRange range = [currentText rangeOfString:@"IP位置："];
 						  if (range.location != NSNotFound) {
 							  NSString *baseText = [currentText substringToIndex:range.location];
 							  if (![currentText containsString:displayLocation]) {
-								  label.text = [NSString stringWithFormat:@"%@IP属地：%@", baseText, displayLocation];
+								  label.text = [NSString stringWithFormat:@"%@IP位置：%@", baseText, displayLocation];
 							  }
 						  }
 					  } else {
 						  NSString *baseText = label.text ?: @"";
 						  if (baseText.length > 0) {
-							  label.text = [NSString stringWithFormat:@"%@  IP属地：%@", baseText, displayLocation];
+							  label.text = [NSString stringWithFormat:@"%@  IP位置：%@", baseText, displayLocation];
 						  }
 					  }
 					});
@@ -1034,7 +1034,7 @@ static CGFloat rightLabelRightMargin = -1;
 
 							       // 根据返回数据构建位置显示文本
 							       if (countryName.length > 0) {
-								       if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:@"中国"] &&
+								       if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:@"中國"] &&
 									   ![countryName isEqualToString:localName]) {
 									       // 国外位置：国家 + 州/省 + 地点
 									       displayLocation = [NSString stringWithFormat:@"%@ %@ %@", countryName, adminName1, localName];
@@ -1063,18 +1063,18 @@ static CGFloat rightLabelRightMargin = -1;
 							       dispatch_async(dispatch_get_main_queue(), ^{
 								 NSString *currentText = label.text ?: @"";
 
-								 if ([currentText containsString:@"IP属地："]) {
-									 NSRange range = [currentText rangeOfString:@"IP属地："];
+								 if ([currentText containsString:@"IP位置："]) {
+									 NSRange range = [currentText rangeOfString:@"IP位置："];
 									 if (range.location != NSNotFound) {
 										 NSString *baseText = [currentText substringToIndex:range.location];
 										 if (![currentText containsString:displayLocation]) {
-											 label.text = [NSString stringWithFormat:@"%@IP属地：%@", baseText, displayLocation];
+											 label.text = [NSString stringWithFormat:@"%@IP位置：%@", baseText, displayLocation];
 										 }
 									 }
 								 } else {
 									 NSString *baseText = label.text ?: @"";
 									 if (baseText.length > 0) {
-										 label.text = [NSString stringWithFormat:@"%@  IP属地：%@", baseText, displayLocation];
+										 label.text = [NSString stringWithFormat:@"%@  IP位置：%@", baseText, displayLocation];
 									 }
 								 }
 							       });
@@ -1087,9 +1087,9 @@ static CGFloat rightLabelRightMargin = -1;
 							    ([cityCode hasPrefix:@"11"] || [cityCode hasPrefix:@"12"] || [cityCode hasPrefix:@"31"] || [cityCode hasPrefix:@"50"]);
 
 					if (isDirectCity) {
-						label.text = [NSString stringWithFormat:@"%@  IP属地：%@", text, cityName];
+						label.text = [NSString stringWithFormat:@"%@  IP位置：%@", text, cityName];
 					} else {
-						label.text = [NSString stringWithFormat:@"%@  IP属地：%@ %@", text, provinceName, cityName];
+						label.text = [NSString stringWithFormat:@"%@  IP位置：%@ %@", text, provinceName, cityName];
 					}
 				} else {
 					BOOL isDirectCity = [provinceName isEqualToString:cityName] ||
@@ -1099,7 +1099,7 @@ static CGFloat rightLabelRightMargin = -1;
 					if (containsProvince && !isDirectCity) {
 						label.text = [NSString stringWithFormat:@"%@ %@", text, cityName];
 					} else if (containsProvince && isDirectCity) {
-						label.text = [NSString stringWithFormat:@"%@  IP属地：%@", text, cityName];
+						label.text = [NSString stringWithFormat:@"%@  IP位置：%@", text, cityName];
 					} else if (isDirectCity && containsProvince) {
 						label.text = text;
 					} else if (containsProvince) {
@@ -1111,7 +1111,7 @@ static CGFloat rightLabelRightMargin = -1;
 			}
 		}
 	}
-	// 应用IP属地标签上移
+	// 應用IP屬地標籤上移
 	NSString *ipScaleValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYNicknameScale"];
 	if (ipScaleValue.length > 0) {
 		UIFont *originalFont = label.font;
@@ -1268,7 +1268,7 @@ static CGFloat rightLabelRightMargin = -1;
 		grandParentView = parentView.superview;
 	}
 
-	// 检查祖父视图是否为 AWEBaseElementView 类型
+	// 檢查祖父視圖是否為 AWEBaseElementView 類型
 	if (grandParentView && [grandParentView.superview isKindOfClass:%c(AWEBaseElementView)]) {
 		CGRect scaledFrame = grandParentView.frame;
 		CGFloat translationX = -scaledFrame.origin.x;
@@ -1358,7 +1358,7 @@ static CGFloat rightLabelRightMargin = -1;
 
 %end
 
-// 获取资源的地址
+// 獲取資源的地址
 %hook AWEURLModel
 %new - (NSURL *)getDYYYSrcURLDownload {
 	NSURL *bestURL;
@@ -1376,7 +1376,7 @@ static CGFloat rightLabelRightMargin = -1;
 }
 %end
 
-// 禁用点击首页刷新
+// 禁用點擊首頁刷新
 %hook AWENormalModeTabBarGeneralButton
 
 - (BOOL)enableRefresh {
@@ -1414,7 +1414,7 @@ static CGFloat rightLabelRightMargin = -1;
 
 %end
 
-// 应用内推送毛玻璃效果
+// 應用內推送毛玻璃效果
 %hook AWEInnerNotificationWindow
 
 - (id)initWithFrame:(CGRect)frame {
@@ -1501,7 +1501,7 @@ static CGFloat rightLabelRightMargin = -1;
 	[self clearBackgroundRecursivelyInView:containerView];
 
 	[self setLabelsColorWhiteInView:containerView];
-}
+	}
 
 %new
 - (void)setLabelsColorWhiteInView:(UIView *)view {
@@ -1510,7 +1510,7 @@ static CGFloat rightLabelRightMargin = -1;
 			UILabel *label = (UILabel *)subview;
 			NSString *text = label.text;
 
-			if (![text isEqualToString:@"回复"] && ![text isEqualToString:@"查看"] && ![text isEqualToString:@"续火花"]) {
+			if (![text isEqualToString:@"回覆"] && ![text isEqualToString:@"查看"] && ![text isEqualToString:@"續火花"]) {
 				label.textColor = [UIColor whiteColor];
 			}
 		}
@@ -1607,7 +1607,7 @@ static CGFloat rightLabelRightMargin = -1;
 		}
 		NSString *descText = [selectdComment content];
 		[[UIPasteboard generalPasteboard] setString:descText];
-		[DYYYToast showSuccessToastWithMessage:@"评论已复制"];
+		[DYYYToast showSuccessToastWithMessage:@"評論已複製"];
 	}
 }
 %end
