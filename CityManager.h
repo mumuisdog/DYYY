@@ -9,4 +9,4 @@
 - (NSString *)getProvinceNameWithCode:(NSString *)code;
 - (void)loadCityData;
 + (void)fetchLocationWithGeonameId:(NSString *)geonameId completionHandler:(void (^)(NSDictionary *locationInfo, NSError *error))completionHandler;
-@end 
+@end
