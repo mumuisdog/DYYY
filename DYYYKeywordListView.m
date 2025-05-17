@@ -54,7 +54,7 @@
     // 主标题 - 根据模式设置文本颜色
     self.titleLabel =
         [[UILabel alloc] initWithFrame:CGRectMake(20, 20, 260, 24)];
-    self.titleLabel.text = title ?: @"过滤过滤项";
+    self.titleLabel.text = title ?: @"過濾項目";
     self.titleLabel.textColor = isDarkMode ? 
         [UIColor colorWithRed:230/255.0 green:230/255.0 blue:235/255.0 alpha:1.0] : 
         [UIColor colorWithRed:45/255.0 green:47/255.0 blue:56/255.0 alpha:1.0];
@@ -88,7 +88,7 @@
         [UIColor colorWithRed:45/255.0 green:45/255.0 blue:45/255.0 alpha:1.0] :
         [UIColor colorWithRed:245/255.0 green:245/255.0 blue:245/255.0 alpha:1.0];
     self.addButton.layer.cornerRadius = 8;
-    [self.addButton setTitle:@"+ 添加过滤项" forState:UIControlStateNormal];
+    [self.addButton setTitle:@"+ 新增過濾項目" forState:UIControlStateNormal];
     [self.addButton setTitleColor:[UIColor colorWithRed:11/255.0
                                                   green:223/255.0
                                                    blue:154/255.0
@@ -139,7 +139,7 @@
     self.confirmButton = [UIButton buttonWithType:UIButtonTypeSystem];
     self.confirmButton.frame = CGRectMake(150, 0, 150, 55.5);
     self.confirmButton.backgroundColor = [UIColor clearColor];
-    [self.confirmButton setTitle:@"确定" forState:UIControlStateNormal];
+    [self.confirmButton setTitle:@"確定" forState:UIControlStateNormal];
     [self.confirmButton setTitleColor:isDarkMode ?
         [UIColor colorWithRed:230/255.0 green:230/255.0 blue:235/255.0 alpha:1.0] :
         [UIColor colorWithRed:45/255.0 green:47/255.0 blue:56/255.0 alpha:1.0]
@@ -186,9 +186,9 @@
 
 - (void)addKeywordTapped {
   DYYYCustomInputView *inputView = [[DYYYCustomInputView alloc]
-      initWithTitle:@"添加过滤项"
+      initWithTitle:@"新增過濾項目"
         defaultText:nil
-        placeholder:@"请输入过滤项，多个用逗号分隔"];
+        placeholder:@"請輸入過濾項目，多個請用逗號分隔"];
 
   __weak typeof(self) weakSelf = self;
   inputView.onConfirm = ^(NSString *text) {
@@ -236,9 +236,9 @@
   static NSString *cellIdentifier = @"KeywordCell";
   UITableViewCell *cell =
       [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
-  
-  BOOL isDarkMode = [DYYYManager isDarkMode];
 
+  BOOL isDarkMode = [DYYYManager isDarkMode];
+  
   if (!cell) {
     cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
                                   reuseIdentifier:cellIdentifier];
@@ -251,7 +251,7 @@
     UIImage *xImage = [[UIImage systemImageNamed:@"xmark"]
         imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [deleteButton setImage:xImage forState:UIControlStateNormal];
-    
+
     // 设置删除按钮颜色
     [deleteButton setTintColor:isDarkMode ?
         [UIColor colorWithRed:160/255.0 green:160/255.0 blue:165/255.0 alpha:1.0] :
@@ -282,7 +282,7 @@
   // 配置单元格
   cell.textLabel.text = self.keywords[indexPath.row];
   cell.accessoryView.tag = indexPath.row; // 用于识别删除哪个过滤项
-  
+
   // 设置背景色透明，以便表格背景色可见
   cell.backgroundColor = [UIColor clearColor];
 
@@ -302,9 +302,9 @@
 
   NSString *currentKeyword = self.keywords[indexPath.row];
   DYYYCustomInputView *inputView =
-      [[DYYYCustomInputView alloc] initWithTitle:@"编辑过滤项"
+      [[DYYYCustomInputView alloc] initWithTitle:@"編輯過濾項目"
                                      defaultText:currentKeyword
-                                     placeholder:@"请输入过滤项"];
+                                     placeholder:@"請輸入過濾項目"];
 
   __weak typeof(self) weakSelf = self;
   inputView.onConfirm = ^(NSString *text) {
