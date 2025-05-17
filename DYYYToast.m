@@ -374,7 +374,7 @@
                           duration:0.2
                            options:UIViewAnimationOptionTransitionCrossDissolve
                         animations:^{
-                          self.percentLabel.text = @"已取消下载";
+                          self.percentLabel.text = @"已取消下載";
                         }
                         completion:nil];
       }
