@@ -1002,3 +1002,4 @@ typedef NS_ENUM(NSInteger, MediaType) {
 @end
 
 @interface AWEMixVideoPanelMoreView : UIView
+@end
