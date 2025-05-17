@@ -1645,6 +1645,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	enhanceSettingItem.isEnable = YES;
 	enhanceSettingItem.cellTappedBlock = ^{
 	  // 创建增强设置二级界面的设置项
+	  NSMutableDictionary *cellTapHandlers = [NSMutableDictionary dictionary];
 
 	  // 【长按面板设置】分类
 	  NSMutableArray<AWESettingItemModel *> *longPressItems = [NSMutableArray array];
@@ -1729,6 +1730,16 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_hamburgernut_outlined_20"},
+		  @{@"identifier" : @"DYYYisEnableSheetBlur",
+			@"title" : @"儲存面板玻璃效果",
+			@"detail" : @"",
+			@"cellType" : @6,
+			@"imageName" : @"ic_list_outlined"},
+		  @{@"identifier" : @"DYYYSheetBlurTransparent",
+			@"title" : @"面板毛玻璃透明度",
+			@"detail" : @"0-1小数",
+			@"cellType" : @26,
+			@"imageName" : @"ic_eye_outlined_20"},			
 		  @{@"identifier" : @"DYYYCommentLivePhotoNotWaterMark",
 		    @"title" : @"移除評論實況水印",
 		    @"detail" : @"",
@@ -1748,11 +1759,17 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"儲存預覽頁表情包",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_emoji_outlined"}
+		    @"imageName" : @"ic_emoji_outlined"},
+		  @{@"identifier" : @"DYYYHapticFeedbackEnabled",
+			@"title" : @"下載完成震動反饋",
+			@"detail" : @"",
+			@"cellType" : @6,
+			@"imageName" : @"ic_gearsimplify_outlined_20"
+			}			
 	  ];
 
 	  for (NSDictionary *dict in downloadSettings) {
-		  AWESettingItemModel *item = [DYYYSettingsHelper createSettingItem:dict];
+		  AWESettingItemModel *item = [DYYYSettingsHelper createSettingItem:dict cellTapHandlers:cellTapHandlers];
 
 		  // 特殊处理接口解析保存媒体选项
 		  if ([item.identifier isEqualToString:@"DYYYInterfaceDownload"]) {
@@ -1777,7 +1794,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 							  onCancel:nil];
 			  };
 		  }
-
 		  [downloadItems addObject:item];
 	  }
 
@@ -2043,7 +2059,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"影片降噪人聲增強",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_threestars_filled_16"},			
+		    @"imageName" : @"ic_usercheckmark_outlined"},
 		  @{@"identifier" : @"DYYYDisableHomeRefresh",
 		    @"title" : @"禁用點擊首頁重新整理",
 		    @"detail" : @"",
@@ -2073,11 +2089,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    [doubleTapItems addObject:enableDoubleTapMenu];
 
 			    NSArray *doubleTapFunctions = @[
-				    @{@"identifier" : @"DYYYisEnableSheetBlur",
-				      @"title" : @"選單玻璃效果",
-				      @"detail" : @"",
-				      @"cellType" : @6,
-				      @"imageName" : @"ic_list_outlined"},
 				    @{@"identifier" : @"DYYYDoubleTapDownload",
 				      @"title" : @"儲存影片/圖片",
 				      @"detail" : @"",
