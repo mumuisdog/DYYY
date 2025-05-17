@@ -556,7 +556,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_video_outlined_20"},
-		  @{@"identifier" : @"DYYYEnableLiveHighestQuality",
+		  @{@"identifier" : @"DYYYEnableVideoHighestQuality",
 		    @"title" : @"影片預設最高畫質",
 		    @"detail" : @"",
 		    @"cellType" : @6,
