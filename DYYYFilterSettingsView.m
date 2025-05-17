@@ -60,7 +60,7 @@
 
     // 主标题 - 根据模式设置文本颜色
     self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 20, 260, 24)];
-    self.titleLabel.text = title ?: @"推荐过滤设置";
+    self.titleLabel.text = title ?: @"推薦過濾設定";
     self.titleLabel.textColor = isDarkMode ?
         [UIColor colorWithRed:230/255.0 green:230/255.0 blue:235/255.0 alpha:1.0] :
         [UIColor colorWithRed:45/255.0 green:47/255.0 blue:56/255.0 alpha:1.0];
@@ -78,7 +78,7 @@
 
     // 选中预览区域 - 根据模式设置背景色
     self.selectionPreviewLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 54, 260, 50)];
-    self.selectionPreviewLabel.text = @"请滑动选择文字";
+    self.selectionPreviewLabel.text = @"請滑動選擇文字";
     self.selectionPreviewLabel.textColor = [UIColor colorWithRed:11/255.0 green:223/255.0 blue:154/255.0 alpha:1.0]; // 保持强调色不变
     self.selectionPreviewLabel.textAlignment = NSTextAlignmentCenter;
     self.selectionPreviewLabel.numberOfLines = 2;
@@ -138,7 +138,7 @@
     self.confirmButton = [UIButton buttonWithType:UIButtonTypeSystem];
     self.confirmButton.frame = CGRectMake(150, 0, 150, 55.5);
     self.confirmButton.backgroundColor = [UIColor clearColor];
-    [self.confirmButton setTitle:@"确定" forState:UIControlStateNormal];
+    [self.confirmButton setTitle:@"確定" forState:UIControlStateNormal];
     [self.confirmButton setTitleColor:isDarkMode ?
         [UIColor colorWithRed:230/255.0 green:230/255.0 blue:235/255.0 alpha:1.0] :
         [UIColor colorWithRed:45/255.0 green:47/255.0 blue:56/255.0 alpha:1.0]
@@ -160,10 +160,10 @@
   const CGFloat buttonSize = 25.0;
   const CGFloat margin = 1.0;
   const int buttonsPerRow = 10;
-  
+
   int row = 0;
   int col = 0;
-  
+
   BOOL isDarkMode = [DYYYManager isDarkMode];
   UIColor *buttonBackgroundColor = isDarkMode ?
       [UIColor colorWithRed:50/255.0 green:50/255.0 blue:50/255.0 alpha:1.0] :
@@ -174,7 +174,7 @@
   UIColor *buttonBorderColor = isDarkMode ?
       [UIColor colorWithRed:70/255.0 green:70/255.0 blue:70/255.0 alpha:1.0] :
       [UIColor colorWithRed:230/255.0 green:230/255.0 blue:230/255.0 alpha:1.0];
-  
+
   for (NSInteger i = 0; i < self.text.length; i++) {
     NSString *character = [self.text substringWithRange:NSMakeRange(i, 1)];
     
@@ -338,19 +338,19 @@
         button.backgroundColor = buttonBackgroundColor;
     }
     
-    self.selectionPreviewLabel.text = @"请滑动选择文字";
+    self.selectionPreviewLabel.text = @"請滑動選擇文字";
 }
 
 - (void)updateSelectionWithStartIndex:(NSInteger)startIdx endIndex:(NSInteger)endIdx {
   // 确保有效的开始和结束索引
   NSInteger startIndex = MIN(startIdx, endIdx);
   NSInteger endIndex = MAX(startIdx, endIdx);
-  
+ 
   BOOL isDarkMode = [DYYYManager isDarkMode];
   UIColor *buttonBackgroundColor = isDarkMode ?
       [UIColor colorWithRed:50/255.0 green:50/255.0 blue:50/255.0 alpha:1.0] :
       [UIColor whiteColor];
-  
+
   // 清除所有按钮选中状态
   for (UIButton *button in self.characterButtons) {
     button.backgroundColor = buttonBackgroundColor;
@@ -371,7 +371,7 @@
   if (selection.length > 0) {
     self.selectionPreviewLabel.text = selection;
   } else {
-    self.selectionPreviewLabel.text = @"请滑动选择文字";
+    self.selectionPreviewLabel.text = @"請滑動選擇文字";
   }
 }
 
