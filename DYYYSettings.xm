@@ -856,6 +856,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  // 【主介面元素】分类
 	  NSMutableArray<AWESettingItemModel *> *mainUiItems = [NSMutableArray array];
 	  NSArray *mainUiSettings = @[
+		  @{@"identifier" : @"DYYYHideDoubleColumnEntry",
+		    @"title" : @"隱藏雙列箭頭",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_eyeslash_outlined_16"},	  
 		  @{@"identifier" : @"DYYYisHiddenBottomBg",
 		    @"title" : @"隱藏底欄背景",
 		    @"detail" : @"",
