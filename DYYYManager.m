@@ -2585,7 +2585,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
                                                 options:0
                                                   error:&jsonError];
             if (jsonError) {
-              [self showToast:@"解析介面返回資料失敗"];
+              [self showToast:@"解析接口返回資料失敗"];
               return;
             }
 
