@@ -1435,6 +1435,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  // 【长按评论分类】
 	  NSMutableArray<AWESettingItemModel *> *commentpanel = [NSMutableArray array];
 	  NSArray *commentpanelSettings = @[
+		  @{@"identifier" : @"DYYYHideCommentShareToFriends",
+		    @"title" : @"隱藏評論分享",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_eyeslash_outlined_16"},	  
 		  @{@"identifier" : @"DYYYHideCommentLongPressCopy",
 		    @"title" : @"隱藏評論複製",
 		    @"detail" : @"",
