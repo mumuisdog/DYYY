@@ -94,7 +94,7 @@
 			// 添加保存封面选项
 			if (!isImageContent) { // 仅视频内容显示保存封面选项
 				AWEUserSheetAction *saveCoverAction = [NSClassFromString(@"AWEUserSheetAction")
-				    actionWithTitle:@"保存封面"
+				    actionWithTitle:@"儲存封面"
 					    imgName:nil
 					    handler:^{
 					      AWEVideoModel *videoModel = awemeModel.video;
