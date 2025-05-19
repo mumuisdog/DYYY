@@ -251,6 +251,184 @@ static void *kViewModelKey = &kViewModelKey;
 }
 %end
 
+static void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed);
+%hook AWELeftSideBarWeatherLabel
+- (id)initWithFrame:(CGRect)frame {
+    id orig = %orig;
+    
+    // 启用用户交互
+    self.userInteractionEnabled = YES;
+    
+    // 添加点击手势
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(openDYYYSettings)];
+    [self addGestureRecognizer:tapGesture];
+    
+    return orig;
+}
+// 重写drawTextInRect方法
+- (void)drawTextInRect:(CGRect)rect {
+
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextSaveGState(context);
+    
+    // 清除原有内容
+    CGContextClearRect(context, rect);
+    
+    // 设置文本属性
+    UIFont *smallFont = [UIFont systemFontOfSize:12.0];
+    NSDictionary *attributes = @{
+        NSFontAttributeName: smallFont,
+        NSForegroundColorAttributeName: self.textColor
+    };
+    
+    [@"DYYY" drawInRect:rect withAttributes:attributes];
+    
+    CGContextRestoreGState(context);
+}
+%new
+- (void)openDYYYSettings {
+    // 获取当前视图控制器
+    UIViewController *currentVC = nil;
+    UIResponder *responder = self;
+    while (responder) {
+        if ([responder isKindOfClass:[UIViewController class]]) {
+            currentVC = (UIViewController *)responder;
+            break;
+        }
+        responder = [responder nextResponder];
+    }
+    
+    if (!currentVC || ![currentVC isKindOfClass:%c(AWELeftSideBarViewController)]) {
+        return;
+    }
+    
+    AWELeftSideBarViewController *sidebarVC = (AWELeftSideBarViewController *)currentVC;
+    
+    // 检查用户是否已同意协议
+    BOOL hasAgreed = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"];
+    
+    showDYYYSettingsVC(sidebarVC, hasAgreed);
+}
+%end
+%hook AWELeftSideBarWeatherView
+- (void)didMoveToSuperview {
+    %orig;
+    
+    // 在视图添加到父视图后下移10点
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        CGRect frame = self.frame;
+        frame.origin.y += 10;
+        self.frame = frame;
+    });
+}
+
+- (void)layoutSubviews {
+    %orig;
+    
+    self.userInteractionEnabled = YES;
+    
+    if (![self.gestureRecognizers containsObject:[self tapGestureForDYYY]]) {
+        [self addGestureRecognizer:[self tapGestureForDYYY]];
+    }
+    
+    for (UIView *subview in self.subviews) {
+        // 启用子视图交互并添加手势
+        subview.userInteractionEnabled = YES;
+        if (![subview.gestureRecognizers containsObject:[self tapGestureForSubview:subview]]) {
+            [subview addGestureRecognizer:[self tapGestureForSubview:subview]];
+        }
+        
+        for (UIView *childView in subview.subviews) {
+            if (![childView isKindOfClass:%c(AWELeftSideBarWeatherLabel)]) {
+                [childView removeFromSuperview];
+            }
+        }
+    }
+}
+%new
+- (UITapGestureRecognizer *)tapGestureForDYYY {
+    static UITapGestureRecognizer *tapGesture = nil;
+    if (!tapGesture) {
+        tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(openDYYYSettings)];
+    }
+    return tapGesture;
+}
+%new
+- (UITapGestureRecognizer *)tapGestureForSubview:(UIView *)subview {
+    // 为每个子视图创建唯一的手势识别器
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(openDYYYSettings)];
+
+    objc_setAssociatedObject(subview, "DYYYTapGesture", tapGesture, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    return tapGesture;
+}
+%new
+- (void)openDYYYSettings {
+    // 获取当前视图控制器
+    UIViewController *currentVC = nil;
+    UIResponder *responder = self;
+    while (responder) {
+        if ([responder isKindOfClass:[UIViewController class]]) {
+            currentVC = (UIViewController *)responder;
+            break;
+        }
+        responder = [responder nextResponder];
+    }
+    
+    if (!currentVC || ![currentVC isKindOfClass:%c(AWELeftSideBarViewController)]) {
+        return;
+    }
+    
+    AWELeftSideBarViewController *sidebarVC = (AWELeftSideBarViewController *)currentVC;
+    
+    // 检查用户是否已同意协议
+    BOOL hasAgreed = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"];
+    
+    showDYYYSettingsVC(sidebarVC, hasAgreed);
+}
+%end
+
+%hook AWELeftSideBarEntranceView
+- (void)leftSideBarEntranceViewTapped:(UITapGestureRecognizer *)gesture {
+
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYentrance"]) {
+
+        UIViewController *feedVC = nil;
+        UIResponder      *resp   = self;
+        Class feedCls            = %c(AWEFeedContainerViewController);
+
+        while (resp) {
+            if ([resp isKindOfClass:feedCls]) {
+                feedVC = (UIViewController *)resp;
+                break;
+            }
+            resp = [resp nextResponder];
+        }
+
+        if (!feedVC) {
+            UIViewController *root =
+                UIApplication.sharedApplication.keyWindow.rootViewController;
+            while (root) {
+                if ([root isKindOfClass:feedCls]) {
+                    feedVC = root;
+                    break;
+                }
+                root = root.presentedViewController;
+            }
+        }
+
+        if (feedVC) {
+            BOOL hasAgreed = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"];
+            showDYYYSettingsVC(feedVC, hasAgreed);
+            return;
+        }
+    }
+
+    %orig;
+}
+
+%end
+
+
 static AWESettingBaseViewController *createSubSettingsViewController(NSString *title, NSArray *sectionsArray) {
 	AWESettingBaseViewController *settingsVC = [[%c(AWESettingBaseViewController) alloc] init];
 
@@ -1095,6 +1273,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{@"identifier" : @"DYYYHideSearchBubble",
+		    @"title" : @"隱藏彈出熱搜",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_eyeslash_outlined_16"},			
 		  @{@"identifier" : @"DYYYHideInteractionSearch",
 		    @"title" : @"隱藏相關搜尋",
 		    @"detail" : @"",
@@ -1269,6 +1452,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"隱藏輸入掃碼",
 		    @"detail" : @"",
 		    @"cellType" : @6,
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{@"identifier" : @"DYYYHideReply",
+		    @"title" : @"隱藏私信回復",
+		    @"detail" : @"",
+		    @"cellType" : @6,			
 		    @"imageName" : @"ic_eyeslash_outlined_16"}
 	  ];
 
@@ -2015,6 +2203,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  // 【交互增强】分类
 	  NSMutableArray<AWESettingItemModel *> *interactionItems = [NSMutableArray array];
 	  NSArray *interactionSettings = @[
+		  @{@"identifier" : @"DYYYentrance",
+		    @"title" : @"左側邊欄快捷入口",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_gearsimplify_outlined_20"},
 		  @{@"identifier" : @"DYYYCommentCopyText",
 		    @"title" : @"長按評論複製文案",
 		    @"detail" : @"",
