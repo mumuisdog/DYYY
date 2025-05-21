@@ -1,13 +1,12 @@
 #import "AwemeHeaders.h"
 
-%hook UIView
-- (void)layoutSubviews {
-	%orig;
+%hook AWEFeedTabJumpGuideView
 
-	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideDiscover"] && [self.accessibilityLabel isEqualToString:@"搜索"]) {
-		[self removeFromSuperview];
-	}
+- (void)layoutSubviews {
+    %orig;
+    [self removeFromSuperview];
 }
+
 %end
 
 %hook AWEFeedLiveMarkView
@@ -1675,6 +1674,18 @@
 
 - (id)init {
 	return nil;
+}
+%end
+
+%hook UIView
+- (void)layoutSubviews {
+    %orig;
+    
+    if (self.accessibilityLabel && [self.accessibilityLabel isEqualToString:@"搜索"]) {
+
+        self.hidden = YES;
+
+    }
 }
 %end
 
