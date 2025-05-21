@@ -1696,9 +1696,18 @@
 - (void)layoutSubviews {
     %orig;
 
-    UIView *parentView = self.superview;
-    if (parentView && [parentView.accessibilityLabel isEqualToString:@"搜索"]) {
-        self.hidden = YES;
+    if (!self.accessibilityLabel) {
+        UIView *parentView = self.superview;
+        
+        if (parentView && [parentView class] == [UIView class] && 
+            [parentView.accessibilityLabel isEqualToString:@"搜索"]) {
+            self.hidden = YES;
+        }
+
+        else if (parentView && [NSStringFromClass([parentView class]) isEqualToString:@"AWESearchEntryHalfScreenElement"] &&
+                 [parentView.accessibilityLabel isEqualToString:@"搜索"]) {
+            self.hidden = YES;
+       }
     }
 }
 %end
