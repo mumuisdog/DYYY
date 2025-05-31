@@ -203,8 +203,8 @@
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYfollowTips"]) {
 
 		dispatch_async(dispatch_get_main_queue(), ^{
-		  [DYYYBottomAlertView showAlertWithTitle:@"关注确认"
-						  message:@"是否确认关注？"
+		  [DYYYBottomAlertView showAlertWithTitle:@"關注確認"
+						  message:@"是否確認關注？"
 					     cancelAction:nil
 					    confirmAction:^{
 					      %orig(gesture);
@@ -222,8 +222,8 @@
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYfollowTips"]) {
 
 		dispatch_async(dispatch_get_main_queue(), ^{
-		  [DYYYBottomAlertView showAlertWithTitle:@"关注确认"
-						  message:@"是否确认关注？"
+		  [DYYYBottomAlertView showAlertWithTitle:@"關注確認"
+						  message:@"是否確認關注？"
 					     cancelAction:nil
 					    confirmAction:^{
 					      %orig(gesture);
@@ -540,7 +540,7 @@
 
 				if (settingVC.modalPresentationStyle == UIModalPresentationFullScreen) {
 					UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-					[closeButton setTitle:@"关闭" forState:UIControlStateNormal];
+					[closeButton setTitle:@"關閉" forState:UIControlStateNormal];
 					closeButton.translatesAutoresizingMaskIntoConstraints = NO;
 
 					[settingVC.view addSubview:closeButton];
@@ -709,8 +709,8 @@
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYcollectTips"] && [self.accessibilityLabel isEqualToString:@"收藏"]) {
 
 		dispatch_async(dispatch_get_main_queue(), ^{
-		  [DYYYBottomAlertView showAlertWithTitle:@"收藏确认"
-						  message:@"是否确认/取消收藏？"
+		  [DYYYBottomAlertView showAlertWithTitle:@"收藏確認"
+						  message:@"是否確認/取消收藏？"
 					     cancelAction:nil
 					    confirmAction:^{
 					      if (r && [r isKindOfClass:NSClassFromString(@"NSBlock")]) {
@@ -743,7 +743,7 @@
 	if (!parentView)
 		return;
 
-	if ([scheduleStyle isEqualToString:@"进度条两侧左右"]) {
+	if ([scheduleStyle isEqualToString:@"進度條兩側左右"]) {
 		// 尝试获取标签
 		UILabel *leftLabel = [parentView viewWithTag:10001];
 		UILabel *rightLabel = [parentView viewWithTag:10002];
@@ -814,10 +814,10 @@ static CGFloat rightLabelRightMargin = -1;
 		}
 
 		NSString *scheduleStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
-		BOOL showRemainingTime = [scheduleStyle isEqualToString:@"进度条右侧剩余"];
-		BOOL showCompleteTime = [scheduleStyle isEqualToString:@"进度条右侧完整"];
-		BOOL showLeftRemainingTime = [scheduleStyle isEqualToString:@"进度条左侧剩余"];
-		BOOL showLeftCompleteTime = [scheduleStyle isEqualToString:@"进度条左侧完整"];
+		BOOL showRemainingTime = [scheduleStyle isEqualToString:@"進度條右側剩餘"];
+		BOOL showCompleteTime = [scheduleStyle isEqualToString:@"進度條右側完整"];
+		BOOL showLeftRemainingTime = [scheduleStyle isEqualToString:@"進度條左側剩餘"];
+		BOOL showLeftCompleteTime = [scheduleStyle isEqualToString:@"進度條左側完整"];
 
 		NSString *labelColorHex = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYProgressLabelColor"];
 		UIColor *labelColor = [UIColor whiteColor];
@@ -929,10 +929,10 @@ static CGFloat rightLabelRightMargin = -1;
 			}
 		}
 		NSString *scheduleStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
-		BOOL showRemainingTime = [scheduleStyle isEqualToString:@"进度条右侧剩余"];
-		BOOL showCompleteTime = [scheduleStyle isEqualToString:@"进度条右侧完整"];
-		BOOL showLeftRemainingTime = [scheduleStyle isEqualToString:@"进度条左侧剩余"];
-		BOOL showLeftCompleteTime = [scheduleStyle isEqualToString:@"进度条左侧完整"];
+		BOOL showRemainingTime = [scheduleStyle isEqualToString:@"進度條右側剩餘"];
+		BOOL showCompleteTime = [scheduleStyle isEqualToString:@"進度條右側完整"];
+		BOOL showLeftRemainingTime = [scheduleStyle isEqualToString:@"進度條左側剩餘"];
+		BOOL showLeftCompleteTime = [scheduleStyle isEqualToString:@"進度條左側完整"];
 
 		// 更新左标签
 		if (arg1 >= 0 && leftLabel) {
@@ -1005,7 +1005,7 @@ static CGFloat rightLabelRightMargin = -1;
 - (void)applyCustomProgressStyle {
 	NSString *scheduleStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
 
-	if ([scheduleStyle isEqualToString:@"进度条两侧左右"]) {
+	if ([scheduleStyle isEqualToString:@"進度條兩側左右"]) {
 		for (UIView *subview in self.subviews) {
 			if ([subview class] == [UIView class]) {
 				subview.hidden = YES;
@@ -1107,7 +1107,7 @@ static CGFloat rightLabelRightMargin = -1;
 					NSString *displayLocation = @"未知";
 
 					if (countryName.length > 0) {
-						if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:@"中国"] && ![countryName isEqualToString:localName]) {
+						if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:@"中國"] && ![countryName isEqualToString:localName]) {
 							// 国外位置：国家 + 州/省 + 地点
 							displayLocation = [NSString stringWithFormat:@"%@ %@ %@", countryName, adminName1, localName];
 						} else if (localName.length > 0 && ![countryName isEqualToString:localName]) {
@@ -1124,18 +1124,18 @@ static CGFloat rightLabelRightMargin = -1;
 					dispatch_async(dispatch_get_main_queue(), ^{
 					  NSString *currentText = label.text ?: @"";
 
-					  if ([currentText containsString:@"IP属地："]) {
-						  NSRange range = [currentText rangeOfString:@"IP属地："];
+					  if ([currentText containsString:@"IP位置："]) {
+						  NSRange range = [currentText rangeOfString:@"IP位置："];
 						  if (range.location != NSNotFound) {
 							  NSString *baseText = [currentText substringToIndex:range.location];
 							  if (![currentText containsString:displayLocation]) {
-								  label.text = [NSString stringWithFormat:@"%@IP属地：%@", baseText, displayLocation];
+								  label.text = [NSString stringWithFormat:@"%@IP位置：%@", baseText, displayLocation];
 							  }
 						  }
 					  } else {
 						  NSString *baseText = label.text ?: @"";
 						  if (baseText.length > 0) {
-							  label.text = [NSString stringWithFormat:@"%@  IP属地：%@", baseText, displayLocation];
+							  label.text = [NSString stringWithFormat:@"%@  IP位置：%@", baseText, displayLocation];
 						  }
 					  }
 					});
@@ -1151,7 +1151,7 @@ static CGFloat rightLabelRightMargin = -1;
 
 							       // 根据返回数据构建位置显示文本
 							       if (countryName.length > 0) {
-								       if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:@"中国"] &&
+								       if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:@"中國"] &&
 									   ![countryName isEqualToString:localName]) {
 									       // 国外位置：国家 + 州/省 + 地点
 									       displayLocation = [NSString stringWithFormat:@"%@ %@ %@", countryName, adminName1, localName];
@@ -1180,18 +1180,18 @@ static CGFloat rightLabelRightMargin = -1;
 							       dispatch_async(dispatch_get_main_queue(), ^{
 								 NSString *currentText = label.text ?: @"";
 
-								 if ([currentText containsString:@"IP属地："]) {
-									 NSRange range = [currentText rangeOfString:@"IP属地："];
+								 if ([currentText containsString:@"IP位置："]) {
+									 NSRange range = [currentText rangeOfString:@"IP位置："];
 									 if (range.location != NSNotFound) {
 										 NSString *baseText = [currentText substringToIndex:range.location];
 										 if (![currentText containsString:displayLocation]) {
-											 label.text = [NSString stringWithFormat:@"%@IP属地：%@", baseText, displayLocation];
+											 label.text = [NSString stringWithFormat:@"%@IP位置：%@", baseText, displayLocation];
 										 }
 									 }
 								 } else {
 									 NSString *baseText = label.text ?: @"";
 									 if (baseText.length > 0) {
-										 label.text = [NSString stringWithFormat:@"%@  IP属地：%@", baseText, displayLocation];
+										 label.text = [NSString stringWithFormat:@"%@  IP位置：%@", baseText, displayLocation];
 									 }
 								 }
 							       });
@@ -1204,9 +1204,9 @@ static CGFloat rightLabelRightMargin = -1;
 							    ([cityCode hasPrefix:@"11"] || [cityCode hasPrefix:@"12"] || [cityCode hasPrefix:@"31"] || [cityCode hasPrefix:@"50"]);
 
 					if (isDirectCity) {
-						label.text = [NSString stringWithFormat:@"%@  IP属地：%@", text, cityName];
+						label.text = [NSString stringWithFormat:@"%@  IP位置：%@", text, cityName];
 					} else {
-						label.text = [NSString stringWithFormat:@"%@  IP属地：%@ %@", text, provinceName, cityName];
+						label.text = [NSString stringWithFormat:@"%@  IP位置：%@ %@", text, provinceName, cityName];
 					}
 				} else {
 					BOOL isDirectCity = [provinceName isEqualToString:cityName] ||
@@ -1216,7 +1216,7 @@ static CGFloat rightLabelRightMargin = -1;
 					if (containsProvince && !isDirectCity) {
 						label.text = [NSString stringWithFormat:@"%@ %@", text, cityName];
 					} else if (containsProvince && isDirectCity) {
-						label.text = [NSString stringWithFormat:@"%@  IP属地：%@", text, cityName];
+						label.text = [NSString stringWithFormat:@"%@  IP位置：%@", text, cityName];
 					} else if (isDirectCity && containsProvince) {
 						label.text = text;
 					} else if (containsProvince) {
@@ -1627,7 +1627,7 @@ static CGFloat rightLabelRightMargin = -1;
 			UILabel *label = (UILabel *)subview;
 			NSString *text = label.text;
 
-			if (![text isEqualToString:@"回复"] && ![text isEqualToString:@"查看"] && ![text isEqualToString:@"续火花"]) {
+			if (![text isEqualToString:@"回覆"] && ![text isEqualToString:@"查看"] && ![text isEqualToString:@"續火花"]) {
 				label.textColor = [UIColor whiteColor];
 			}
 		}
@@ -1724,7 +1724,7 @@ static CGFloat rightLabelRightMargin = -1;
 		}
 		NSString *descText = [selectdComment content];
 		[[UIPasteboard generalPasteboard] setString:descText];
-		[DYYYToast showSuccessToastWithMessage:@"评论已复制"];
+		[DYYYToast showSuccessToastWithMessage:@"評論已複製"];
 	}
 }
 %end
@@ -2142,7 +2142,7 @@ static BOOL isDownloadFlied = NO;
 	// 获取表情包URL
 	AWEIMEmoticonModel *emoticonModel = self.model;
 	if (!emoticonModel) {
-		[DYYYManager showToast:@"无法获取表情包信息"];
+		[DYYYManager showToast:@"無法獲取表情包資訊"];
 		return;
 	}
 
@@ -2166,7 +2166,7 @@ static BOOL isDownloadFlied = NO;
 	}
 
 	if (!urlString) {
-		[DYYYManager showToast:@"无法获取表情包链接"];
+		[DYYYManager showToast:@"無法獲取表情包連結"];
 		return;
 	}
 
@@ -2193,7 +2193,7 @@ static AWEIMReusableCommonCell *currentCell;
 	currentCell = (AWEIMReusableCommonCell *)cell;
 
 	AWEIMCustomMenuModel *newMenuItem1 = [%c(AWEIMCustomMenuModel) new];
-	newMenuItem1.title = @"保存表情";
+	newMenuItem1.title = @"儲存表情";
 	newMenuItem1.imageName = @"im_emoticon_interactive_tab_new";
 	newMenuItem1.willPerformMenuActionSelectorBlock = ^(id arg1) {
 	  AWEIMMessageComponentContext *context = (AWEIMMessageComponentContext *)currentCell.currentContext;
@@ -2208,7 +2208,7 @@ static AWEIMReusableCommonCell *currentCell;
 		  }
 	  }
 	};
-	newMenuItem1.trackerName = @"保存表情";
+	newMenuItem1.trackerName = @"儲存表情";
 	AWEIMMessageComponentContext *context = (AWEIMMessageComponentContext *)currentCell.currentContext;
 	if ([context.message isKindOfClass:%c(AWEIMGiphyMessage)]) {
 		[newMenuItems addObject:newMenuItem1];
@@ -2473,7 +2473,7 @@ static AWEIMReusableCommonCell *currentCell;
 			NSString *song = btn.currentTitle;
 			if (song.length) {
 				[UIPasteboard generalPasteboard].string = song;
-				[DYYYToast showSuccessToastWithMessage:@"歌曲名已复制"];
+				[DYYYToast showSuccessToastWithMessage:@"歌曲名已複製"];
 			}
 		}
 	} else {
@@ -2812,7 +2812,7 @@ static AWEIMReusableCommonCell *currentCell;
 
 	NSString *accessibilityLabel = self.accessibilityLabel;
 
-	if ([accessibilityLabel isEqualToString:@"点赞"]) {
+	if ([accessibilityLabel isEqualToString:@"點讚"]) {
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideLikeButton"]) {
 			[self removeFromSuperview];
 			return;
@@ -2826,7 +2826,7 @@ static AWEIMReusableCommonCell *currentCell;
 				}
 			}
 		}
-	} else if ([accessibilityLabel isEqualToString:@"评论"]) {
+	} else if ([accessibilityLabel isEqualToString:@"評論"]) {
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentButton"]) {
 			[self removeFromSuperview];
 			return;
@@ -2878,7 +2878,7 @@ static AWEIMReusableCommonCell *currentCell;
 - (void)setTitle:(NSString *)title forState:(UIControlState)state {
 	%orig;
 
-	if ([title isEqualToString:@"加入挑战"]) {
+	if ([title isEqualToString:@"加入挑戰"]) {
 		dispatch_async(dispatch_get_main_queue(), ^{
 		  if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideChallengeStickers"]) {
 			  UIResponder *responder = self;
@@ -2914,7 +2914,7 @@ static AWEIMReusableCommonCell *currentCell;
 
 	NSString *accessibilityLabel = self.accessibilityLabel;
 
-	if ([accessibilityLabel isEqualToString:@"拍照搜同款"] || [accessibilityLabel isEqualToString:@"扫一扫"]) {
+	if ([accessibilityLabel isEqualToString:@"拍照搜同款"] || [accessibilityLabel isEqualToString:@"掃一掃"]) {
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideScancode"]) {
 			[self removeFromSuperview];
 			return;
@@ -2977,7 +2977,7 @@ static AWEIMReusableCommonCell *currentCell;
 
 	NSString *accessibilityLabel = self.accessibilityLabel;
 
-	if ([accessibilityLabel isEqualToString:@"音乐详情"]) {
+	if ([accessibilityLabel isEqualToString:@"音樂詳情"]) {
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideMusicButton"]) {
 			[self removeFromSuperview];
 			return;
@@ -3005,7 +3005,7 @@ static AWEIMReusableCommonCell *currentCell;
 
 	NSString *accessibilityLabel = self.accessibilityLabel;
 
-	if ([accessibilityLabel isEqualToString:@"关注"]) {
+	if ([accessibilityLabel isEqualToString:@"關注"]) {
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideAvatarButton"]) {
 			[self removeFromSuperview];
 			return;
@@ -3036,7 +3036,7 @@ static AWEIMReusableCommonCell *currentCell;
 	%orig;
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideGradient"]) {
 		UIView *parent = self.superview;
-		if ([parent.accessibilityLabel isEqualToString:@"暂停，按钮"] || [parent.accessibilityLabel isEqualToString:@"播放，按钮"] || [parent.accessibilityLabel isEqualToString:@"“切换视角，按钮"]) {
+		if ([parent.accessibilityLabel isEqualToString:@"暫停，按鈕"] || [parent.accessibilityLabel isEqualToString:@"播放，按鈕"] || [parent.accessibilityLabel isEqualToString:@"“切換視角，按鈕"]) {
 			[self removeFromSuperview];
 		}
 		return;
@@ -3089,7 +3089,7 @@ static AWEIMReusableCommonCell *currentCell;
 
 		if ([label isEqualToString:@"商城"]) {
 			shouldHide = hideShop;
-		} else if ([label containsString:@"消息"]) {
+		} else if ([label containsString:@"訊息"]) {
 			shouldHide = hideMsg;
 		} else if ([label containsString:@"朋友"]) {
 			shouldHide = hideFri;
@@ -3447,14 +3447,14 @@ static AWEIMReusableCommonCell *currentCell;
 	NSString *trimmedLabel = [accessibilityLabel stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 	BOOL shouldHide = NO;
 
-	if ([trimmedLabel hasSuffix:@"人共创"]) {
+	if ([trimmedLabel hasSuffix:@"人共創"]) {
 		NSString *prefix = [trimmedLabel substringToIndex:trimmedLabel.length - 3];
 		NSCharacterSet *nonDigits = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
 		shouldHide = ([prefix rangeOfCharacterFromSet:nonDigits].location == NSNotFound);
 	}
 
 	if (!shouldHide) {
-		shouldHide = [trimmedLabel isEqualToString:@"章节要点"] || [trimmedLabel isEqualToString:@"图集"];
+		shouldHide = [trimmedLabel isEqualToString:@"章節要點"] || [trimmedLabel isEqualToString:@"圖集"];
 	}
 
 	if (shouldHide) {
@@ -3788,7 +3788,7 @@ static AWEIMReusableCommonCell *currentCell;
 
 	NSString *title = [self valueForKey:@"title"];
 
-	if ([title containsString:@"任务Banner"] || [title containsString:@"活动Banner"]) {
+	if ([title containsString:@"任務Banner"] || [title containsString:@"活動Banner"]) {
 		[self removeFromSuperview];
 	}
 }
@@ -4053,7 +4053,7 @@ static AWEIMReusableCommonCell *currentCell;
 		}
 	}
 	return (shouldFilterAds || shouldFilterRec || shouldFilterHotSpot || shouldFilterLowLikes || shouldFilterKeywords || shouldFilterTime || shouldFilterUser) ? nil : orig;
-}
+	}
 
 - (id)init {
 	id orig = %orig;
@@ -4258,7 +4258,7 @@ static AWEIMReusableCommonCell *currentCell;
 
 		// 确定内容类型（视频或图片）
 		BOOL isImageContent = (awemeModel.awemeType == 68);
-		NSString *downloadTitle = isImageContent ? @"保存图片" : @"保存视频";
+		NSString *downloadTitle = isImageContent ? @"儲存圖片" : @"儲存影片";
 
 		// 创建AWEUserActionSheetView
 		AWEUserActionSheetView *actionSheet = [[NSClassFromString(@"AWEUserActionSheetView") alloc] init];
@@ -4303,7 +4303,7 @@ static AWEIMReusableCommonCell *currentCell;
 			// 添加保存封面选项
 			if (!isImageContent) { // 仅视频内容显示保存封面选项
 				AWEUserSheetAction *saveCoverAction = [NSClassFromString(@"AWEUserSheetAction")
-				    actionWithTitle:@"保存封面"
+				    actionWithTitle:@"儲存封面"
 					    imgName:nil
 					    handler:^{
 					      AWEVideoModel *videoModel = awemeModel.video;
@@ -4320,7 +4320,7 @@ static AWEIMReusableCommonCell *currentCell;
 
 			// 如果是图集，添加下载所有图片选项
 			if (isImageContent && awemeModel.albumImages.count > 1) {
-				AWEUserSheetAction *downloadAllAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"保存所有图片"
+				AWEUserSheetAction *downloadAllAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"儲存所有圖片"
 															  imgName:nil
 															  handler:^{
 															    NSMutableArray *imageURLs = [NSMutableArray array];
@@ -4339,7 +4339,7 @@ static AWEIMReusableCommonCell *currentCell;
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDoubleTapDownloadAudio"] || ![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDoubleTapDownloadAudio"]) {
 
 			AWEUserSheetAction *downloadAudioAction = [NSClassFromString(@"AWEUserSheetAction")
-			    actionWithTitle:@"保存音频"
+			    actionWithTitle:@"儲存音訊"
 				    imgName:nil
 				    handler:^{
 				      if (musicModel && musicModel.playURL && musicModel.playURL.originURLList.count > 0) {
@@ -4354,12 +4354,12 @@ static AWEIMReusableCommonCell *currentCell;
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDoubleInterfaceDownload"]) {
 			NSString *apiKey = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYInterfaceDownload"];
 			if (apiKey.length > 0) {
-				AWEUserSheetAction *apiDownloadAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"接口保存"
+				AWEUserSheetAction *apiDownloadAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"接口儲存"
 															  imgName:nil
 															  handler:^{
 															    NSString *shareLink = [awemeModel valueForKey:@"shareURL"];
 															    if (shareLink.length == 0) {
-																    [DYYYManager showToast:@"无法获取分享链接"];
+																    [DYYYManager showToast:@"無法取得分享連結"];
 																    return;
 															    }
 
@@ -4429,7 +4429,7 @@ static AWEIMReusableCommonCell *currentCell;
 						  completion:^(BOOL success, NSString *message) {
 						    if (success) {
 						    } else {
-							    [DYYYManager showToast:[NSString stringWithFormat:@"视频制作失败: %@", message]];
+							    [DYYYManager showToast:[NSString stringWithFormat:@"影片製作失敗: %@", message]];
 						    }
 						  }];
 					    }];
@@ -4440,12 +4440,12 @@ static AWEIMReusableCommonCell *currentCell;
 		// 添加复制文案选项
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDoubleTapCopyDesc"] || ![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDoubleTapCopyDesc"]) {
 
-			AWEUserSheetAction *copyTextAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"复制文案"
+			AWEUserSheetAction *copyTextAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"複製文案"
 													       imgName:nil
 													       handler:^{
 														 NSString *descText = [awemeModel valueForKey:@"descriptionString"];
 														 [[UIPasteboard generalPasteboard] setString:descText];
-														 [DYYYToast showSuccessToastWithMessage:@"文案已复制"];
+														 [DYYYToast showSuccessToastWithMessage:@"文案已複製"];
 													       }];
 			[actions addObject:copyTextAction];
 		}
@@ -4453,7 +4453,7 @@ static AWEIMReusableCommonCell *currentCell;
 		// 添加打开评论区选项
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDoubleTapComment"] || ![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDoubleTapComment"]) {
 
-			AWEUserSheetAction *openCommentAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"打开评论"
+			AWEUserSheetAction *openCommentAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"打開評論"
 														  imgName:nil
 														  handler:^{
 														    [self performCommentAction];
@@ -4464,7 +4464,7 @@ static AWEIMReusableCommonCell *currentCell;
 		// 添加分享选项
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDoubleTapshowSharePanel"] || ![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDoubleTapshowSharePanel"]) {
 
-			AWEUserSheetAction *showSharePanel = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"分享视频"
+			AWEUserSheetAction *showSharePanel = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"分享影片"
 													       imgName:nil
 													       handler:^{
 														 [self showSharePanel]; // 执行分享操作
@@ -4475,7 +4475,7 @@ static AWEIMReusableCommonCell *currentCell;
 		// 添加点赞视频选项
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDoubleTapLike"] || ![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDoubleTapLike"]) {
 
-			AWEUserSheetAction *likeAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"点赞视频"
+			AWEUserSheetAction *likeAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"點讚影片"
 													   imgName:nil
 													   handler:^{
 													     [self performLikeAction]; // 执行点赞操作
@@ -4486,7 +4486,7 @@ static AWEIMReusableCommonCell *currentCell;
 		// 添加长按面板
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDoubleTapshowDislikeOnVideo"] || ![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDoubleTapshowDislikeOnVideo"]) {
 
-			AWEUserSheetAction *showDislikeOnVideo = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"长按面板"
+			AWEUserSheetAction *showDislikeOnVideo = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"長按面板"
 														   imgName:nil
 														   handler:^{
 														     [self showDislikeOnVideo]; // 执行长按面板操作
@@ -5707,6 +5707,6 @@ static void findTargetViewInView(UIView *view) {
 										findTargetViewInView(window);
 									}
 								}
-							      }];
+						      }];
 	}
 }
