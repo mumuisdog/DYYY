@@ -1,4 +1,4 @@
-#import "DYYYSettingViewController.h"、
+#import "DYYYSettingViewController.h"
 #import "DYYYConstants.h"
 
 typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
@@ -54,7 +54,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.title = @"DYYY设置";
+    self.title = @"DYYY設定";
     self.expandedSections = [NSMutableSet set];
     self.isAgreementShown = NO;
     
@@ -134,265 +134,265 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
 - (void)setupSettingItems {
     self.settingSections = @[
         @[
-            [DYYYSettingItem itemWithTitle:@"启用弹幕改色" key:@"DYYYEnableDanmuColor" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"自定弹幕颜色" key:@"DYYYdanmuColor" type:DYYYSettingItemTypeTextField placeholder:@"十六进制"],
-            [DYYYSettingItem itemWithTitle:@"设置默认倍速" key:@"DYYYDefaultSpeed" type:DYYYSettingItemTypeSpeedPicker],
-            [DYYYSettingItem itemWithTitle:@"设置长按倍速" key:@"DYYYLongPressSpeed" type:DYYYSettingItemTypeSpeedPicker],
-            [DYYYSettingItem itemWithTitle:@"显示进度时长" key:@"DYYYisShowScheduleDisplay" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"进度时长样式" key:@"DYYYScheduleStyle" type:DYYYSettingItemTypeTextField placeholder:@"默认"],
-            [DYYYSettingItem itemWithTitle:@"进度纵轴位置" key:@"DYYYTimelineVerticalPosition" type:DYYYSettingItemTypeTextField placeholder:@"-12.5"],
-            [DYYYSettingItem itemWithTitle:@"进度标签颜色" key:@"DYYYProgressLabelColor" type:DYYYSettingItemTypeTextField placeholder:@"十六进制"],
-            [DYYYSettingItem itemWithTitle:@"隐藏视频进度" key:@"DYYYHideVideoProgress" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"启用自动播放" key:@"DYYYisEnableAutoPlay" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"推荐过滤直播" key:@"DYYYisSkipLive" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"推荐过滤热点" key:@"DYYYisSkipHotSpot" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"推荐过滤低赞" key:@"DYYYfilterLowLikes" type:DYYYSettingItemTypeTextField placeholder:@"填0关闭"],
-            [DYYYSettingItem itemWithTitle:@"推荐过滤文案" key:@"DYYYfilterKeywords" type:DYYYSettingItemTypeTextField placeholder:@"不填关闭"],
-            [DYYYSettingItem itemWithTitle:@"推荐过滤用户" key:@"DYYYfilterUsers" type:DYYYSettingItemTypeTextField placeholder:@"不填关闭"],
-            [DYYYSettingItem itemWithTitle:@"推荐视频时限" key:@"DYYYfiltertimelimit" type:DYYYSettingItemTypeTextField placeholder:@"填0关闭，单位为天"],
-            [DYYYSettingItem itemWithTitle:@"启用首页净化" key:@"DYYYisEnablePure" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"启用首页全屏" key:@"DYYYisEnableFullScreen" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"启用屏蔽广告" key:@"DYYYNoAds" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"屏蔽检测更新" key:@"DYYYNoUpdates" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"去青少年弹窗" key:@"DYYYHideteenmode" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"评论区毛玻璃" key:@"DYYYisEnableCommentBlur" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"啟用彈幕改色" key:@"DYYYEnableDanmuColor" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"自訂彈幕顏色" key:@"DYYYdanmuColor" type:DYYYSettingItemTypeTextField placeholder:@"十六進位"],
+            [DYYYSettingItem itemWithTitle:@"設定預設倍速" key:@"DYYYDefaultSpeed" type:DYYYSettingItemTypeSpeedPicker],
+            [DYYYSettingItem itemWithTitle:@"設定長按倍速" key:@"DYYYLongPressSpeed" type:DYYYSettingItemTypeSpeedPicker],
+            [DYYYSettingItem itemWithTitle:@"顯示進度時長" key:@"DYYYisShowScheduleDisplay" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"進度時長樣式" key:@"DYYYScheduleStyle" type:DYYYSettingItemTypeTextField placeholder:@"預設"],
+            [DYYYSettingItem itemWithTitle:@"進度縱軸位置" key:@"DYYYTimelineVerticalPosition" type:DYYYSettingItemTypeTextField placeholder:@"-12.5"],
+            [DYYYSettingItem itemWithTitle:@"進度標籤顏色" key:@"DYYYProgressLabelColor" type:DYYYSettingItemTypeTextField placeholder:@"十六進位"],
+            [DYYYSettingItem itemWithTitle:@"隱藏影片進度" key:@"DYYYHideVideoProgress" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"啟用自動播放" key:@"DYYYisEnableAutoPlay" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"推薦過濾直播" key:@"DYYYisSkipLive" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"推薦過濾熱點" key:@"DYYYisSkipHotSpot" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"推薦過濾低讚" key:@"DYYYfilterLowLikes" type:DYYYSettingItemTypeTextField placeholder:@"填0關閉"],
+            [DYYYSettingItem itemWithTitle:@"推薦過濾文案" key:@"DYYYfilterKeywords" type:DYYYSettingItemTypeTextField placeholder:@"不填關閉"],
+            [DYYYSettingItem itemWithTitle:@"推薦過濾用戶" key:@"DYYYfilterUsers" type:DYYYSettingItemTypeTextField placeholder:@"不填關閉"],
+            [DYYYSettingItem itemWithTitle:@"推薦影片時限" key:@"DYYYfiltertimelimit" type:DYYYSettingItemTypeTextField placeholder:@"填0關閉，單位為天"],
+            [DYYYSettingItem itemWithTitle:@"啟用首頁淨化" key:@"DYYYisEnablePure" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"啟用首頁全螢幕" key:@"DYYYisEnableFullScreen" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"啟用屏蔽廣告" key:@"DYYYNoAds" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"屏蔽檢測更新" key:@"DYYYNoUpdates" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"去除青少年彈窗" key:@"DYYYHideteenmode" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"評論區毛玻璃" key:@"DYYYisEnableCommentBlur" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"通知玻璃效果" key:@"DYYYEnableNotificationTransparency" type:DYYYSettingItemTypeSwitch],  
-            [DYYYSettingItem itemWithTitle:@"毛玻璃透明度" key:@"DYYYCommentBlurTransparent" type:DYYYSettingItemTypeTextField placeholder:@"0-1小数"],
-            [DYYYSettingItem itemWithTitle:@"通知圆角半径" key:@"DYYYNotificationCornerRadius" type:DYYYSettingItemTypeTextField placeholder:@"默认12"],
-            [DYYYSettingItem itemWithTitle:@"时间属地显示" key:@"DYYYisEnableArea" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"国外解析账号" key:@"DYYYGeonamesUsername" type:DYYYSettingItemTypeTextField placeholder:@"不填默认"],
-            [DYYYSettingItem itemWithTitle:@"时间标签颜色" key:@"DYYYLabelColor" type:DYYYSettingItemTypeTextField placeholder:@"十六进制"],
-            [DYYYSettingItem itemWithTitle:@"时间随机渐变" key:@"DYYYEnabsuijiyanse" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏系统顶栏" key:@"DYYYisHideStatusbar" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"关注二次确认" key:@"DYYYfollowTips" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"收藏二次确认" key:@"DYYYcollectTips" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"直播默认最高画质" key:@"DYYYEnableLiveHighestQuality" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"视频默认最高画质" key:@"DYYYEnableVideoHighestQuality" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"禁用直播PCDN功能" key:@"DYYYDisableLivePCDN" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"禁用自动进入直播" key:@"DYYYDisableAutoEnterLive" type:DYYYSettingItemTypeSwitch]
+            [DYYYSettingItem itemWithTitle:@"毛玻璃透明度" key:@"DYYYCommentBlurTransparent" type:DYYYSettingItemTypeTextField placeholder:@"0-1小數"],
+            [DYYYSettingItem itemWithTitle:@"通知圓角半徑" key:@"DYYYNotificationCornerRadius" type:DYYYSettingItemTypeTextField placeholder:@"預設12"],
+            [DYYYSettingItem itemWithTitle:@"時間屬地顯示" key:@"DYYYisEnableArea" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"國外解析帳號" key:@"DYYYGeonamesUsername" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
+            [DYYYSettingItem itemWithTitle:@"時間標籤顏色" key:@"DYYYLabelColor" type:DYYYSettingItemTypeTextField placeholder:@"十六進位"],
+            [DYYYSettingItem itemWithTitle:@"時間隨機漸變" key:@"DYYYEnabsuijiyanse" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏系統頂欄" key:@"DYYYisHideStatusbar" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"關注二次確認" key:@"DYYYfollowTips" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"收藏二次確認" key:@"DYYYcollectTips" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"直播預設最高畫質" key:@"DYYYEnableLiveHighestQuality" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"影片預設最高畫質" key:@"DYYYEnableVideoHighestQuality" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"禁用自動進入直播" key:@"DYYYDisableAutoEnterLive" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"禁用直播PCDN功能" key:@"DYYYDisableLivePCDN" type:DYYYSettingItemTypeSwitch]
         ],
         @[
-            [DYYYSettingItem itemWithTitle:@"设置顶栏透明" key:@"DYYYtopbartransparent" type:DYYYSettingItemTypeTextField placeholder:@"0-1小数"],
-            [DYYYSettingItem itemWithTitle:@"设置全局透明" key:@"DYYYGlobalTransparency" type:DYYYSettingItemTypeTextField placeholder:@"0-1小数"],
-            [DYYYSettingItem itemWithTitle:@"首页头像透明" key:@"DYYYAvatarViewTransparency" type:DYYYSettingItemTypeTextField placeholder:@"0-1小数"],                              
-            [DYYYSettingItem itemWithTitle:@"右侧栏缩放度" key:@"DYYYElementScale" type:DYYYSettingItemTypeTextField placeholder:@"不填默认"],
-            [DYYYSettingItem itemWithTitle:@"昵称文案缩放" key:@"DYYYNicknameScale" type:DYYYSettingItemTypeTextField placeholder:@"不填默认"],
-            [DYYYSettingItem itemWithTitle:@"昵称下移距离" key:@"DYYYNicknameVerticalOffset" type:DYYYSettingItemTypeTextField placeholder:@"不填默认"],
-            [DYYYSettingItem itemWithTitle:@"文案下移距离" key:@"DYYYDescriptionVerticalOffset" type:DYYYSettingItemTypeTextField placeholder:@"不填默认"],
-            [DYYYSettingItem itemWithTitle:@"属地上移距离" key:@"DYYYIPLabelVerticalOffset" type:DYYYSettingItemTypeTextField placeholder:@"不填默认"],
-            [DYYYSettingItem itemWithTitle:@"设置首页标题" key:@"DYYYIndexTitle" type:DYYYSettingItemTypeTextField placeholder:@"不填默认"],
-            [DYYYSettingItem itemWithTitle:@"设置朋友标题" key:@"DYYYFriendsTitle" type:DYYYSettingItemTypeTextField placeholder:@"不填默认"],
-            [DYYYSettingItem itemWithTitle:@"设置消息标题" key:@"DYYYMsgTitle" type:DYYYSettingItemTypeTextField placeholder:@"不填默认"],
-            [DYYYSettingItem itemWithTitle:@"设置我的标题" key:@"DYYYSelfTitle" type:DYYYSettingItemTypeTextField placeholder:@"不填默认"],
-            [DYYYSettingItem itemWithTitle:@"设置顶栏标题" key:@"DYYYModifyTopTabText" type:DYYYSettingItemTypeTextField placeholder:@"标题=修改#标题=修改"]
+            [DYYYSettingItem itemWithTitle:@"設定頂欄透明" key:@"DYYYtopbartransparent" type:DYYYSettingItemTypeTextField placeholder:@"0-1小數"],
+            [DYYYSettingItem itemWithTitle:@"設定全域透明" key:@"DYYYGlobalTransparency" type:DYYYSettingItemTypeTextField placeholder:@"0-1小數"],
+            [DYYYSettingItem itemWithTitle:@"首頁頭像透明" key:@"DYYYAvatarViewTransparency" type:DYYYSettingItemTypeTextField placeholder:@"0-1小數"],                              
+            [DYYYSettingItem itemWithTitle:@"右側欄縮放度" key:@"DYYYElementScale" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
+            [DYYYSettingItem itemWithTitle:@"暱稱文案縮放" key:@"DYYYNicknameScale" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
+            [DYYYSettingItem itemWithTitle:@"暱稱下移距離" key:@"DYYYNicknameVerticalOffset" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
+            [DYYYSettingItem itemWithTitle:@"文案下移距離" key:@"DYYYDescriptionVerticalOffset" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
+            [DYYYSettingItem itemWithTitle:@"屬地下移距離" key:@"DYYYIPLabelVerticalOffset" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
+            [DYYYSettingItem itemWithTitle:@"設定首頁標題" key:@"DYYYIndexTitle" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
+            [DYYYSettingItem itemWithTitle:@"設定朋友標題" key:@"DYYYFriendsTitle" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
+            [DYYYSettingItem itemWithTitle:@"設定訊息標題" key:@"DYYYMsgTitle" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
+            [DYYYSettingItem itemWithTitle:@"設定我的標題" key:@"DYYYSelfTitle" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
+            [DYYYSettingItem itemWithTitle:@"設定頂欄標題" key:@"DYYYModifyTopTabText" type:DYYYSettingItemTypeTextField placeholder:@"標題=修改#標題=修改"]
         ],
         @[
-            [DYYYSettingItem itemWithTitle:@"隐藏全屏观看" key:@"DYYYisHiddenEntry" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏底栏商城" key:@"DYYYHideShopButton" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏双列箭头" key:@"DYYYHideDoubleColumnEntry" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏底栏消息" key:@"DYYYHideMessageButton" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏底栏朋友" key:@"DYYYHideFriendsButton" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏底栏我的" key:@"DYYYHideMyButton" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏底栏加号" key:@"DYYYisHiddenJia" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏底栏热榜" key:@"DYYYHideHotSearch" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏底栏评论" key:@"DYYYHideComment" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏底栏红点" key:@"DYYYisHiddenBottomDot" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏底栏背景" key:@"DYYYisHiddenBottomBg" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏侧栏元素" key:@"DYYYStreamlinethesidebar" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏侧栏红点" key:@"DYYYisHiddenSidebarDot" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏发作品框" key:@"DYYYHidePostView" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏头像加号" key:@"DYYYHideLOTAnimationView" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"移除头像加号" key:@"DYYYHideFollowPromptView" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏点赞数值" key:@"DYYYHideLikeLabel" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏评论数值" key:@"DYYYHideCommentLabel" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏收藏数值" key:@"DYYYHideCollectLabel" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏分享数值" key:@"DYYYHideShareLabel" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏点赞按钮" key:@"DYYYHideLikeButton" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏评论按钮" key:@"DYYYHideCommentButton" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏收藏按钮" key:@"DYYYHideCollectButton" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏头像按钮" key:@"DYYYHideAvatarButton" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏音乐按钮" key:@"DYYYHideMusicButton" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏分享按钮" key:@"DYYYHideShareButton" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏视频定位" key:@"DYYYHideLocation" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏右上搜索" key:@"DYYYHideDiscover" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏相关搜索" key:@"DYYYHideInteractionSearch" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏弹出热搜" key:@"DYYYHideSearchBubble" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏搜索同款" key:@"DYYYHideSearchSame" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏长框搜索" key:@"DYYYHideSearchEntrance" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏进入直播" key:@"DYYYHideEnterLive" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏评论视图"  key:@"DYYYHideCommentViews" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏通知提示" key:@"DYYYHidePushBanner" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏头像列表" key:@"DYYYisHiddenAvatarList" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏头像气泡" key:@"DYYYisHiddenAvatarBubble" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏左侧边栏" key:@"DYYYisHiddenLeftSideBar" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏吃喝玩乐" key:@"DYYYHideNearbyCapsuleView" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏弹幕按钮" key:@"DYYYHideDanmuButton" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏取消静音" key:@"DYYYHideCancelMute" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏去汽水听" key:@"DYYYHideQuqishuiting" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏共创头像" key:@"DYYYHideGongChuang" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏热点提示" key:@"DYYYHideHotspot" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏推荐提示" key:@"DYYYHideRecommendTips" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏分享提示" key:@"DYYYHideShareContentView" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏作者声明" key:@"DYYYHideAntiAddictedNotice" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏底部相关" key:@"DYYYHideBottomRelated" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏拍摄同款" key:@"DYYYHideFeedAnchorContainer" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏挑战贴纸" key:@"DYYYHideChallengeStickers" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏校园提示" key:@"DYYYHideTemplateTags" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏作者店铺" key:@"DYYYHideHisShop" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏关注直播" key:@"DYYYHideConcernCapsuleView" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏顶栏横线" key:@"DYYYHidentopbarprompt" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏视频合集" key:@"DYYYHideTemplateVideo" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏短剧合集" key:@"DYYYHideTemplatePlaylet" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏动图标签" key:@"DYYYHideLiveGIF" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏笔记标签" key:@"DYYYHideItemTag" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏底部话题" key:@"DYYYHideTemplateGroup" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏相机定位" key:@"DYYYHideCameraLocation" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏视频滑条" key:@"DYYYHideStoryProgressSlide" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏图片滑条" key:@"DYYYHideDotsIndicator" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏分享私信" key:@"DYYYHidePrivateMessages" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏昵称右侧" key:@"DYYYHideRightLable" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏群聊商店" key:@"DYYYHideGroupShop" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏直播胶囊" key:@"DYYYHideLiveCapsuleView" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏关注顶端" key:@"DYYYHidenLiveView" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏同城顶端" key:@"DYYYHideMenuView" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏群直播中" key:@"DYYYGroupLiving" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏聊天底栏" key:@"DYYYHideGroupInputActionBar" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏添加朋友" key:@"DYYYHideButton" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏日常按钮" key:@"DYYYHideFamiliar" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏直播广场" key:@"DYYYHideLivePlayground" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏礼物展馆" key:@"DYYYHideGiftPavilion" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏顶栏红点" key:@"DYYYHideTopBarBadge" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏退出清屏" key:@"DYYYHideLiveRoomClear" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏投屏按钮" key:@"DYYYHideLiveRoomMirroring" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏直播发现" key:@"DYYYHideLiveDiscovery" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏直播点歌" key:@"DYYYHideKTVSongIndicator" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏流量提醒" key:@"DYYYHideCellularAlert" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏红包悬浮" key:@"DYYYHidePendantGroup" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏聊天评论" key:@"DYYYHideChatCommentBg" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏章节进度" key:@"DYYYHideChapterProgress" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏键盘AI" key:@"DYYYHidekeyboardai" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏上次看到" key:@"DYYYHidePopover" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏展开渐变" key:@"DYYYHideGradient" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏关闭按钮" key:@"DYYYHideLiveRoomClose" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏横屏按钮" key:@"DYYYHideLiveRoomFullscreen" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏返回按钮" key:@"DYYYHideBack" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏设置关于" key:@"DYYYHideSettingsAbout" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏商品信息" key:@"DYYYHideLiveGoodsMsg" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏点赞动画" key:@"DYYYHideLiveLikeAnimation" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏输入扫码" key:@"DYYYHideScancode" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏私信回复" key:@"DYYYHideReply" type:DYYYSettingItemTypeSwitch]
+            [DYYYSettingItem itemWithTitle:@"隱藏全螢幕觀看" key:@"DYYYisHiddenEntry" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏底欄商城" key:@"DYYYHideShopButton" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏雙列箭頭" key:@"DYYYHideDoubleColumnEntry" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏底欄訊息" key:@"DYYYHideMessageButton" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏底欄朋友" key:@"DYYYHideFriendsButton" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏底欄我的" key:@"DYYYHideMyButton" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏底欄加號" key:@"DYYYisHiddenJia" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏底欄熱榜" key:@"DYYYHideHotSearch" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏底欄評論" key:@"DYYYHideComment" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏底欄紅點" key:@"DYYYisHiddenBottomDot" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏底欄背景" key:@"DYYYisHiddenBottomBg" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏側欄元素" key:@"DYYYStreamlinethesidebar" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏側欄紅點" key:@"DYYYisHiddenSidebarDot" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏發作品框" key:@"DYYYHidePostView" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏頭像加號" key:@"DYYYHideLOTAnimationView" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"移除頭像加號" key:@"DYYYHideFollowPromptView" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏按讚數值" key:@"DYYYHideLikeLabel" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏評論數值" key:@"DYYYHideCommentLabel" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏收藏數值" key:@"DYYYHideCollectLabel" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏分享數值" key:@"DYYYHideShareLabel" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏按讚按鈕" key:@"DYYYHideLikeButton" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏評論按鈕" key:@"DYYYHideCommentButton" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏收藏按鈕" key:@"DYYYHideCollectButton" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏頭像按鈕" key:@"DYYYHideAvatarButton" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏音樂按鈕" key:@"DYYYHideMusicButton" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏分享按鈕" key:@"DYYYHideShareButton" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏影片定位" key:@"DYYYHideLocation" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏右上搜尋" key:@"DYYYHideDiscover" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏相關搜尋" key:@"DYYYHideInteractionSearch" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏彈出熱搜" key:@"DYYYHideSearchBubble" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏搜尋同款" key:@"DYYYHideSearchSame" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏長框搜尋" key:@"DYYYHideSearchEntrance" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏進入直播" key:@"DYYYHideEnterLive" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏評論視圖" key:@"DYYYHideCommentViews" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏通知提示" key:@"DYYYHidePushBanner" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏頭像列表" key:@"DYYYisHiddenAvatarList" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏頭像氣泡" key:@"DYYYisHiddenAvatarBubble" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏左側邊欄" key:@"DYYYisHiddenLeftSideBar" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏吃喝玩樂" key:@"DYYYHideNearbyCapsuleView" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏彈幕按鈕" key:@"DYYYHideDanmuButton" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏取消靜音" key:@"DYYYHideCancelMute" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏去汽水聽" key:@"DYYYHideQuqishuiting" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏共創頭像" key:@"DYYYHideGongChuang" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏熱點提示" key:@"DYYYHideHotspot" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏推薦提示" key:@"DYYYHideRecommendTips" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏分享提示" key:@"DYYYHideShareContentView" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏作者聲明" key:@"DYYYHideAntiAddictedNotice" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏底部相關" key:@"DYYYHideBottomRelated" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏拍攝同款" key:@"DYYYHideFeedAnchorContainer" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏挑戰貼紙" key:@"DYYYHideChallengeStickers" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏校園提示" key:@"DYYYHideTemplateTags" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏作者商店" key:@"DYYYHideHisShop" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏關注直播" key:@"DYYYHideConcernCapsuleView" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏頂欄橫線" key:@"DYYYHidentopbarprompt" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏影片合集" key:@"DYYYHideTemplateVideo" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏短劇合集" key:@"DYYYHideTemplatePlaylet" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏動圖標籤" key:@"DYYYHideLiveGIF" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏筆記標籤" key:@"DYYYHideItemTag" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏底部話題" key:@"DYYYHideTemplateGroup" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏相機定位" key:@"DYYYHideCameraLocation" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏影片滑條" key:@"DYYYHideStoryProgressSlide" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏圖片滑條" key:@"DYYYHideDotsIndicator" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏分享私訊" key:@"DYYYHidePrivateMessages" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏暱稱右側" key:@"DYYYHideRightLable" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏群聊商店" key:@"DYYYHideGroupShop" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏直播膠囊" key:@"DYYYHideLiveCapsuleView" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏關注頂端" key:@"DYYYHidenLiveView" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏同城頂端" key:@"DYYYHideMenuView" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏群直播中" key:@"DYYYGroupLiving" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏聊天底欄" key:@"DYYYHideGroupInputActionBar" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏添加朋友" key:@"DYYYHideButton" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏日常按鈕" key:@"DYYYHideFamiliar" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏直播廣場" key:@"DYYYHideLivePlayground" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏禮物展館" key:@"DYYYHideGiftPavilion" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏頂欄紅點" key:@"DYYYHideTopBarBadge" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏退出清屏" key:@"DYYYHideLiveRoomClear" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏投屏按鈕" key:@"DYYYHideLiveRoomMirroring" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏直播發現" key:@"DYYYHideLiveDiscovery" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏直播點歌" key:@"DYYYHideKTVSongIndicator" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏流量提醒" key:@"DYYYHideCellularAlert" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏紅包懸浮" key:@"DYYYHidePendantGroup" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏聊天評論" key:@"DYYYHideChatCommentBg" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏章節進度" key:@"DYYYHideChapterProgress" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏鍵盤AI" key:@"DYYYHidekeyboardai" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏上次看到" key:@"DYYYHidePopover" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏展開漸變" key:@"DYYYHideGradient" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏關閉按鈕" key:@"DYYYHideLiveRoomClose" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏橫屏按鈕" key:@"DYYYHideLiveRoomFullscreen" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏返回按鈕" key:@"DYYYHideBack" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏設定關於" key:@"DYYYHideSettingsAbout" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏商品資訊" key:@"DYYYHideLiveGoodsMsg" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏按讚動畫" key:@"DYYYHideLiveLikeAnimation" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏輸入掃碼" key:@"DYYYHideScancode" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏私訊回覆" key:@"DYYYHideReply" type:DYYYSettingItemTypeSwitch]
         ],
         @[
-            [DYYYSettingItem itemWithTitle:@"移除推荐" key:@"DYYYHideHotContainer" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"移除关注" key:@"DYYYHideFollow" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"移除精选" key:@"DYYYHideMediumVideo" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"移除推薦" key:@"DYYYHideHotContainer" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"移除關注" key:@"DYYYHideFollow" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"移除精選" key:@"DYYYHideMediumVideo" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"移除商城" key:@"DYYYHideMall" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"移除朋友" key:@"DYYYHideFriend" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"移除同城" key:@"DYYYHideNearby" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"移除团购" key:@"DYYYHideGroupon" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"移除團購" key:@"DYYYHideGroupon" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"移除直播" key:@"DYYYHideTabLive" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"移除热点" key:@"DYYYHidePadHot" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"移除经验" key:@"DYYYHideHangout" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"移除短剧" key:@"DYYYHidePlaylet" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"移除看剧" key:@"DYYYHideCinema" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"移除少儿" key:@"DYYYHideKidsV2" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"移除游戏" key:@"DYYYHideGame" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"移除顶栏其他" key:@"DYYYHideOtherChannel" type:DYYYSettingItemTypeTextField placeholder:@"逗号分隔"]
+            [DYYYSettingItem itemWithTitle:@"移除熱點" key:@"DYYYHidePadHot" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"移除經驗" key:@"DYYYHideHangout" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"移除短劇" key:@"DYYYHidePlaylet" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"移除看劇" key:@"DYYYHideCinema" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"移除少兒" key:@"DYYYHideKidsV2" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"移除遊戲" key:@"DYYYHideGame" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"移除頂欄其他" key:@"DYYYHideOtherChannel" type:DYYYSettingItemTypeTextField placeholder:@"逗號分隔"]
         ],
         @[
-            [DYYYSettingItem itemWithTitle:@"隐藏面板日常" key:@"DYYYHidePanelDaily" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏面板推荐" key:@"DYYYHidePanelRecommend" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏面板举报" key:@"DYYYHidePanelReport" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏面板倍速" key:@"DYYYHidePanelSpeed" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏面板清屏" key:@"DYYYHidePanelClearScreen" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏面板缓存" key:@"DYYYHidePanelFavorite" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏面板投屏" key:@"DYYYHidePanelCast" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏面板弹幕" key:@"DYYYHidePanelSubtitle" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏面板识图" key:@"DYYYHidePanelSearchImage" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏面板听抖音" key:@"DYYYHidePanelListenDouyin" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏电脑Pad打开" key:@"DYYYHidePanelOpenInPC" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏面板稍后再看" key:@"DYYYHidePanelLater" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏面板自动连播" key:@"DYYYHidePanelAutoPlay" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏面板不感兴趣" key:@"DYYYHidePanelNotInterested" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏面板后台播放" key:@"DYYYHidePanelBackgroundPlay" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏面板定时关闭" key:@"DYYYHidePanelTimerClose" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏双列快捷入口" key:@"DYYYHidePanelBiserial" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏评论分享" key:@"DYYYHideCommentShareToFriends" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏评论复制" key:@"DYYYHideCommentLongPressCopy" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏评论保存" key:@"DYYYHideCommentLongPressSaveImage" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏评论举报" key:@"DYYYHideCommentLongPressReport" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏评论搜索" key:@"DYYYHideCommentLongPressSearch" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏评论转发日常" key:@"DYYYHideCommentLongPressDaily" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏评论视频回复" key:@"DYYYHideCommentLongPressVideoReply" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隐藏评论识别图片" key:@"DYYYHideCommentLongPressPictureSearch" type:DYYYSettingItemTypeSwitch]
+            [DYYYSettingItem itemWithTitle:@"隱藏面板日常" key:@"DYYYHidePanelDaily" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏面板推薦" key:@"DYYYHidePanelRecommend" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏面板檢舉" key:@"DYYYHidePanelReport" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏面板倍速" key:@"DYYYHidePanelSpeed" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏面板清屏" key:@"DYYYHidePanelClearScreen" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏面板快取" key:@"DYYYHidePanelFavorite" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏面板投屏" key:@"DYYYHidePanelCast" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏面板彈幕" key:@"DYYYHidePanelSubtitle" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏面板識圖" key:@"DYYYHidePanelSearchImage" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏面板聽抖音" key:@"DYYYHidePanelListenDouyin" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏電腦Pad打開" key:@"DYYYHidePanelOpenInPC" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏面板稍後再看" key:@"DYYYHidePanelLater" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏面板自動連播" key:@"DYYYHidePanelAutoPlay" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏面板不感興趣" key:@"DYYYHidePanelNotInterested" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏面板後台播放" key:@"DYYYHidePanelBackgroundPlay" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏面板定時關閉" key:@"DYYYHidePanelTimerClose" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏雙列快捷入口" key:@"DYYYHidePanelBiserial" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏評論分享" key:@"DYYYHideCommentShareToFriends" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏評論複製" key:@"DYYYHideCommentLongPressCopy" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏評論儲存" key:@"DYYYHideCommentLongPressSaveImage" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏評論檢舉" key:@"DYYYHideCommentLongPressReport" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏評論搜尋" key:@"DYYYHideCommentLongPressSearch" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏評論轉發日常" key:@"DYYYHideCommentLongPressDaily" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏評論影片回覆" key:@"DYYYHideCommentLongPressVideoReply" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏評論識別圖片" key:@"DYYYHideCommentLongPressPictureSearch" type:DYYYSettingItemTypeSwitch]
          ],
         @[
-            [DYYYSettingItem itemWithTitle:@"启用新版玻璃面板" key:@"DYYYisEnableModern" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"启用新版浅色面板" key:@"DYYYisEnableModernLight" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"新版面板跟随系统" key:@"DYYYModernPanelFollowSystem" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"保存面板玻璃效果" key:@"DYYYisEnableSheetBlur" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"面板毛玻璃透明度" key:@"DYYYSheetBlurTransparent" type:DYYYSettingItemTypeTextField placeholder:@"0-1小数"],
-            [DYYYSettingItem itemWithTitle:@"长按面板保存视频" key:@"DYYYLongPressSaveVideo" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"长按面板保存封面" key:@"DYYYLongPressSaveCover" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"长按面板保存音频" key:@"DYYYLongPressSaveAudio" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"长按面板保存图片" key:@"DYYYLongPressSaveCurrentImage" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"长按保存所有图片" key:@"DYYYLongPressSaveAllImages" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"长按面板生成视频" key:@"DYYYLongPressCreateVideo" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"长按面板复制文案" key:@"DYYYLongPressCopyText" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"长按面板复制链接" key:@"DYYYLongPressCopyLink" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"长按面板接口解析" key:@"DYYYLongPressApiDownload" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"长按面板定时关闭" key:@"DYYYLongPressTimerClose" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"长按面板过滤文案" key:@"DYYYLongPressFilterTitle" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"长按面板过滤作者" key:@"DYYYLongPressFilterUser" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"双击面板保存视频" key:@"DYYYDoubleTapDownload" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"双击面板保存音频" key:@"DYYYDoubleTapDownloadAudio" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"双击面板接口解析" key:@"DYYYDoubleInterfaceDownload" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"双击面板制作视频" key:@"DYYYDoubleCreateVideo" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"双击面板复制文案" key:@"DYYYDoubleTapCopyDesc" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"双击面板打开评论" key:@"DYYYDoubleTapComment" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"双击面板点赞视频" key:@"DYYYDoubleTapLike" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"双击面板分享视频" key:@"DYYYDoubleTapshowSharePanel" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"双击面板长按面板" key:@"DYYYDoubleTapshowDislikeOnVideo" type:DYYYSettingItemTypeSwitch]
+            [DYYYSettingItem itemWithTitle:@"啟用新版玻璃面板" key:@"DYYYisEnableModern" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"啟用新版淺色面板" key:@"DYYYisEnableModernLight" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"新版面板跟隨系統" key:@"DYYYModernPanelFollowSystem" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"儲存面板玻璃效果" key:@"DYYYisEnableSheetBlur" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"面板毛玻璃透明度" key:@"DYYYSheetBlurTransparent" type:DYYYSettingItemTypeTextField placeholder:@"0-1小數"],
+            [DYYYSettingItem itemWithTitle:@"長按面板儲存影片" key:@"DYYYLongPressSaveVideo" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"長按面板儲存封面" key:@"DYYYLongPressSaveCover" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"長按面板儲存音訊" key:@"DYYYLongPressSaveAudio" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"長按面板儲存圖片" key:@"DYYYLongPressSaveCurrentImage" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"長按儲存所有圖片" key:@"DYYYLongPressSaveAllImages" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"長按面板製作影片" key:@"DYYYLongPressCreateVideo" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"長按面板複製文案" key:@"DYYYLongPressCopyText" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"長按面板複製連結" key:@"DYYYLongPressCopyLink" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"長按面板接口解析" key:@"DYYYLongPressApiDownload" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"長按面板定時關閉" key:@"DYYYLongPressTimerClose" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"長按面板過濾文案" key:@"DYYYLongPressFilterTitle" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"長按面板過濾作者" key:@"DYYYLongPressFilterUser" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"雙擊面板儲存影片" key:@"DYYYDoubleTapDownload" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"雙擊面板儲存音訊" key:@"DYYYDoubleTapDownloadAudio" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"雙擊面板接口解析" key:@"DYYYDoubleInterfaceDownload" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"雙擊面板製作影片" key:@"DYYYDoubleCreateVideo" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"雙擊面板複製文案" key:@"DYYYDoubleTapCopyDesc" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"雙擊面板打開評論" key:@"DYYYDoubleTapComment" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"雙擊面板按讚影片" key:@"DYYYDoubleTapLike" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"雙擊面板分享影片" key:@"DYYYDoubleTapshowSharePanel" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"雙擊面板長按面板" key:@"DYYYDoubleTapshowDislikeOnVideo" type:DYYYSettingItemTypeSwitch]
          ],
         @[
-            [DYYYSettingItem itemWithTitle:@"启用双击打开评论" key:@"DYYYEnableDoubleOpenComment" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"启用双击打开菜单" key:@"DYYYEnableDoubleOpenAlertController" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"启用自动勾选原图" key:@"DYYYisAutoSelectOriginalPhoto" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"资料默认进入作品" key:@"DYYYDefaultEnterWorks" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"启用保存他人头像" key:@"DYYYEnableSaveAvatar" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"左侧边栏快捷入口" key:@"DYYYentrance" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"接口解析保存媒体" key:@"DYYYInterfaceDownload" type:DYYYSettingItemTypeTextField placeholder:@"不填关闭"],
-            [DYYYSettingItem itemWithTitle:@"接口显示清晰选项" key:@"DYYYShowAllVideoQuality" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"移除评论实况水印" key:@"DYYYCommentLivePhotoNotWaterMark" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"移除评论图片水印" key:@"DYYYCommentNotWaterMark" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"禁用点击首页刷新" key:@"DYYYDisableHomeRefresh" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"禁用双击视频点赞" key:@"DYYYDouble" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"保存评论区表情包" key:@"DYYYForceDownloadEmotion" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"保存预览页表情包" key:@"DYYYForceDownloadPreviewEmotion" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"保存聊天页表情包" key:@"DYYYForceDownloadIMEmotion" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"长按评论复制文案" key:@"DYYYCommentCopyText" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"下载完成震动反馈" key:@"DYYYHapticFeedbackEnabled" type:DYYYSettingItemTypeSwitch]
+            [DYYYSettingItem itemWithTitle:@"啟用雙擊打開評論" key:@"DYYYEnableDoubleOpenComment" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"啟用雙擊打開選單" key:@"DYYYEnableDoubleOpenAlertController" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"啟用自動勾選原圖" key:@"DYYYisAutoSelectOriginalPhoto" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"資料預設進入作品" key:@"DYYYDefaultEnterWorks" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"啟用儲存他人頭像" key:@"DYYYEnableSaveAvatar" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"左側邊欄快捷入口" key:@"DYYYentrance" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"接口解析儲存媒體" key:@"DYYYInterfaceDownload" type:DYYYSettingItemTypeTextField placeholder:@"不填關閉"],
+            [DYYYSettingItem itemWithTitle:@"接口顯示解析度選項" key:@"DYYYShowAllVideoQuality" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"移除評論原況水印" key:@"DYYYCommentLivePhotoNotWaterMark" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"移除評論圖片水印" key:@"DYYYCommentNotWaterMark" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"禁用雙擊影片按讚" key:@"DYYYDouble" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"儲存評論區表情包" key:@"DYYYForceDownloadEmotion" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"儲存預覽頁表情包" key:@"DYYYForceDownloadPreviewEmotion" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"儲存聊天頁表情包" key:@"DYYYForceDownloadIMEmotion" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"長按評論複製文案" key:@"DYYYCommentCopyText" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"下載完成震動回饋" key:@"DYYYHapticFeedbackEnabled" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"禁用點擊首頁重新整理" key:@"DYYYDisableHomeRefresh" type:DYYYSettingItemTypeSwitch]			
         ],
         @[
-            [DYYYSettingItem itemWithTitle:@"启用快捷倍速按钮" key:@"DYYYEnableFloatSpeedButton" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"快捷倍速数值设置" key:@"DYYYSpeedSettings" type:DYYYSettingItemTypeTextField placeholder:@"逗号分隔"],
-            [DYYYSettingItem itemWithTitle:@"自动恢复默认倍速" key:@"DYYYAutoRestoreSpeed" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"倍速按钮显示后缀" key:@"DYYYSpeedButtonShowX" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"快捷倍速按钮大小" key:@"DYYYSpeedButtonSize" type:DYYYSettingItemTypeTextField placeholder:@"默认32"],
-            [DYYYSettingItem itemWithTitle:@"启用一键清屏按钮" key:@"DYYYEnableFloatClearButton" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"快捷清屏按钮大小" key:@"DYYYEnableFloatClearButtonSize" type:DYYYSettingItemTypeTextField placeholder:@"默认40"],
-            [DYYYSettingItem itemWithTitle:@"清屏隐藏弹幕" key:@"DYYYHideDanmaku" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"清屏移除时间进度" key:@"DYYYEnabshijianjindu" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"清屏隐藏时间进度" key:@"DYYYHideTimeProgress" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"清屏隐藏滑条" key:@"DYYYHideSlider" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"清屏隐藏底栏" key:@"DYYYHideTabBar" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"清屏隐藏倍速" key:@"DYYYHideSpeed" type:DYYYSettingItemTypeSwitch]
+            [DYYYSettingItem itemWithTitle:@"啟用快捷倍速按鈕" key:@"DYYYEnableFloatSpeedButton" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"快捷倍速數值設定" key:@"DYYYSpeedSettings" type:DYYYSettingItemTypeTextField placeholder:@"逗號分隔"],
+            [DYYYSettingItem itemWithTitle:@"自動恢復預設倍速" key:@"DYYYAutoRestoreSpeed" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"倍速按鈕顯示後綴" key:@"DYYYSpeedButtonShowX" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"快捷倍速按鈕大小" key:@"DYYYSpeedButtonSize" type:DYYYSettingItemTypeTextField placeholder:@"預設32"],
+            [DYYYSettingItem itemWithTitle:@"啟用一鍵清屏按鈕" key:@"DYYYEnableFloatClearButton" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"快捷清屏按鈕大小" key:@"DYYYEnableFloatClearButtonSize" type:DYYYSettingItemTypeTextField placeholder:@"預設40"],
+            [DYYYSettingItem itemWithTitle:@"清屏隱藏彈幕" key:@"DYYYHideDanmaku" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"清屏移除時間進度" key:@"DYYYEnabshijianjindu" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"清屏隱藏時間進度" key:@"DYYYHideTimeProgress" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"清屏隱藏滑條" key:@"DYYYHideSlider" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"清屏隱藏底欄" key:@"DYYYHideTabBar" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"清屏隱藏倍速" key:@"DYYYHideSpeed" type:DYYYSettingItemTypeSwitch]
         ]
     ];
 }
 
 - (void)setupSectionTitles {
-    self.sectionTitles = [@[@"基本设置", @"界面设置", @"隐藏设置", @"顶栏移除",@"隐藏面板", @"面板设置",@"功能设置", @"悬浮按钮"] mutableCopy];
+    self.sectionTitles = [@[@"基本設定", @"介面設定", @"隱藏設定", @"頂欄移除", @"隱藏面板", @"面板設定", @"功能設定", @"懸浮按鈕"] mutableCopy];
 }
 
 - (void)setupFooterLabel {
@@ -449,27 +449,27 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
 }
 
 - (void)showAgreementAlert {
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"用户协议"
-                                                                             message:@"本插件为开源项目\n仅供学习交流用途\n如有侵权请联系, GitHub 仓库：Wtrwx/DYYY\n请遵守当地法律法规, 逆向工程仅为学习目的\n盗用源码进行商业用途/发布但未标记开源项目必究\n详情请参阅项目内 MIT 许可证\n\n请输入\"我已阅读并同意继续使用\"以继续使用"
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"用戶協議"
+                                                                             message:@"本外掛程式為開源專案\n僅供學習交流用途\n如有侵權請聯繫, GitHub 倉庫：Wtrwx/DYYY\n請遵守當地法律法規, 逆向工程僅為學習目的\n盜用程式碼進行商業用途/發布但未標記開源專案必究\n詳情請參閱專案內 MIT 許可證\n\n請輸入\"我已閱讀並同意繼續使用\"以繼續使用"
                                                                       preferredStyle:UIAlertControllerStyleAlert];
     
     [alertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
         textField.clearButtonMode = UITextFieldViewModeWhileEditing;
     }];
     
-    UIAlertAction *confirmAction = [UIAlertAction actionWithTitle:@"确认" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+    UIAlertAction *confirmAction = [UIAlertAction actionWithTitle:@"確認" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
         UITextField *textField = alertController.textFields.firstObject;
         NSString *inputText = textField.text;
         
-        if ([inputText isEqualToString:@"我已阅读并同意继续使用"]) {
+        if ([inputText isEqualToString:@"我已閱讀並同意繼續使用"]) {
             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"DYYYUserAgreementAccepted"];
             [[NSUserDefaults standardUserDefaults] synchronize];
         } else {
-            UIAlertController *errorAlert = [UIAlertController alertControllerWithTitle:@"输入错误"
-                                                                               message:@"请正确输入"
+            UIAlertController *errorAlert = [UIAlertController alertControllerWithTitle:@"輸入錯誤"
+                                                                               message:@"請正確輸入"
                                                                         preferredStyle:UIAlertControllerStyleAlert];
             
-            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"確定" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
                 [self showAgreementAlert];
             }];
             
@@ -497,21 +497,21 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     switch (section) {
         case 0:
-            return @"基本设置";
+            return @"基本設定";
         case 1:
-            return @"界面设置";
+            return @"介面設定";
         case 2:
-            return @"隐藏设置";
+            return @"隱藏設定";
         case 3:
-            return @"顶栏移除";
+            return @"頂欄移除";
         case 4:
-            return @"隐藏面板";
+            return @"隱藏面板";
         case 5:
-            return @"面板设置";
+            return @"面板設定";
         case 6:
-            return @"功能设置";
+            return @"功能設定";
         case 7:
-            return @"悬浮按钮";
+            return @"懸浮按鈕";
         default:
             return @"";
     }
@@ -653,7 +653,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
 - (void)showSpeedPickerForIndexPath:(NSIndexPath *)indexPath {
     DYYYSettingItem *item = self.settingSections[indexPath.section][indexPath.row];
     
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:[NSString stringWithFormat:@"选择%@", item.title]
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:[NSString stringWithFormat:@"選擇%@", item.title]
                                                                    message:nil
                                                             preferredStyle:UIAlertControllerStyleActionSheet];
     
