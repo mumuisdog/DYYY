@@ -138,7 +138,7 @@
 	self.justToggledLock = YES;
 
 	// 显示锁定/解锁提示
-	NSString *toastMessage = self.isLocked ? @"按钮已锁定" : @"按钮已解锁";
+	NSString *toastMessage = self.isLocked ? @"按鈕已鎖定" : @"按鈕已解鎖";
 	[DYYYManager showToast:toastMessage];
 
 	// 如果锁定了，保存当前位置
@@ -685,7 +685,7 @@ void updateSpeedButtonUI() {
 				[currentFeedVideoController adjustPlaybackSpeed:newSpeed];
 			} else {
 				// 两种控制器都找不到时显示提示
-				[DYYYManager showToast:@"无法找到视频控制器"];
+				[DYYYManager showToast:@"無法找到影片控制器"];
 			}
 		}
 	}
