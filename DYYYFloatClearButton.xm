@@ -74,7 +74,7 @@ static void forceResetAllUIElements(void) {
 	UIWindow *window = getKeyWindow();
 	if (!window)
 		return;
-	Class StackViewClass = NSClassFromString(@"AWEElementStackView");
+	Class StackViewClass = NSClassFromString(@"AWEElementStackView");		
 	for (NSString *className in targetClassNames) {
 		Class viewClass = NSClassFromString(className);
 		if (!viewClass)
@@ -249,8 +249,8 @@ static void initTargetClassNames(void) {
         
         [animatedImageView startAnimating];
     } else {
-        [self setTitle:@"隐藏" forState:UIControlStateNormal];
-        [self setTitle:@"显示" forState:UIControlStateSelected];
+        [self setTitle:@"隱藏" forState:UIControlStateNormal];
+        [self setTitle:@"顯示" forState:UIControlStateSelected];
         self.titleLabel.font = [UIFont systemFontOfSize:10];
     }
 }
@@ -299,7 +299,7 @@ static void initTargetClassNames(void) {
         [self hideUIElements];
         self.isElementsHidden = YES;
         self.selected = YES;
-        
+
         // 如果设置了隐藏倍速按钮，则在清屏时隐藏它
         BOOL hideSpeed = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideSpeed"];
         if (hideSpeed) {
@@ -312,7 +312,7 @@ static void initTargetClassNames(void) {
         self.isElementsHidden = NO;
         [self.hiddenViewsList removeAllObjects];
         self.selected = NO;
-        
+
         // 如果设置了隐藏倍速按钮，则在恢复UI时显示它
         BOOL hideSpeed = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideSpeed"];
         if (hideSpeed) {
@@ -351,7 +351,7 @@ static void initTargetClassNames(void) {
 		self.isLocked = !self.isLocked;
 		// 保存锁定状态
 		[self saveLockState];
-		NSString *toastMessage = self.isLocked ? @"按钮已锁定" : @"按钮已解锁";
+		NSString *toastMessage = self.isLocked ? @"按鈕已鎖定" : @"按鈕已解鎖";
 		[DYYYManager showToast:toastMessage];
 		if (@available(iOS 10.0, *)) {
 			UIImpactFeedbackGenerator *generator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
@@ -383,7 +383,7 @@ static void initTargetClassNames(void) {
 			view.hidden = YES;
 		} else {
 			// 否则设置透明度为 0.0,可拖动
-			view.tag = DYYY_IGNORE_GLOBAL_ALPHA_TAG;
+        	view.tag = DYYY_IGNORE_GLOBAL_ALPHA_TAG;
         	view.alpha = 0.0;
 		}
         [self.hiddenViewsList addObject:view];
