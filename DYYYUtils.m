@@ -24,7 +24,7 @@
     NSArray<NSString *> *contents = [fileManager contentsOfDirectoryAtPath:directoryPath error:&error];
     
     if (error) {
-        NSLog(@"获取目录内容失败 %@: %@", directoryPath, error);
+        NSLog(@"獲取目錄內容失敗 %@: %@", directoryPath, error);
         return 0;
     }
     
@@ -52,7 +52,7 @@
             NSError *delError = nil;
             [fileManager removeItemAtPath:fullPath error:&delError];
             if (delError) {
-                NSLog(@"删除失败 %@: %@", fullPath, delError);
+                NSLog(@"刪除失敗 %@: %@", fullPath, delError);
             } else {
                 totalSize += fileSize;
             }
