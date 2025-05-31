@@ -21,9 +21,9 @@
     }
     
     if (!confirmButtonText) {
-        confirmButtonText = @"确定";
+        confirmButtonText = @"確定";
     }
-    
+
     DYYYAlertActionHandler wrappedCancelAction = nil;
     if (cancelAction) {
         wrappedCancelAction = ^{
@@ -63,7 +63,7 @@
             [self dismissAlertViewController:vc];
         }
     }];
-    
+
     [vc configWithImageView:nil 
                   lockImage:nil 
            defaultLockState:NO 
@@ -110,7 +110,7 @@
     return [self showAlertWithTitle:title 
                             message:message 
                     cancelButtonText:@"取消" 
-                   confirmButtonText:@"确定" 
+                   confirmButtonText:@"確定" 
                         cancelAction:cancelAction 
                        confirmAction:confirmAction];
 }
