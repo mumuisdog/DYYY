@@ -2812,7 +2812,7 @@ static AWEIMReusableCommonCell *currentCell;
 
 	NSString *accessibilityLabel = self.accessibilityLabel;
 
-	if ([accessibilityLabel isEqualToString:@"點讚"]) {
+	if ([accessibilityLabel isEqualToString:@"点赞"]) {
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideLikeButton"]) {
 			[self removeFromSuperview];
 			return;
@@ -2826,7 +2826,7 @@ static AWEIMReusableCommonCell *currentCell;
 				}
 			}
 		}
-	} else if ([accessibilityLabel isEqualToString:@"評論"]) {
+	} else if ([accessibilityLabel isEqualToString:@"评论"]) {
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentButton"]) {
 			[self removeFromSuperview];
 			return;
@@ -2878,7 +2878,7 @@ static AWEIMReusableCommonCell *currentCell;
 - (void)setTitle:(NSString *)title forState:(UIControlState)state {
 	%orig;
 
-	if ([title isEqualToString:@"加入挑戰"]) {
+	if ([title isEqualToString:@"加入挑战"]) {
 		dispatch_async(dispatch_get_main_queue(), ^{
 		  if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideChallengeStickers"]) {
 			  UIResponder *responder = self;
@@ -2914,7 +2914,7 @@ static AWEIMReusableCommonCell *currentCell;
 
 	NSString *accessibilityLabel = self.accessibilityLabel;
 
-	if ([accessibilityLabel isEqualToString:@"拍照搜同款"] || [accessibilityLabel isEqualToString:@"掃一掃"]) {
+	if ([accessibilityLabel isEqualToString:@"拍照搜同款"] || [accessibilityLabel isEqualToString:@"扫一扫"]) {
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideScancode"]) {
 			[self removeFromSuperview];
 			return;
@@ -3089,7 +3089,7 @@ static AWEIMReusableCommonCell *currentCell;
 
 		if ([label isEqualToString:@"商城"]) {
 			shouldHide = hideShop;
-		} else if ([label containsString:@"訊息"]) {
+		} else if ([label containsString:@"消息"]) {
 			shouldHide = hideMsg;
 		} else if ([label containsString:@"朋友"]) {
 			shouldHide = hideFri;
