@@ -18,13 +18,27 @@
 #import "DYYYToast.h"
 
 // 禁用自动进入直播间
-%hook AWELiveNewPreStreamViewController
+%hook AWELiveFeedStatusViewModel
 
-- (void)setAutoEnterEnable:(BOOL)enable {
+- (BOOL)enableAutoEnterLive {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableAutoEnterLive"]) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)updateAutoEnterTips {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableAutoEnterLive"]) {
+        return;
+    }
+    %orig;
+}
+
+- (void)setDirectShowAutoEnterStyle:(BOOL)style {
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableAutoEnterLive"]) {
         %orig(NO);
     } else {
-        %orig(enable);
+        %orig(style);
     }
 }
 
@@ -1627,7 +1641,7 @@ static CGFloat rightLabelRightMargin = -1;
 			UILabel *label = (UILabel *)subview;
 			NSString *text = label.text;
 
-			if (![text isEqualToString:@"回覆"] && ![text isEqualToString:@"查看"] && ![text isEqualToString:@"續火花"]) {
+			if (![text isEqualToString:@"回复"] && ![text isEqualToString:@"查看"] && ![text isEqualToString:@"续火花"]) {
 				label.textColor = [UIColor whiteColor];
 			}
 		}
@@ -2977,7 +2991,7 @@ static AWEIMReusableCommonCell *currentCell;
 
 	NSString *accessibilityLabel = self.accessibilityLabel;
 
-	if ([accessibilityLabel isEqualToString:@"音樂詳情"]) {
+	if ([accessibilityLabel isEqualToString:@"音乐详情"]) {
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideMusicButton"]) {
 			[self removeFromSuperview];
 			return;
@@ -3005,7 +3019,7 @@ static AWEIMReusableCommonCell *currentCell;
 
 	NSString *accessibilityLabel = self.accessibilityLabel;
 
-	if ([accessibilityLabel isEqualToString:@"關注"]) {
+	if ([accessibilityLabel isEqualToString:@"关注"]) {
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideAvatarButton"]) {
 			[self removeFromSuperview];
 			return;
@@ -3036,7 +3050,7 @@ static AWEIMReusableCommonCell *currentCell;
 	%orig;
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideGradient"]) {
 		UIView *parent = self.superview;
-		if ([parent.accessibilityLabel isEqualToString:@"暫停，按鈕"] || [parent.accessibilityLabel isEqualToString:@"播放，按鈕"] || [parent.accessibilityLabel isEqualToString:@"“切換視角，按鈕"]) {
+		if ([parent.accessibilityLabel isEqualToString:@"暂停，按钮"] || [parent.accessibilityLabel isEqualToString:@"播放，按钮"] || [parent.accessibilityLabel isEqualToString:@"“切换视角，按钮"]) {
 			[self removeFromSuperview];
 		}
 		return;
@@ -3447,14 +3461,14 @@ static AWEIMReusableCommonCell *currentCell;
 	NSString *trimmedLabel = [accessibilityLabel stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 	BOOL shouldHide = NO;
 
-	if ([trimmedLabel hasSuffix:@"人共創"]) {
+	if ([trimmedLabel hasSuffix:@"人共创"]) {
 		NSString *prefix = [trimmedLabel substringToIndex:trimmedLabel.length - 3];
 		NSCharacterSet *nonDigits = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
 		shouldHide = ([prefix rangeOfCharacterFromSet:nonDigits].location == NSNotFound);
 	}
 
 	if (!shouldHide) {
-		shouldHide = [trimmedLabel isEqualToString:@"章節要點"] || [trimmedLabel isEqualToString:@"圖集"];
+		shouldHide = [trimmedLabel isEqualToString:@"章节要点"] || [trimmedLabel isEqualToString:@"图集"];
 	}
 
 	if (shouldHide) {
@@ -4247,30 +4261,7 @@ static AWEIMReusableCommonCell *currentCell;
 		// 获取当前视频模型
 		AWEAwemeModel *awemeModel = nil;
 
-		// 尝试通过可能的方法/属性获取模型
-		if ([self respondsToSelector:@selector(awemeModel)]) {
-			awemeModel = [self performSelector:@selector(awemeModel)];
-		} else if ([self respondsToSelector:@selector(currentAwemeModel)]) {
-			awemeModel = [self performSelector:@selector(currentAwemeModel)];
-		} else if ([self respondsToSelector:@selector(getAwemeModel)]) {
-			awemeModel = [self performSelector:@selector(getAwemeModel)];
-		}
-
-		// 如果仍然无法获取模型，尝试从视图控制器获取
-		if (!awemeModel) {
-			UIViewController *baseVC = [self valueForKey:@"awemeBaseViewController"];
-			if (baseVC && [baseVC respondsToSelector:@selector(model)]) {
-				awemeModel = [baseVC performSelector:@selector(model)];
-			} else if (baseVC && [baseVC respondsToSelector:@selector(awemeModel)]) {
-				awemeModel = [baseVC performSelector:@selector(awemeModel)];
-			}
-		}
-
-		// 如果无法获取模型，执行默认行为并返回
-		if (!awemeModel) {
-			%orig;
-			return;
-		}
+		awemeModel = [self performSelector:@selector(awemeModel)];
 
 		AWEVideoModel *videoModel = awemeModel.video;
 		AWEMusicModel *musicModel = awemeModel.music;
@@ -4635,11 +4626,6 @@ static AWEIMReusableCommonCell *currentCell;
 
 %end
 
-#import "AwemeHeaders.h"
-#import "DYYYManager.h"
-#import <UIKit/UIKit.h>
-#import <objc/runtime.h>
-
 // 底栏高度
 static CGFloat g_heightDifference = 0;
 
@@ -4773,51 +4759,62 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
 		}
 	}
 }
+
 - (void)setFrame:(CGRect)frame {
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self setFrame:frame];
+        });
+        return;
+    }
 
-	if ([self isKindOfClass:%c(AWEIMSkylightListView)] && [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisHiddenAvatarList"]) {
-		frame = CGRectZero;
-	}
+    BOOL enableBlur = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableCommentBlur"];
+    BOOL enableFS   = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableFullScreen"];
+    BOOL hideAvatar = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisHiddenAvatarList"];
 
-	if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableCommentBlur"] && ![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableFullScreen"]) {
-		%orig;
-		return;
-	}
+    Class SkylightListViewClass = NSClassFromString(@"AWEIMSkylightListView");
+    if (hideAvatar && SkylightListViewClass && [self isKindOfClass:SkylightListViewClass]) {
+        frame = CGRectZero;
+        %orig(frame);
+        return;
+    }
 
-	UIViewController *viewController = [self firstAvailableUIViewController];
-	if ([viewController isKindOfClass:%c(AWEMixVideoPanelDetailTableViewController)] && [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableFullScreen"]) {
-		self.backgroundColor = [UIColor clearColor];
+    UIViewController *vc = [self firstAvailableUIViewController];
+    Class DetailVCClass = NSClassFromString(@"AWEMixVideoPanelDetailTableViewController");
+    Class PlayVCClass1 = NSClassFromString(@"AWEAwemePlayVideoViewController");
+    Class PlayVCClass2 = NSClassFromString(@"AWEDPlayerFeedPlayerViewController");
 
-		for (UIView *subview in self.subviews) {
-			if ([subview isKindOfClass:[UIView class]]) {
-				subview.backgroundColor = [UIColor clearColor];
-			}
-		}
-	}
+    BOOL isDetailVC = (DetailVCClass && [vc isKindOfClass:DetailVCClass]);
+    BOOL isPlayVC   = ( (PlayVCClass1 && [vc isKindOfClass:PlayVCClass1]) ||
+                        (PlayVCClass2 && [vc isKindOfClass:PlayVCClass2]) );
 
-	UIViewController *vc = [self firstAvailableUIViewController];
-	if ([vc isKindOfClass:%c(AWEAwemePlayVideoViewController)] || [vc isKindOfClass:%c(AWEDPlayerFeedPlayerViewController)]) {
+    if (isPlayVC && enableBlur) {
+        if (frame.origin.x != 0) {
+            %orig(frame);
+            return;
+        }
+    }
 
-		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableCommentBlur"] && frame.origin.x != 0) {
-			return;
-		} else if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableFullScreen"] && frame.origin.x != 0 && frame.origin.y != 0) {
-			%orig;
-			return;
-		} else {
-			CGRect superviewFrame = self.superview.frame;
+    if (isPlayVC && enableFS) {
+        if (frame.origin.x != 0 && frame.origin.y != 0) {
+            %orig(frame);
+            return;
+        }
+        CGRect superF = self.superview.frame;
+        if (CGRectGetHeight(superF) > 0 &&
+            CGRectGetHeight(frame) > 0 &&
+            CGRectGetHeight(frame) < CGRectGetHeight(superF)) 
+        {
+            CGFloat diff = CGRectGetHeight(superF) - CGRectGetHeight(frame);
+            if (fabs(diff - g_heightDifference) < 1.0) {
+                frame.size.height = CGRectGetHeight(superF);
+            }
+        }
+        %orig(frame);
+        return;
+    }
 
-			if (superviewFrame.size.height > 0 && frame.size.height > 0 && frame.size.height < superviewFrame.size.height && frame.origin.x == 0 && frame.origin.y == 0) {
-
-				CGFloat heightDifference = superviewFrame.size.height - frame.size.height;
-				if (fabs(heightDifference - g_heightDifference) < 1.0) {
-					frame.size.height = superviewFrame.size.height;
-					%orig(frame);
-					return;
-				}
-			}
-		}
-	}
-	%orig;
+    %orig(frame);
 }
 
 %end
@@ -5351,7 +5348,7 @@ static CGFloat currentScale = 1.0;
 - (void)layoutSubviews {
 	%orig;
 
-	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideChatCommentBg"]) {
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableFullScreen"]) {
 		UIView *parentView = self.superview;
 		while (parentView) {
 			if ([NSStringFromClass([parentView class]) isEqualToString:@"UIView"]) {
@@ -5644,6 +5641,19 @@ static NSString * const kStreamlineSidebarKey = @"DYYYStreamlinethesidebar";
 }
 %end
 
+%hook AFDViewedBottomView
+- (void)layoutSubviews {
+    %orig;
+    
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableFullScreen"]) {
+
+        self.backgroundColor = [UIColor clearColor];
+        
+        self.effectView.hidden = YES;
+    }
+}
+%end
+
 // 极速版红包激励挂件容器视图类组（移除逻辑）
 %group IncentivePendantGroup
 %hook AWEIncentiveSwiftImplDOUYINLite_IncentivePendantContainerView
@@ -5726,6 +5736,6 @@ static void findTargetViewInView(UIView *view) {
 										findTargetViewInView(window);
 									}
 								}
-						      }];
+							      }];
 	}
 }
