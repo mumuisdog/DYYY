@@ -52,7 +52,7 @@
     NSArray *currentChannelIDList = arg2;
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSMutableArray *newCurrentChannelIDList = [NSMutableArray arrayWithArray:currentChannelIDList];
-    NSString *hideOtherChannels = [defaults objectForKey:@"DYYYHideOtherChannel"] ?: @"";Add commentMore actions
+    NSString *hideOtherChannels = [defaults objectForKey:@"DYYYHideOtherChannel"] ?: @"";
     NSArray *hideChannelKeywords = [hideOtherChannels componentsSeparatedByString:@","];
     
     for (AWEHPTopTabItemModel *tabItemModel in channelModels) {
