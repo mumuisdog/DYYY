@@ -5164,7 +5164,7 @@ static CGFloat currentScale = 1.0;
 
 	UIViewController *viewController = [self firstAvailableUIViewController];
 	if ([viewController isKindOfClass:%c(AWEPlayInteractionViewController)]) {
-
+		// 先判断是否有accessibilityLabel
 		BOOL isRightElement = NO;
 		BOOL isLeftElement = NO;
 		
@@ -5176,11 +5176,16 @@ static CGFloat currentScale = 1.0;
 			}
 		} else {
 
-			NSInteger subviewCount = self.subviews.count;
-			if (subviewCount == 6) {
-				isRightElement = YES;
-			} else if (subviewCount == 5 || subviewCount == 4) {
-				isLeftElement = YES;
+			for (UIView *subview in self.subviews) {
+
+				if ([self view:subview containsSubviewOfClass:%c(AWEPlayInteractionUserAvatarView)]) {
+					isRightElement = YES;
+					break;
+				}
+				if ([self view:subview containsSubviewOfClass:%c(AWEFeedAnchorContainerView)]) {
+					isLeftElement = YES;
+					break;
+				}
 			}
 		}
 		
@@ -5236,7 +5241,7 @@ static CGFloat currentScale = 1.0;
 
 	UIViewController *viewController = [self firstAvailableUIViewController];
 	if ([viewController isKindOfClass:%c(AWEPlayInteractionViewController)]) {
-	
+		// 先判断是否有accessibilityLabel
 		BOOL isLeftElement = NO;
 		
 		if (self.accessibilityLabel) {
@@ -5245,12 +5250,14 @@ static CGFloat currentScale = 1.0;
 			}
 		} else {
 
-			NSInteger subviewCount = self.subviews.count;
-			if (subviewCount == 5 || subviewCount == 4) {
-				isLeftElement = YES;
+			for (UIView *subview in self.subviews) {
+				if ([self view:subview containsSubviewOfClass:%c(AWEFeedAnchorContainerView)]) {
+					isLeftElement = YES;
+					break;
+				}
 			}
 		}
-		
+
 		if (isLeftElement) {
 			NSString *scaleValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYNicknameScale"];
 			if (scaleValue.length > 0) {
@@ -5288,7 +5295,22 @@ static CGFloat currentScale = 1.0;
 	}
 	return nil;
 }
+%new
+- (BOOL)view:(UIView *)view containsSubviewOfClass:(Class)viewClass {
+    if ([view isKindOfClass:viewClass]) {
+        return YES;
+    }
+    
+    for (UIView *subview in view.subviews) {
+        if ([self view:subview containsSubviewOfClass:viewClass]) {
+            return YES;
+        }
+    }
+    
+    return NO;
+}
 %end
+
 
 %hook AWEStoryContainerCollectionView
 - (void)layoutSubviews {
