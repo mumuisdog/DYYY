@@ -1024,6 +1024,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  [iconItems addObject:createIconCustomizationItem(@"DYYYIconUnfavorite", @"未收藏圖示", @"ic_star_outlined_20", @"unfavorite.png")];
 	  [iconItems addObject:createIconCustomizationItem(@"DYYYIconFavorite", @"已收藏圖示", @"ic_star_filled_20", @"favorite.png")];
 	  [iconItems addObject:createIconCustomizationItem(@"DYYYIconShare", @"分享的圖示", @"ic_share_outlined", @"share.png")];
+	  [iconItems addObject:createIconCustomizationItem(@"DYYYIcon photograph", @"拍攝的圖示", @"ic_camera_outlined", @"photograph.png")];
 
 	  // 将图标自定义section添加到sections数组
 	  NSMutableArray *sections = [NSMutableArray array];
@@ -2098,6 +2099,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 					confirmButtonText:@"確定"
 					cancelAction:^{
 					  item.isSwitchOn = !newValue;
+					  [DYYYSettingsHelper refreshTableView]; // 刷新 UI					  
 					}
 					confirmAction:^{
 					  item.isSwitchOn = newValue;
@@ -2126,6 +2128,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 					confirmButtonText:@"確定"
 					cancelAction:^{
 					  item.isSwitchOn = !newValue;
+					  [DYYYSettingsHelper refreshTableView]; // 刷新 UI					  
 					}
 					confirmAction:^{
 					  item.isSwitchOn = newValue;
