@@ -2059,7 +2059,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  NSMutableArray<AWESettingItemModel *> *hotUpdateItems = [NSMutableArray array];
 	  NSArray *hotUpdateSettings = @[
 		  @{@"identifier" : @"DYYYABTestBlockEnabled",
-		    @"title" : @"禁用下發配置",
+		    @"title" : @"禁用下發設定",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_fire_outlined_20"},
@@ -2069,21 +2069,64 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_enterpriseservice_outlined"},
 		  @{@"identifier" : @"SaveCurrentABTestData",
-		    @"title" : @"儲存目前配置",
+		    @"title" : @"匯出目前設定",
+		    @"detail" : @"",
+		    @"cellType" : @26,
+		    @"imageName" : @"ic_memorycard_outlined_20"},
+		  @{@"identifier" : @"SaveABTestConfigFile",
+		    @"title" : @"匯出本機設定",
 		    @"detail" : @"",
 		    @"cellType" : @26,
 		    @"imageName" : @"ic_memorycard_outlined_20"},
 		  @{@"identifier" : @"LoadABTestConfigFile",
-		    @"title" : @"本地選擇配置",
+		    @"title" : @"導入本機設定",
 		    @"detail" : @"",
 		    @"cellType" : @26,
 		    @"imageName" : @"ic_phonearrowup_outlined_20"},
 		  @{@"identifier" : @"DeleteABTestConfigFile",
-		    @"title" : @"刪除本地配置",
+		    @"title" : @"刪除本機設定",
 		    @"detail" : @"",
 		    @"cellType" : @26,
 		    @"imageName" : @"ic_trash_outlined_20"}
 	  ];
+
+	  // --- 声明一个__block变量来持有SaveABTestConfigFileitem ---
+	  __block AWESettingItemModel *saveABTestConfigFileItemRef = nil;
+	  // --- 定义一个用于刷新SaveABTestConfigFileitem的局部block ---
+	  void (^refreshSaveABTestConfigFileItem)(void) = ^{
+		  if (!saveABTestConfigFileItemRef) return;
+
+		  NSFileManager *fileManager = [NSFileManager defaultManager];
+		  NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+		  NSString *documentsDirectory = [paths firstObject];
+		  NSString *dyyyFolderPath = [documentsDirectory stringByAppendingPathComponent:@"DYYY"];
+		  NSString *jsonFilePath = [dyyyFolderPath stringByAppendingPathComponent:@"abtest_data_fixed.json"];
+		  if (![fileManager fileExistsAtPath:jsonFilePath]) {
+			  saveABTestConfigFileItemRef.detail = @"(文件不存在)";
+			  saveABTestConfigFileItemRef.isEnable = NO;
+		  } else {
+			  unsigned long long jsonFileSize = 0;
+			  NSError *attributesError = nil;
+			  NSDictionary *attributes = [fileManager attributesOfItemAtPath:jsonFilePath error:&attributesError];
+			  if (!attributesError && attributes) {
+				  jsonFileSize = [attributes fileSize];
+				  NSString *dataSizeString;
+				  if (jsonFileSize < 1024) {
+					  dataSizeString = [NSString stringWithFormat:@"(%llu B)", jsonFileSize];
+				  } else if (jsonFileSize < 1024 * 1024) {
+					  dataSizeString = [NSString stringWithFormat:@"(%.2f KB)", (double)jsonFileSize / 1024.0];
+				  } else {
+					  dataSizeString = [NSString stringWithFormat:@"(%.2f MB)", (double)jsonFileSize / (1024.0 * 1024.0)];
+				  }
+				  saveABTestConfigFileItemRef.detail = dataSizeString;
+				  saveABTestConfigFileItemRef.isEnable = YES;
+			  } else {
+				  saveABTestConfigFileItemRef.detail = [NSString stringWithFormat:@"(讀取失敗: %@)", attributesError.localizedDescription ?: @"未知錯誤"];
+				  saveABTestConfigFileItemRef.isEnable = NO;
+			  }
+		  }
+		  [DYYYSettingsHelper refreshTableView]; // 刷新表格视图以更新显示
+	  };
 
 	  for (NSDictionary *dict in hotUpdateSettings) {
 		  AWESettingItemModel *item = [DYYYSettingsHelper createSettingItem:dict];
@@ -2093,8 +2136,8 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    BOOL newValue = !item.isSwitchOn;
 
 			    if (newValue) {
-				    [DYYYBottomAlertView showAlertWithTitle:@"禁用下發配置"
-					message:@"請盡量保證在禁用熱更新前匯入正確配置，否則會導致插件部分功能失效。確定要繼續嗎？"
+				    [DYYYBottomAlertView showAlertWithTitle:@"禁用下發設定"
+					message:@"請盡量保證在禁用熱更新前匯入正確設定，否則會導致插件部分功能失效。確定要繼續嗎？"
 					cancelButtonText:@"取消"
 					confirmButtonText:@"確定"
 					cancelAction:^{
@@ -2123,7 +2166,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 
 			    if (newValue) {
 				    [DYYYBottomAlertView showAlertWithTitle:@"熱更新補丁模式"
-					message:@"這是一個全新的、更穩定的熱更新配置模式，請您確保匯入正確的配置文件。"
+					message:@"這是一個全新的、更穩定的熱更新設定模式，請您確保匯入正確的設定文件。"
 					cancelButtonText:@"取消"
 					confirmButtonText:@"確定"
 					cancelAction:^{
@@ -2147,34 +2190,59 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    }
 			  };
 		  } else if ([item.identifier isEqualToString:@"SaveCurrentABTestData"]) {
+			  item.detail = @"(获取中...)"; // 默认显示获取中
+
+			  NSDictionary *currentData = getCurrentABTestData();
+
+			  if (!currentData) {
+			    item.detail = @"(建立失敗)";
+			    item.isEnable = NO;
+			  } else {
+			    NSError *serializationError = nil;
+			    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:currentData options:NSJSONWritingPrettyPrinted error:&serializationError];
+			    if (!serializationError && jsonData) {
+				    unsigned long long dataSize = jsonData.length;
+				    NSString *dataSizeString;
+				    if (dataSize < 1024) {
+					  dataSizeString = [NSString stringWithFormat:@"(%llu B)", dataSize];
+				    } else if (dataSize < 1024 * 1024) {
+					  dataSizeString = [NSString stringWithFormat:@"(%.2f KB)", (double)dataSize / 1024.0];
+				    } else {
+					  dataSizeString = [NSString stringWithFormat:@"(%.2f MB)", (double)dataSize / (1024.0 * 1024.0)];
+				    }
+				    item.detail = dataSizeString;
+			    } else {
+				    item.detail = [NSString stringWithFormat:@"(序列化失敗: %@)", serializationError.localizedDescription ?: @"未知錯誤"];
+				    item.isEnable = NO;
+			    }
+			  }
+
 			  item.cellTappedBlock = ^{
 			    NSDictionary *currentData = getCurrentABTestData();
 
 			    if (!currentData) {
-				    [DYYYManager showToast:@"獲取ABTest配置失敗"];
+				    [DYYYManager showToast:@"ABTest設定獲取失敗"];
 				    return;
 			    }
 
 			    NSError *error;
-			    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:currentData options:NSJSONWritingPrettyPrinted error:&error];
+			    NSData *sortedJsonData = [NSJSONSerialization dataWithJSONObject:currentData  options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys error:&error];
 
 			    if (error) {
-				    [DYYYManager showToast:@"序列化配置數據失敗"];
+				    [DYYYManager showToast:@"ABTest設定序列化失敗"];
 				    return;
 			    }
 
 			    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
 			    [formatter setDateFormat:@"yyyyMMdd_HHmmss"];
 			    NSString *timestamp = [formatter stringFromDate:[NSDate date]];
-			    NSString *filename = [NSString stringWithFormat:@"ABTest_Config_%@.json", timestamp];
+			    NSString *tempFile = [NSString stringWithFormat:@"ABTest_Config_%@.json", timestamp];
+			    NSString *tempFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFile];
 
-			    NSString *tempDir = NSTemporaryDirectory();
-			    NSString *tempFilePath = [tempDir stringByAppendingPathComponent:filename];
-
-			    BOOL success = [jsonData writeToFile:tempFilePath atomically:YES];
+			    BOOL success = [sortedJsonData writeToFile:tempFilePath atomically:YES];
 
 			    if (!success) {
-				    [DYYYManager showToast:@"創建臨時檔案失敗"];
+				    [DYYYManager showToast:@"臨時檔案建立失敗"];				
 				    return;
 			    }
 
@@ -2184,12 +2252,71 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    DYYYBackupPickerDelegate *pickerDelegate = [[DYYYBackupPickerDelegate alloc] init];
 			    pickerDelegate.tempFilePath = tempFilePath;
 			    pickerDelegate.completionBlock = ^(NSURL *url) {
-			      [DYYYManager showToast:@"ABTest配置已儲存"];
+			      [DYYYManager showToast:@"ABTest設定已儲存"];
 			    };
 
 			    static char kABTestPickerDelegateKey;
 			    documentPicker.delegate = pickerDelegate;
 			    objc_setAssociatedObject(documentPicker, &kABTestPickerDelegateKey, pickerDelegate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+			    UIViewController *topVC = topView();
+			    [topVC presentViewController:documentPicker animated:YES completion:nil];
+			  };
+		  } else if ([item.identifier isEqualToString:@"SaveABTestConfigFile"]) {
+			  item.detail = @"(获取中...)"; // 默认显示获取中
+
+			  saveABTestConfigFileItemRef = item; // 捕获对该特定item的引用
+			  refreshSaveABTestConfigFileItem();  // 确保初始显示正确状态
+
+			  item.cellTappedBlock = ^{
+			    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+			    NSString *documentsDirectory = [paths firstObject];
+
+			    NSString *dyyyFolderPath = [documentsDirectory stringByAppendingPathComponent:@"DYYY"];
+			    NSString *jsonFilePath = [dyyyFolderPath stringByAppendingPathComponent:@"abtest_data_fixed.json"];
+
+			    NSData *jsonData = [NSData dataWithContentsOfFile:jsonFilePath];
+			    if (!jsonData) {
+			      [DYYYManager showToast:@"本機設定獲取失敗"];
+			      return;
+			    }
+
+			    NSError *error;
+			    NSDictionary *originalData = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&error];
+			    if (error || ![originalData isKindOfClass:[NSDictionary class]]) {
+			      [DYYYManager showToast:@"本機設定序列化失敗"];
+			      return;
+			    }
+
+			    NSData *sortedJsonData = [NSJSONSerialization dataWithJSONObject:originalData options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys error:&error];
+			    if (error || !sortedJsonData) {
+			      [DYYYManager showToast:@"排序資料序列化失敗"];
+			      return;
+			    }
+
+			    // 创建临时文件
+			    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+			    [formatter setDateFormat:@"yyyyMMdd_HHmmss"];
+			    NSString *timestamp = [formatter stringFromDate:[NSDate date]];
+			    NSString *tempFile = [NSString stringWithFormat:@"abtest_data_fixed_%@.json", timestamp];
+			    NSString *tempFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFile];
+
+			    if (![sortedJsonData writeToFile:tempFilePath atomically:YES]) {
+			      [DYYYManager showToast:@"臨時檔案建立失敗"];
+			      return;
+			    }
+
+			    UIDocumentPickerViewController *documentPicker = [[UIDocumentPickerViewController alloc] initWithURLs:@[[NSURL fileURLWithPath:tempFilePath]] inMode:UIDocumentPickerModeExportToService];
+
+			    DYYYBackupPickerDelegate *pickerDelegate = [[DYYYBackupPickerDelegate alloc] init];
+			    pickerDelegate.tempFilePath = tempFilePath;
+			    pickerDelegate.completionBlock = ^(NSURL *url) {
+			      [DYYYManager showToast:@"本機設定已儲存"];
+			    };
+
+			    static char kABTestConfigPickerDelegateKey;
+			    documentPicker.delegate = pickerDelegate;
+			    objc_setAssociatedObject(documentPicker, &kABTestConfigPickerDelegateKey, pickerDelegate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
 			    UIViewController *topVC = topView();
 			    [topVC presentViewController:documentPicker animated:YES completion:nil];
@@ -2218,13 +2345,15 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 
 			      BOOL success = [[NSFileManager defaultManager] copyItemAtPath:sourcePath toPath:destPath error:&error];
 
-			      NSString *message = success ? @"配置已匯入，重啟抖音生效" : [NSString stringWithFormat:@"匯入失敗: %@", error.localizedDescription];
+			      NSString *message = success ? @"設定已匯入，重啟抖音生效" : [NSString stringWithFormat:@"匯入失敗: %@", error.localizedDescription];
 			      [DYYYManager showToast:message];
 
 			      if (success) {
 				      gFixedABTestData = nil;
 				      onceToken = 0;
 				      loadFixedABTestData();
+				      // 导入成功后更新 SaveABTestConfigFile item 的状态
+				      refreshSaveABTestConfigFileItem();
 			      }
 			    };
 
@@ -2246,15 +2375,19 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 				    NSError *error = nil;
 				    BOOL success = [[NSFileManager defaultManager] removeItemAtPath:configPath error:&error];
 
-				    NSString *message = success ? @"本地配置已刪除成功" : [NSString stringWithFormat:@"刪除失敗: %@", error.localizedDescription];
+				    NSString *message = success ? @"本機設定已刪除成功" : [NSString stringWithFormat:@"刪除失敗: %@", error.localizedDescription];
 				    [DYYYManager showToast:message];
 
 				    if (success) {
 					    gFixedABTestData = nil;
 					    onceToken = 0;
+					    // 删除成功后修改 SaveABTestConfigFile item 的状态
+					    saveABTestConfigFileItemRef.detail = @"(文件不存在)";
+					    saveABTestConfigFileItemRef.isEnable = NO;
+					    [DYYYSettingsHelper refreshTableView];
 				    }
 			    } else {
-				    [DYYYManager showToast:@"本地配置不存在"];
+				    [DYYYManager showToast:@"本機設定不存在"];
 			    }
 			  };
 		  }
@@ -2756,10 +2889,10 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 
 	  // 转换为JSON数据
 	  NSError *error;
-	  NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dyyySettings options:NSJSONWritingPrettyPrinted error:&error];
+	  NSData *sortedJsonData = [NSJSONSerialization dataWithJSONObject:dyyySettings options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys error:&error];
 
 	  if (error) {
-		  [DYYYManager showToast:@"備份失敗：無法序列化設定數據"];
+		  [DYYYManager showToast:@"備份失敗：無法序列化設定資料"];
 		  return;
 	  }
 
@@ -2770,10 +2903,10 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  NSString *tempDir = NSTemporaryDirectory();
 	  NSString *tempFilePath = [tempDir stringByAppendingPathComponent:backupFileName];
 
-	  BOOL success = [jsonData writeToFile:tempFilePath atomically:YES];
+	  BOOL success = [sortedJsonData writeToFile:tempFilePath atomically:YES];
 
 	  if (!success) {
-		  [DYYYManager showToast:@"備份失敗：無法創建臨時檔案"];
+		  [DYYYManager showToast:@"備份失敗：無法建立臨時檔案"];
 		  return;
 	  }
 
