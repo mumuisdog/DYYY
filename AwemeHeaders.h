@@ -90,6 +90,8 @@ static CGFloat gStartVal = 0.0;
 @interface AWEUserModel : NSObject
 @property(copy, nonatomic) NSString *nickname;
 @property(copy, nonatomic) NSString *shortID;
+@property(copy, nonatomic) NSString *signature;
+@property(copy, nonatomic) AWEURLModel *avatarMedium;
 @end
 
 @interface AWEAwemeModel : NSObject
@@ -200,6 +202,7 @@ static CGFloat gStartVal = 0.0;
 @interface AWEPlayInteractionViewController : UIViewController
 @property(nonatomic, strong) UIView *view;
 @property(nonatomic, strong) NSString *referString;
+@property(nonatomic, assign) BOOL isCommentVCShowing;
 - (void)performCommentAction;
 - (void)performLikeAction;
 - (void)showSharePanel;
@@ -933,6 +936,7 @@ static CGFloat gStartVal = 0.0;
 - (void)setTapDismissBlock:(void (^)(void))tapDismissBlock;
 - (void)setAfterDismissBlock:(void (^)(void))afterDismissBlock;
 - (void)updateDarkModeAppearance;
+- (void)presentOnViewController:(UIViewController *)presentingViewController;
 @end
 
 @interface AWELoadingAndVolumeView : UIView
@@ -1144,4 +1148,8 @@ static CGFloat gStartVal = 0.0;
 @end
 
 @interface AWEMixVideoPanelMoreView : UIView
+@end
+
+@interface AWEPlayInteractionUserAvatarFollowController : UIViewController
+@property(retain, nonatomic) AWEAwemeModel *model;
 @end
