@@ -1017,7 +1017,7 @@ static CGFloat gStartVal = 0.0;
 @interface AWEDemaciaChapterProgressSlider : UIView
 @end
 
-@interface AWELiveAutoEnterStyleAView : UIView您
+@interface AWELiveAutoEnterStyleAView : UIView
 @end
 
 @interface AWEABTestManager : NSObject
