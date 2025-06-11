@@ -17,6 +17,7 @@
 #import "DYYYSettingViewController.h"
 #import "DYYYToast.h"
 
+// 默认视频流最高画质
 %hook AWEVideoModel
 
 - (AWEURLModel *)playURL {
@@ -4019,10 +4020,8 @@ static AWEIMReusableCommonCell *currentCell;
 	BOOL hideEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideTopBarBadge"];
 
 	if (hideEnabled) {
-		// 阻断徽章创建
-		return nil; // 返回 nil 阻止视图生成
+		return nil;
 	} else {
-		// 未启用隐藏功能时正常显示
 		return %orig(style, config, count, text);
 	}
 }
@@ -4098,14 +4097,6 @@ static AWEIMReusableCommonCell *currentCell;
 	} else {
 		%orig(arg1);
 	}
-}
-%end
-
-// 屏蔽青少年模式弹窗
-%hook AWEUIAlertView
-- (void)show {
-	if (![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYHideteenmode"])
-		%orig;
 }
 %end
 
@@ -5992,7 +5983,7 @@ static NSString *const kStreamlineSidebarKey = @"DYYYStreamlinethesidebar";
 		NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
 		NSString *dyyyFolderPath = [documentsPath stringByAppendingPathComponent:@"DYYY"];
 
-		NSString *customImagePath = [dyyyFolderPath stringByAppendingPathComponent:@"photograph.png"];
+		NSString *customImagePath = [dyyyFolderPath stringByAppendingPathComponent:@"tab_plus.png"];
 
 		if ([[NSFileManager defaultManager] fileExistsAtPath:customImagePath]) {
 			UIImage *customImage = [UIImage imageWithContentsOfFile:customImagePath];
