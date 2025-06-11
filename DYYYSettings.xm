@@ -109,36 +109,7 @@ static AWESettingItemModel *createIconCustomizationItem(NSString *identifier, NS
 			[[NSFileManager defaultManager] removeItemAtPath:imagePath error:&error];
 			if (!error) {
 				item.detail = @"預設";
-
-				UIViewController *topVC = topView();
-				AWESettingBaseViewController *settingsVC = nil;
-				UITableView *tableView = nil;
-
-				UIView *firstLevelView = [topVC.view.subviews firstObject];
-				UIView *secondLevelView = [firstLevelView.subviews firstObject];
-				UIView *thirdLevelView = [secondLevelView.subviews firstObject];
-
-				UIResponder *responder = thirdLevelView;
-				while (responder) {
-					if ([responder isKindOfClass:%c(AWESettingBaseViewController)]) {
-						settingsVC = (AWESettingBaseViewController *)responder;
-						break;
-					}
-					responder = [responder nextResponder];
-				}
-
-				if (settingsVC) {
-					for (UIView *subview in settingsVC.view.subviews) {
-						if ([subview isKindOfClass:[UITableView class]]) {
-							tableView = (UITableView *)subview;
-							break;
-						}
-					}
-
-					if (tableView) {
-						[tableView reloadData];
-					}
-				}
+				[DYYYSettingsHelper refreshTableView];
 			}
 		}
 	      },
@@ -152,27 +123,22 @@ static AWESettingItemModel *createIconCustomizationItem(NSString *identifier, NS
 		// 创建并设置代理
 		DYYYImagePickerDelegate *pickerDelegate = [[DYYYImagePickerDelegate alloc] init];
 		pickerDelegate.completionBlock = ^(NSDictionary *info) {
-		  // 1. 正确声明变量，作用域在块内
 		  NSURL *originalImageURL = info[UIImagePickerControllerImageURL];
 		  if (!originalImageURL) {
 			  originalImageURL = info[UIImagePickerControllerReferenceURL];
 		  }
 
-		  // 2. 确保变量在非nil时使用
 		  if (originalImageURL) {
-			  // 路径构建
 			  NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
 			  NSString *dyyyFolderPath = [documentsPath stringByAppendingPathComponent:@"DYYY"];
 			  NSString *imagePath = [dyyyFolderPath stringByAppendingPathComponent:saveFilename];
 
-			  // 获取原始数据
 			  NSData *imageData = [NSData dataWithContentsOfURL:originalImageURL];
 
-			  // GIF检测（带类型转换）
+			  // GIF检测
 			  const char *bytes = (const char *)imageData.bytes;
 			  BOOL isGIF = (imageData.length >= 6 && (memcmp(bytes, "GIF87a", 6) == 0 || memcmp(bytes, "GIF89a", 6) == 0));
 
-			  // 保存逻辑
 			  if (isGIF) {
 				  [imageData writeToFile:imagePath atomically:YES];
 			  } else {
@@ -181,41 +147,11 @@ static AWESettingItemModel *createIconCustomizationItem(NSString *identifier, NS
 				  [imageData writeToFile:imagePath atomically:YES];
 			  }
 
-			  // 文件存在时更新UI（在同一个块内）
-			  if ([[NSFileManager defaultManager] fileExistsAtPath:imagePath]) {
-				  item.detail = @"已設定";
-				  dispatch_async(dispatch_get_main_queue(), ^{
-				    UIViewController *topVC = topView();
-				    AWESettingBaseViewController *settingsVC = nil;
-				    UITableView *tableView = nil;
-
-				    UIView *firstLevelView = [topVC.view.subviews firstObject];
-				    UIView *secondLevelView = [firstLevelView.subviews firstObject];
-				    UIView *thirdLevelView = [secondLevelView.subviews firstObject];
-
-				    UIResponder *responder = thirdLevelView;
-				    while (responder) {
-					    if ([responder isKindOfClass:%c(AWESettingBaseViewController)]) {
-						    settingsVC = (AWESettingBaseViewController *)responder;
-						    break;
-					    }
-					    responder = [responder nextResponder];
-				    }
-
-				    if (settingsVC) {
-					    for (UIView *subview in settingsVC.view.subviews) {
-						    if ([subview isKindOfClass:[UITableView class]]) {
-							    tableView = (UITableView *)subview;
-							    break;
-						    }
-					    }
-
-					    if (tableView) {
-						    [tableView reloadData];
-					    }
-				    }
-				  });
-			  }
+			  // 延迟执行UI更新，确保图片选择器已完全消失且视图已恢复
+			  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+			    item.detail = @"已设置";
+			    [DYYYSettingsHelper refreshTableView];
+			  });
 		  }
 		};
 
@@ -617,42 +553,38 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		  AWESettingItemModel *item = [DYYYSettingsHelper createSettingItem:dict cellTapHandlers:cellTapHandlers];
 
 		  if ([item.identifier isEqualToString:@"DYYYDefaultSpeed"]) {
-			  // 获取已保存的默认倍速值
 			  NSString *savedSpeed = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDefaultSpeed"];
 			  item.detail = savedSpeed ?: @"1.0x";
 
 			  item.cellTappedBlock = ^{
 			    NSArray *speedOptions = @[ @"0.75x", @"1.0x", @"1.25x", @"1.5x", @"2.0x", @"2.5x", @"3.0x" ];
 
-			    // 显示选项选择视图并直接获取返回值
-			    NSString *selectedValue = [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYDefaultSpeed"
-											 optionsArray:speedOptions
-											   headerText:@"選擇預設倍速"
-										       onPresentingVC:topView()];
-
-			    // 设置详情文本为选中的值
-			    item.detail = selectedValue;
-			    [DYYYSettingsHelper refreshTableView];
+			    [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYDefaultSpeed"
+							       optionsArray:speedOptions
+								 headerText:@"選擇預設倍速"
+							     onPresentingVC:topView()
+							   selectionChanged:^(NSString *selectedValue) {
+							     item.detail = selectedValue;
+							     [DYYYSettingsHelper refreshTableView];
+							   }];
 			  };
 		  }
 
 		  else if ([item.identifier isEqualToString:@"DYYYLongPressSpeed"]) {
-			  // 获取已保存的默认倍速值
 			  NSString *savedSpeed = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYLongPressSpeed"];
 			  item.detail = savedSpeed ?: @"2.0x";
 
 			  item.cellTappedBlock = ^{
 			    NSArray *speedOptions = @[ @"0.75x", @"1.0x", @"1.25x", @"1.5x", @"2.0x", @"2.5x", @"3.0x" ];
 
-			    // 显示选项选择视图并直接获取返回值
-			    NSString *selectedValue = [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYLongPressSpeed"
-											 optionsArray:speedOptions
-											   headerText:@"選擇長按倍速"
-										       onPresentingVC:topView()];
-
-			    // 设置详情文本为选中的值
-			    item.detail = selectedValue;
-			    [DYYYSettingsHelper refreshTableView];
+			    [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYLongPressSpeed"
+							       optionsArray:speedOptions
+								 headerText:@"選擇右側長按倍速"
+							     onPresentingVC:topView()
+							   selectionChanged:^(NSString *selectedValue) {
+							     item.detail = selectedValue;
+							     [DYYYSettingsHelper refreshTableView];
+							   }];
 			  };
 		  }
 
@@ -662,16 +594,14 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			  item.cellTappedBlock = ^{
 			    NSArray *styleOptions = @[ @"進度條兩側上下", @"進度條兩側左右", @"進度條左側剩餘", @"進度條左側完整", @"進度條右側剩餘", @"進度條右側完整" ];
 
-			    // 显示选项选择视图并直接获取返回值
-			    NSString *selectedValue = [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYScheduleStyle"
-											 optionsArray:styleOptions
-											   headerText:@"選擇進度時長樣式"
-										       onPresentingVC:topView()];
-
-			    // 设置详情文本为选中的值
-
-			    item.detail = selectedValue;
-			    [DYYYSettingsHelper refreshTableView];
+			    [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYScheduleStyle"
+							       optionsArray:styleOptions
+								 headerText:@"選擇進度時長樣式"
+							     onPresentingVC:topView()
+							   selectionChanged:^(NSString *selectedValue) {
+							     item.detail = selectedValue;
+							     [DYYYSettingsHelper refreshTableView];
+							   }];
 			  };
 		  }
 
@@ -805,26 +735,22 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    NSArray *keywordArray = [savedKeywords length] > 0 ? [savedKeywords componentsSeparatedByString:@","] : @[];
 			    DYYYKeywordListView *keywordListView = [[DYYYKeywordListView alloc] initWithTitle:@"過濾使用者列表" keywords:keywordArray];
 			    keywordListView.onConfirm = ^(NSArray *keywords) {
-			      // 将关键词数组转换为逗号分隔的字符串
 			      NSString *keywordString = [keywords componentsJoinedByString:@","];
 			      [DYYYSettingsHelper setUserDefaults:keywordString forKey:@"DYYYfilterUsers"];
 			      item.detail = keywordString;
 			      [DYYYSettingsHelper refreshTableView];
 			    };
 
-			    // 显示关键词列表视图
 			    [keywordListView show];
 			  };
 		  } else if ([item.identifier isEqualToString:@"DYYYfilterKeywords"]) {
 			  NSString *savedValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYfilterKeywords"];
 			  item.detail = savedValue ?: @"";
 			  item.cellTappedBlock = ^{
-			    // 将保存的逗号分隔字符串转换为数组
 			    NSString *savedKeywords = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYfilterKeywords"] ?: @"";
 			    NSArray *keywordArray = [savedKeywords length] > 0 ? [savedKeywords componentsSeparatedByString:@","] : @[];
 			    DYYYKeywordListView *keywordListView = [[DYYYKeywordListView alloc] initWithTitle:@"設定過濾關鍵詞" keywords:keywordArray];
 			    keywordListView.onConfirm = ^(NSArray *keywords) {
-			      // 将关键词数组转换为逗号分隔的字符串
 			      NSString *keywordString = [keywords componentsJoinedByString:@","];
 
 			      [DYYYSettingsHelper setUserDefaults:keywordString forKey:@"DYYYfilterKeywords"];
@@ -864,7 +790,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"收藏二次確認",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_collection_outlined_20"}
+		    @"imageName" : @"ic_star_outlined_20"}
 	  ];
 
 	  for (NSDictionary *dict in securitySettings) {
@@ -2059,14 +1985,14 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  NSMutableArray<AWESettingItemModel *> *hotUpdateItems = [NSMutableArray array];
 	  NSArray *hotUpdateSettings = @[
 		  @{@"identifier" : @"DYYYABTestBlockEnabled",
-		    @"title" : @"禁用下發設定",
+		    @"title" : @"禁止下發設定",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_fire_outlined_20"},
-		  @{@"identifier" : @"DYYYABTestPatchEnabled",
-		    @"title" : @"啟用補丁模式",
+		  @{@"identifier" : @"DYYYABTestModeString",
+		    @"title" : @"設定應用方式",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @26,
 		    @"imageName" : @"ic_enterpriseservice_outlined"},
 		  @{@"identifier" : @"SaveCurrentABTestData",
 		    @"title" : @"匯出目前設定",
@@ -2094,38 +2020,41 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  __block AWESettingItemModel *saveABTestConfigFileItemRef = nil;
 	  // --- 定义一个用于刷新SaveABTestConfigFileitem的局部block ---
 	  void (^refreshSaveABTestConfigFileItem)(void) = ^{
-		  if (!saveABTestConfigFileItemRef) return;
+	    if (!saveABTestConfigFileItemRef)
+		    return;
 
-		  NSFileManager *fileManager = [NSFileManager defaultManager];
-		  NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-		  NSString *documentsDirectory = [paths firstObject];
-		  NSString *dyyyFolderPath = [documentsDirectory stringByAppendingPathComponent:@"DYYY"];
-		  NSString *jsonFilePath = [dyyyFolderPath stringByAppendingPathComponent:@"abtest_data_fixed.json"];
-		  if (![fileManager fileExistsAtPath:jsonFilePath]) {
-			  saveABTestConfigFileItemRef.detail = @"(文件不存在)";
-			  saveABTestConfigFileItemRef.isEnable = NO;
-		  } else {
-			  unsigned long long jsonFileSize = 0;
-			  NSError *attributesError = nil;
-			  NSDictionary *attributes = [fileManager attributesOfItemAtPath:jsonFilePath error:&attributesError];
-			  if (!attributesError && attributes) {
-				  jsonFileSize = [attributes fileSize];
-				  NSString *dataSizeString;
-				  if (jsonFileSize < 1024) {
-					  dataSizeString = [NSString stringWithFormat:@"(%llu B)", jsonFileSize];
-				  } else if (jsonFileSize < 1024 * 1024) {
-					  dataSizeString = [NSString stringWithFormat:@"(%.2f KB)", (double)jsonFileSize / 1024.0];
-				  } else {
-					  dataSizeString = [NSString stringWithFormat:@"(%.2f MB)", (double)jsonFileSize / (1024.0 * 1024.0)];
-				  }
-				  saveABTestConfigFileItemRef.detail = dataSizeString;
-				  saveABTestConfigFileItemRef.isEnable = YES;
-			  } else {
-				  saveABTestConfigFileItemRef.detail = [NSString stringWithFormat:@"(讀取失敗: %@)", attributesError.localizedDescription ?: @"未知錯誤"];
-				  saveABTestConfigFileItemRef.isEnable = NO;
-			  }
-		  }
-		  [DYYYSettingsHelper refreshTableView]; // 刷新表格视图以更新显示
+	    NSFileManager *fileManager = [NSFileManager defaultManager];
+	    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	    NSString *documentsDirectory = [paths firstObject];
+	    NSString *dyyyFolderPath = [documentsDirectory stringByAppendingPathComponent:@"DYYY"];
+	    NSString *jsonFilePath = [dyyyFolderPath stringByAppendingPathComponent:@"abtest_data_fixed.json"];
+
+	    NSString *loadingStatus = gDataLoaded ? @"已加載：" : @"未加載：";
+	    if (![fileManager fileExistsAtPath:jsonFilePath]) {
+		    saveABTestConfigFileItemRef.detail = [NSString stringWithFormat:@"%@ (文件不存在)", loadingStatus];
+		    saveABTestConfigFileItemRef.isEnable = NO;
+	    } else {
+		    unsigned long long jsonFileSize = 0;
+		    NSError *attributesError = nil;
+		    NSDictionary *attributes = [fileManager attributesOfItemAtPath:jsonFilePath error:&attributesError];
+		    if (!attributesError && attributes) {
+			    jsonFileSize = [attributes fileSize];
+			    NSString *dataSizeString;
+			    if (jsonFileSize < 1024) {
+				    dataSizeString = [NSString stringWithFormat:@"%llu B", jsonFileSize];
+			    } else if (jsonFileSize < 1024 * 1024) {
+				    dataSizeString = [NSString stringWithFormat:@"%.2f KB", (double)jsonFileSize / 1024.0];
+			    } else {
+				    dataSizeString = [NSString stringWithFormat:@"%.2f MB", (double)jsonFileSize / (1024.0 * 1024.0)];
+			    }
+			    saveABTestConfigFileItemRef.detail = [NSString stringWithFormat:@"%@ %@", loadingStatus, dataSizeString];
+			    saveABTestConfigFileItemRef.isEnable = YES;
+		    } else {
+			    saveABTestConfigFileItemRef.detail = [NSString stringWithFormat:@"%@ (讀取失敗: %@)", loadingStatus, attributesError.localizedDescription ?: @"未知錯誤"];
+			    saveABTestConfigFileItemRef.isEnable = NO;
+		    }
+	    }
+	    [DYYYSettingsHelper refreshTableView];
 	  };
 
 	  for (NSDictionary *dict in hotUpdateSettings) {
@@ -2136,85 +2065,78 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    BOOL newValue = !item.isSwitchOn;
 
 			    if (newValue) {
-				    [DYYYBottomAlertView showAlertWithTitle:@"禁用下發設定"
-					message:@"請盡量保證在禁用熱更新前匯入正確設定，否則會導致插件部分功能失效。確定要繼續嗎？"
+				    [DYYYBottomAlertView showAlertWithTitle:@"禁止熱更新下發配置"
+					message:@"這將暫停接收測試新功能的推播。確定要繼續嗎？"
 					cancelButtonText:@"取消"
 					confirmButtonText:@"確定"
 					cancelAction:^{
 					  item.isSwitchOn = !newValue;
-					  [DYYYSettingsHelper refreshTableView]; // 刷新 UI					  
+					  [DYYYSettingsHelper refreshTableView];
 					}
 					confirmAction:^{
 					  item.isSwitchOn = newValue;
 					  [DYYYSettingsHelper setUserDefaults:@(newValue) forKey:@"DYYYABTestBlockEnabled"];
-					  [DYYYSettingsHelper handleConflictsAndDependenciesForSetting:item.identifier isEnabled:newValue];
 
-					  // 重置全局变量
-					  gFixedABTestData = nil;
-					  onceToken = 0;
-					  loadFixedABTestData();
+					  abTestBlockEnabled = newValue;
 					}];
 			    } else {
 				    item.isSwitchOn = newValue;
 				    [DYYYSettingsHelper setUserDefaults:@(newValue) forKey:@"DYYYABTestBlockEnabled"];
-				    [DYYYSettingsHelper handleConflictsAndDependenciesForSetting:item.identifier isEnabled:newValue];
 			    }
 			  };
-		  } else if ([item.identifier isEqualToString:@"DYYYABTestPatchEnabled"]) {
-			  item.switchChangedBlock = ^{
-			    BOOL newValue = !item.isSwitchOn;
+		  } else if ([item.identifier isEqualToString:@"DYYYABTestModeString"]) {
+			  // 获取当前的模式
+			  NSString *savedMode = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYABTestModeString"];
+			  BOOL isPatchMode = [savedMode isEqualToString:@"覆寫模式：保留原設定，覆蓋同名項"];
+			  item.detail = isPatchMode ? @"覆寫模式" : @"替換模式";
 
-			    if (newValue) {
-				    [DYYYBottomAlertView showAlertWithTitle:@"熱更新補丁模式"
-					message:@"這是一個全新的、更穩定的熱更新設定模式，請您確保匯入正確的設定文件。"
-					cancelButtonText:@"取消"
-					confirmButtonText:@"確定"
-					cancelAction:^{
-					  item.isSwitchOn = !newValue;
-					  [DYYYSettingsHelper refreshTableView]; // 刷新 UI					  
-					}
-					confirmAction:^{
-					  item.isSwitchOn = newValue;
-					  [DYYYSettingsHelper setUserDefaults:@(newValue) forKey:@"DYYYABTestPatchEnabled"];
-					  [DYYYSettingsHelper handleConflictsAndDependenciesForSetting:item.identifier isEnabled:newValue];
+			  item.cellTappedBlock = ^{
+			    NSString *currentMode = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYABTestModeString"] ?: @"替換模式：清除原設定，寫入新數據";
 
-					  // 重置全局变量
-					  gFixedABTestData = nil;
-					  onceToken = 0;
-					  loadFixedABTestData();
-					}];
-			    } else {
-				    item.isSwitchOn = newValue;
-				    [DYYYSettingsHelper setUserDefaults:@(newValue) forKey:@"DYYYABTestPatchEnabled"];
-				    [DYYYSettingsHelper handleConflictsAndDependenciesForSetting:item.identifier isEnabled:newValue];
-			    }
+			    NSArray *modeOptions = @[ @"覆寫模式：保留原設定，覆蓋同名項", @"替換模式：清除原設定，寫入新數據" ];
+
+			    [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYABTestModeString"
+							       optionsArray:modeOptions
+								 headerText:@"選擇本機設定的應用方式"
+							     onPresentingVC:topView()
+							   selectionChanged:^(NSString *selectedValue) {
+							     BOOL isPatchMode = [selectedValue isEqualToString:@"覆寫模式：保留原設定，覆蓋同名項"];
+							     item.detail = isPatchMode ? @"覆寫模式" : @"替換模式";
+
+							     if (![selectedValue isEqualToString:currentMode]) {
+								     gFixedABTestData = nil;
+								     onceToken = 0;
+								     ensureABTestDataLoaded();
+							     }
+							     [DYYYSettingsHelper refreshTableView];
+							   }];
 			  };
 		  } else if ([item.identifier isEqualToString:@"SaveCurrentABTestData"]) {
-			  item.detail = @"(获取中...)"; // 默认显示获取中
+			  item.detail = @"(獲取中...)";
 
 			  NSDictionary *currentData = getCurrentABTestData();
 
 			  if (!currentData) {
-			    item.detail = @"(建立失敗)";
-			    item.isEnable = NO;
+				  item.detail = @"(獲取失敗)";
+				  item.isEnable = NO;
 			  } else {
-			    NSError *serializationError = nil;
-			    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:currentData options:NSJSONWritingPrettyPrinted error:&serializationError];
-			    if (!serializationError && jsonData) {
-				    unsigned long long dataSize = jsonData.length;
-				    NSString *dataSizeString;
-				    if (dataSize < 1024) {
-					  dataSizeString = [NSString stringWithFormat:@"(%llu B)", dataSize];
-				    } else if (dataSize < 1024 * 1024) {
-					  dataSizeString = [NSString stringWithFormat:@"(%.2f KB)", (double)dataSize / 1024.0];
-				    } else {
-					  dataSizeString = [NSString stringWithFormat:@"(%.2f MB)", (double)dataSize / (1024.0 * 1024.0)];
-				    }
-				    item.detail = dataSizeString;
-			    } else {
-				    item.detail = [NSString stringWithFormat:@"(序列化失敗: %@)", serializationError.localizedDescription ?: @"未知錯誤"];
-				    item.isEnable = NO;
-			    }
+				  NSError *serializationError = nil;
+				  NSData *jsonData = [NSJSONSerialization dataWithJSONObject:currentData options:NSJSONWritingPrettyPrinted error:&serializationError];
+				  if (!serializationError && jsonData) {
+					  unsigned long long dataSize = jsonData.length;
+					  NSString *dataSizeString;
+					  if (dataSize < 1024) {
+						  dataSizeString = [NSString stringWithFormat:@"%llu B", dataSize];
+					  } else if (dataSize < 1024 * 1024) {
+						  dataSizeString = [NSString stringWithFormat:@"%.2f KB", (double)dataSize / 1024.0];
+					  } else {
+						  dataSizeString = [NSString stringWithFormat:@"%.2f MB", (double)dataSize / (1024.0 * 1024.0)];
+					  }
+					  item.detail = dataSizeString;
+				  } else {
+					  item.detail = [NSString stringWithFormat:@"(序列化失敗: %@)", serializationError.localizedDescription ?: @"未知錯誤"];
+					  item.isEnable = NO;
+				  }
 			  }
 
 			  item.cellTappedBlock = ^{
@@ -2226,7 +2148,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    }
 
 			    NSError *error;
-			    NSData *sortedJsonData = [NSJSONSerialization dataWithJSONObject:currentData  options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys error:&error];
+			    NSData *sortedJsonData = [NSJSONSerialization dataWithJSONObject:currentData options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys error:&error];
 
 			    if (error) {
 				    [DYYYManager showToast:@"ABTest設定序列化失敗"];
@@ -2263,10 +2185,10 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    [topVC presentViewController:documentPicker animated:YES completion:nil];
 			  };
 		  } else if ([item.identifier isEqualToString:@"SaveABTestConfigFile"]) {
-			  item.detail = @"(获取中...)"; // 默认显示获取中
+			  item.detail = @"(獲取中...)";
 
-			  saveABTestConfigFileItemRef = item; // 捕获对该特定item的引用
-			  refreshSaveABTestConfigFileItem();  // 确保初始显示正确状态
+			  saveABTestConfigFileItemRef = item;
+			  refreshSaveABTestConfigFileItem();
 
 			  item.cellTappedBlock = ^{
 			    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
@@ -2277,21 +2199,21 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 
 			    NSData *jsonData = [NSData dataWithContentsOfFile:jsonFilePath];
 			    if (!jsonData) {
-			      [DYYYManager showToast:@"本機設定獲取失敗"];
-			      return;
+				    [DYYYManager showToast:@"本機設定獲取失敗"];
+				    return;					
 			    }
 
 			    NSError *error;
 			    NSDictionary *originalData = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&error];
 			    if (error || ![originalData isKindOfClass:[NSDictionary class]]) {
-			      [DYYYManager showToast:@"本機設定序列化失敗"];
-			      return;
+				    [DYYYManager showToast:@"本機設定序列化失敗"];
+				    return;					
 			    }
 
 			    NSData *sortedJsonData = [NSJSONSerialization dataWithJSONObject:originalData options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys error:&error];
 			    if (error || !sortedJsonData) {
-			      [DYYYManager showToast:@"排序資料序列化失敗"];
-			      return;
+				    [DYYYManager showToast:@"排序資料序列化失敗"];
+				    return;				
 			    }
 
 			    // 创建临时文件
@@ -2302,11 +2224,12 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    NSString *tempFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFile];
 
 			    if (![sortedJsonData writeToFile:tempFilePath atomically:YES]) {
-			      [DYYYManager showToast:@"臨時檔案建立失敗"];
-			      return;
+				    [DYYYManager showToast:@"臨時檔案建立失敗"];
+				    return;				
 			    }
 
-			    UIDocumentPickerViewController *documentPicker = [[UIDocumentPickerViewController alloc] initWithURLs:@[[NSURL fileURLWithPath:tempFilePath]] inMode:UIDocumentPickerModeExportToService];
+			    UIDocumentPickerViewController *documentPicker = [[UIDocumentPickerViewController alloc] initWithURLs:@[ [NSURL fileURLWithPath:tempFilePath] ]
+															   inMode:UIDocumentPickerModeExportToService];
 
 			    DYYYBackupPickerDelegate *pickerDelegate = [[DYYYBackupPickerDelegate alloc] init];
 			    pickerDelegate.tempFilePath = tempFilePath;
@@ -2323,47 +2246,62 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			  };
 		  } else if ([item.identifier isEqualToString:@"LoadABTestConfigFile"]) {
 			  item.cellTappedBlock = ^{
-			    UIDocumentPickerViewController *documentPicker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[ @"public.json" ] inMode:UIDocumentPickerModeImport];
+			    NSString *savedMode = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYABTestModeString"];
+			    BOOL isPatchMode = [savedMode isEqualToString:@"覆寫模式：保留原設定，覆蓋同名項"];		  
 
-			    DYYYBackupPickerDelegate *pickerDelegate = [[DYYYBackupPickerDelegate alloc] init];
-			    pickerDelegate.completionBlock = ^(NSURL *url) {
-			      NSString *sourcePath = [url path];
+			    NSString *confirmTitle, *confirmMessage;
+			    if (isPatchMode) {
+				    confirmTitle = @"覆寫模式";
+				    confirmMessage = @"覆寫模式將保留原始設定並覆蓋同名項\n確定要繼續嗎？\n";					
+			    } else {
+				    confirmTitle = @"替換模式";
+				    confirmMessage = @"替換模式將丟棄原始設定並替換為新數據\n確定要繼續嗎？\n";					
+			    }
+			    DYYYAboutDialogView *confirmDialog = [[DYYYAboutDialogView alloc] initWithTitle:confirmTitle message:confirmMessage];
+			    confirmDialog.onConfirm = ^{
+			      UIDocumentPickerViewController *documentPicker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[ @"public.json" ] inMode:UIDocumentPickerModeImport];
+				  
+				  			      DYYYBackupPickerDelegate *pickerDelegate = [[DYYYBackupPickerDelegate alloc] init];
+			      pickerDelegate.completionBlock = ^(NSURL *url) {
+				NSString *sourcePath = [url path];
 
-			      NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-			      NSString *documentsDirectory = [paths firstObject];
-			      NSString *dyyyFolderPath = [documentsDirectory stringByAppendingPathComponent:@"DYYY"];
-			      NSString *destPath = [dyyyFolderPath stringByAppendingPathComponent:@"abtest_data_fixed.json"];
+				NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+				NSString *documentsDirectory = [paths firstObject];
+				NSString *dyyyFolderPath = [documentsDirectory stringByAppendingPathComponent:@"DYYY"];
+				NSString *destPath = [dyyyFolderPath stringByAppendingPathComponent:@"abtest_data_fixed.json"];
 
-			      if (![[NSFileManager defaultManager] fileExistsAtPath:dyyyFolderPath]) {
-				      [[NSFileManager defaultManager] createDirectoryAtPath:dyyyFolderPath withIntermediateDirectories:YES attributes:nil error:nil];
-			      }
+				if (![[NSFileManager defaultManager] fileExistsAtPath:dyyyFolderPath]) {
+					[[NSFileManager defaultManager] createDirectoryAtPath:dyyyFolderPath withIntermediateDirectories:YES attributes:nil error:nil];
+				}
 
-			      NSError *error;
-			      if ([[NSFileManager defaultManager] fileExistsAtPath:destPath]) {
-				      [[NSFileManager defaultManager] removeItemAtPath:destPath error:&error];
-			      }
+				NSError *error;
+				if ([[NSFileManager defaultManager] fileExistsAtPath:destPath]) {
+					[[NSFileManager defaultManager] removeItemAtPath:destPath error:&error];
+				}
 
-			      BOOL success = [[NSFileManager defaultManager] copyItemAtPath:sourcePath toPath:destPath error:&error];
+				BOOL success = [[NSFileManager defaultManager] copyItemAtPath:sourcePath toPath:destPath error:&error];
 
-			      NSString *message = success ? @"設定已匯入，重啟抖音生效" : [NSString stringWithFormat:@"匯入失敗: %@", error.localizedDescription];
-			      [DYYYManager showToast:message];
+				NSString *message = success ? @"設定已匯入，重啟抖音生效" : [NSString stringWithFormat:@"匯入失敗: %@", error.localizedDescription];
+				[DYYYManager showToast:message];
 
-			      if (success) {
-				      gFixedABTestData = nil;
-				      onceToken = 0;
-				      loadFixedABTestData();
-				      // 导入成功后更新 SaveABTestConfigFile item 的状态
-				      refreshSaveABTestConfigFileItem();
-			      }
+				if (success) {
+					gFixedABTestData = nil;
+					onceToken = 0;
+					ensureABTestDataLoaded();
+					// 导入成功后更新 SaveABTestConfigFile item 的状态
+					refreshSaveABTestConfigFileItem();
+				}
+			      };
+
+			      static char kPickerDelegateKey;
+			      documentPicker.delegate = pickerDelegate;
+			      objc_setAssociatedObject(documentPicker, &kPickerDelegateKey, pickerDelegate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+			      UIViewController *topVC = topView();
+			      [topVC presentViewController:documentPicker animated:YES completion:nil];
 			    };
-
-			    static char kPickerDelegateKey;
-			    documentPicker.delegate = pickerDelegate;
-			    objc_setAssociatedObject(documentPicker, &kPickerDelegateKey, pickerDelegate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-			    UIViewController *topVC = topView();
-			    [topVC presentViewController:documentPicker animated:YES completion:nil];
-			  };
+			    [confirmDialog show];
+			  };				
 		  } else if ([item.identifier isEqualToString:@"DeleteABTestConfigFile"]) {
 			  item.cellTappedBlock = ^{
 			    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
@@ -2382,7 +2320,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 					    gFixedABTestData = nil;
 					    onceToken = 0;
 					    // 删除成功后修改 SaveABTestConfigFile item 的状态
-					    saveABTestConfigFileItemRef.detail = @"(文件不存在)";
+					    saveABTestConfigFileItemRef.detail = @"(文件已刪除)";
 					    saveABTestConfigFileItemRef.isEnable = NO;
 					    [DYYYSettingsHelper refreshTableView];
 				    }
@@ -2402,12 +2340,12 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"左側邊欄快捷入口",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_gearsimplify_outlined_20"},
+		    @"imageName" : @"ic_circlearrowin_outlined_20"},
 		  @{@"identifier" : @"DYYYVideoGesture",
 		    @"title" : @"橫向影片交互增強",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_playsquarestack_outlined_20"},
+		    @"imageName" : @"ic_phonearrowdown_outlined_20"},
 		  @{@"identifier" : @"DYYYDisableAutoEnterLive",
 		    @"title" : @"禁用自動進入直播",
 		    @"detail" : @"",
@@ -2427,7 +2365,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"評論音樂點擊複製",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_at_outlined_20"},
+		    @"imageName" : @"ic_quaver_outlined_20"},
 		  @{@"identifier" : @"DYYYisAutoSelectOriginalPhoto",
 		    @"title" : @"啟用自動勾選原圖",
 		    @"detail" : @"",
@@ -2437,17 +2375,17 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"啟用新版玻璃面板",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_gearsimplify_outlined_20"},
+		    @"imageName" : @"ic_moon_outlined"},
 		  @{@"identifier" : @"DYYYisEnableModernLight",
 		    @"title" : @"啟用新版淺色面板",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_gearsimplify_outlined_20"},
+		    @"imageName" : @"ic_sun_outlined"},
 		  @{@"identifier" : @"DYYYModernPanelFollowSystem",
 		    @"title" : @"新版面板跟隨系統",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_gearsimplify_outlined_20"},
+		    @"imageName" : @"ic_squaresplit_outlined_20"},
 		  @{@"identifier" : @"DYYYEnableSaveAvatar",
 		    @"title" : @"啟用儲存他人頭像",
 		    @"detail" : @"",
@@ -2482,7 +2420,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 
 	  for (NSDictionary *dict in interactionSettings) {
 		  AWESettingItemModel *item = [DYYYSettingsHelper createSettingItem:dict];
-		  // 为双击菜单选项添加特殊处理
 		  if ([item.identifier isEqualToString:@"DYYYEnableDoubleOpenAlertController"]) {
 			  item.cellTappedBlock = ^{
 			    // 检查是否启用了双击打开评论功能
