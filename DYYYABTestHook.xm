@@ -1,5 +1,5 @@
 #import "DYYYABTestHook.h"
-#import 
+#import <objc/runtime.h>
 
 @interface AWEABTestManager : NSObject
 @property(retain, nonatomic) NSDictionary *abTestData;
