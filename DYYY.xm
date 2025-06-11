@@ -308,7 +308,7 @@
 		NSString *signature = @"";
 		NSString *avatarURL = @"";
 
-		if ([self respondsToSelector:@selector(model)]) {Add commentMore actions
+		if ([self respondsToSelector:@selector(model)]) {
 			id model = [self model];
 			if ([model isKindOfClass:NSClassFromString(@"AWEAwemeModel")]) {
 				author = [model valueForKey:@"author"];
