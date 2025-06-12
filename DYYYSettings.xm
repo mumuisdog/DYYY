@@ -848,6 +848,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_comment_outlined_20"},
+		  @{@"identifier" : @"DYYYisEnableCommentBarTransparent",
+		    @"title" : @"評論底欄透明",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_msgnut_outlined_20"},			
 		  @{@"identifier" : @"DYYYCommentBlurTransparent",
 		    @"title" : @"毛玻璃透明度",
 		    @"detail" : @"0-1小數",
@@ -2339,6 +2344,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_circlearrowin_outlined_20"},
+		  @{@"identifier" : @"DYYYDisableSidebarGesture",
+		    @"title" : @"禁止側滑進入邊欄",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_circlearrowin_outlined_20"},			
 		  @{@"identifier" : @"DYYYVideoGesture",
 		    @"title" : @"橫向影片交互增強",
 		    @"detail" : @"",
@@ -2349,11 +2359,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_video_outlined_20"},
-		  @{@"identifier" : @"DYYYDisableSidebarGesture",
-		    @"title" : @"禁止側滑進入邊欄",
-		    @"detail" : @"",
-		    @"cellType" : @6,
-		    @"imageName" : @"ic_gearsimplify_outlined_20"},			
 		  @{@"identifier" : @"DYYYCommentCopyText",
 		    @"title" : @"長按評論複製文案",
 		    @"detail" : @"",
@@ -2435,7 +2440,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 				    @"imageName" : @"ic_xiaoxihuazhonghua_outlined_20"
 			    }];
 			    [doubleTapItems addObject:enableDoubleTapMenu];
-
 			    NSArray *doubleTapFunctions = @[
 				    @{@"identifier" : @"DYYYDoubleTapDownload",
 				      @"title" : @"儲存影片/圖片",
@@ -2447,7 +2451,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 				      @"detail" : @"",
 				      @"cellType" : @6,
 				      @"imageName" : @"ic_boxarrowdown_outlined"},
-
 				    @{@"identifier" : @"DYYYDoubleInterfaceDownload",
 				      @"title" : @"接口儲存",
 				      @"detail" : @"",
@@ -2473,7 +2476,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 				      @"detail" : @"",
 				      @"cellType" : @6,
 				      @"imageName" : @"ic_heart_outlined_20"},
-
 				    @{
 					    @"identifier" : @"DYYYDoubleTapshowDislikeOnVideo",
 					    @"title" : @"長按面板",
@@ -2481,7 +2483,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 					    @"cellType" : @6,
 					    @"imageName" : @"ic_xiaoxihuazhonghua_outlined_20"
 				    },
-
 				    @{@"identifier" : @"DYYYDoubleTapshowSharePanel",
 				      @"title" : @"分享影片",
 				      @"detail" : @"",
