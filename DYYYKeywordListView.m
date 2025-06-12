@@ -54,7 +54,7 @@
     // 主标题 - 根据模式设置文本颜色
     self.titleLabel =
         [[UILabel alloc] initWithFrame:CGRectMake(20, 20, 260, 24)];
-    self.titleLabel.text = title ?: @"過濾項目";
+    self.titleLabel.text = title ?: @"過濾過濾項目";
     self.titleLabel.textColor = isDarkMode ? 
         [UIColor colorWithRed:230/255.0 green:230/255.0 blue:235/255.0 alpha:1.0] : 
         [UIColor colorWithRed:45/255.0 green:47/255.0 blue:56/255.0 alpha:1.0];
@@ -188,7 +188,7 @@
   DYYYCustomInputView *inputView = [[DYYYCustomInputView alloc]
       initWithTitle:@"新增過濾項目"
         defaultText:nil
-        placeholder:@"請輸入過濾項目，多個請用逗號分隔"];
+        placeholder:@"請輸入過濾項目，多個用逗號分隔"];
 
   __weak typeof(self) weakSelf = self;
   inputView.onConfirm = ^(NSString *text) {
@@ -236,9 +236,9 @@
   static NSString *cellIdentifier = @"KeywordCell";
   UITableViewCell *cell =
       [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
-
-  BOOL isDarkMode = [DYYYManager isDarkMode];
   
+  BOOL isDarkMode = [DYYYManager isDarkMode];
+
   if (!cell) {
     cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
                                   reuseIdentifier:cellIdentifier];
@@ -246,25 +246,26 @@
     // 删除按钮
     UIButton *deleteButton = [UIButton buttonWithType:UIButtonTypeCustom];
     deleteButton.frame = CGRectMake(0, 0, 30, 30);
-
-    // 使用无填充的圆形 X 图标
-    UIImage *xImage = [[UIImage systemImageNamed:@"xmark"]
-        imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    
+    // 自绘制叉号图标
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(12, 12), NO, 0);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    
+    CGContextSetStrokeColorWithColor(context, [UIColor colorWithRed:180/255.0 green:180/255.0 blue:185/255.0 alpha:1.0].CGColor);
+    CGContextSetLineWidth(context, 1.5);
+    
+    CGContextMoveToPoint(context, 1, 1);
+    CGContextAddLineToPoint(context, 11, 11);
+    
+    CGContextMoveToPoint(context, 11, 1);
+    CGContextAddLineToPoint(context, 1, 11);
+    
+    CGContextStrokePath(context);
+    
+    UIImage *xImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
     [deleteButton setImage:xImage forState:UIControlStateNormal];
-
-    // 设置删除按钮颜色
-    [deleteButton setTintColor:isDarkMode ?
-        [UIColor colorWithRed:160/255.0 green:160/255.0 blue:165/255.0 alpha:1.0] :
-        [UIColor colorWithRed:124/255.0 green:124/255.0 blue:130/255.0 alpha:1.0]];
-
-    // 设置灰色
-    cell.accessoryView = deleteButton;
-    cell.textLabel.textColor = [UIColor colorWithRed:124 / 255.0
-                                             green:124 / 255.0
-                                              blue:130 / 255.0
-                                             alpha:1.0]; // #7c7c82
-
-    // 添加按压效果
     deleteButton.adjustsImageWhenHighlighted = YES;
 
     [deleteButton addTarget:self
@@ -281,8 +282,8 @@
 
   // 配置单元格
   cell.textLabel.text = self.keywords[indexPath.row];
-  cell.accessoryView.tag = indexPath.row; // 用于识别删除哪个过滤项
-
+  cell.accessoryView.tag = indexPath.row;
+  
   // 设置背景色透明，以便表格背景色可见
   cell.backgroundColor = [UIColor clearColor];
 
