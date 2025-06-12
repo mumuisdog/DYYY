@@ -6,7 +6,7 @@
 - (instancetype)initWithTitle:(NSString *)title message:(NSString *)message {
     if (self = [super initWithFrame:UIScreen.mainScreen.bounds]) {
         self.backgroundColor = [UIColor colorWithWhite:0 alpha:0.2];
-
+        
         // 判断当前深色/浅色模式
         BOOL isDarkMode = [DYYYManager isDarkMode];
         
@@ -17,7 +17,7 @@
         [self addSubview:self.blurView];
         
         // 计算文本高度，动态调整弹窗高度
-        UIFont *messageFont = [UIFont systemFontOfSize:14];
+        UIFont *messageFont = [UIFont systemFontOfSize:15];
         CGSize constraintSize = CGSizeMake(260, CGFLOAT_MAX);
         NSAttributedString *attributedMessage = [[NSAttributedString alloc] initWithString:message attributes:@{NSFontAttributeName: messageFont}];
         CGRect textRect = [attributedMessage boundingRectWithSize:constraintSize 
@@ -25,7 +25,7 @@
                                                          context:nil];
         
         CGFloat textHeight = textRect.size.height;
-        CGFloat maxTextHeight = 280; 
+        CGFloat maxTextHeight = 320; 
         CGFloat titleHeight = 44; 
         CGFloat buttonHeight = 58; 
         CGFloat buttonPadding = 28;
@@ -33,7 +33,7 @@
         CGFloat contentHeight = titleHeight + actualTextHeight + buttonHeight + buttonPadding;
         BOOL needsScrolling = textHeight > maxTextHeight;
         
-       // 创建内容视图 - 根据模式选择背景色
+        // 创建内容视图 - 根据模式选择背景色
         self.contentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 300, contentHeight)];
         self.contentView.center = CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2);
         self.contentView.backgroundColor = isDarkMode ? [UIColor colorWithRed:30/255.0 green:30/255.0 blue:30/255.0 alpha:1.0] : [UIColor whiteColor];
@@ -52,23 +52,24 @@
         [self.contentView addSubview:self.titleLabel];
         
         // 消息内容 - 适配深色模式
-        self.messageTextView = [[UITextView alloc] initWithFrame:CGRectMake(20, 54, 260, actualTextHeight)];
-        self.messageTextView.backgroundColor = [UIColor clearColor];
-        self.messageTextView.textAlignment = NSTextAlignmentCenter;
+        self.messageTextView = [[UITextView alloc] initWithFrame:CGRectMake(20, 54, 260, (contentHeight - buttonHeight - 54))];
+        self.messageTextView.backgroundColor = self.contentView.backgroundColor;
         self.messageTextView.font = messageFont;
         self.messageTextView.editable = NO;
         self.messageTextView.scrollEnabled = needsScrolling;
         self.messageTextView.showsVerticalScrollIndicator = needsScrolling;
         self.messageTextView.dataDetectorTypes = UIDataDetectorTypeLink;
-        self.messageTextView.transform = CGAffineTransformMakeScale(1.05, 1.05);
         self.messageTextView.selectable = YES;
-        
+
         // 创建段落样式并设置居中对齐
         NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
         paragraphStyle.alignment = NSTextAlignmentCenter;
         NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:message];
         [attributedString addAttribute:NSParagraphStyleAttributeName 
                                  value:paragraphStyle 
+                                 range:NSMakeRange(0, message.length)];
+        [attributedString addAttribute:NSFontAttributeName
+                                 value:messageFont // 使用自定义的 messageFont
                                  range:NSMakeRange(0, message.length)];
 
         // 根据模式设置整体文本颜色
@@ -84,7 +85,7 @@
                                      value:@"https://t.me/vita_app" 
                                      range:telegramRange];
         }
-
+        
         NSRange githubRange = [message rangeOfString:@"倉庫地址 Wtrwx/DYYY"];
         if (githubRange.location != NSNotFound) {
             [attributedString addAttribute:NSLinkAttributeName 
@@ -113,12 +114,12 @@
         };
         
         [self.contentView addSubview:self.messageTextView];
-
+        
         // 添加内容和按钮之间的分割线，调整位置和颜色
         UIView *contentButtonSeparator = [[UIView alloc] initWithFrame:CGRectMake(0, contentHeight - buttonHeight, 300, 0.5)];
         contentButtonSeparator.backgroundColor = isDarkMode ? [UIColor colorWithRed:60/255.0 green:60/255.0 blue:60/255.0 alpha:1.0] : [UIColor colorWithRed:230/255.0 green:230/255.0 blue:230/255.0 alpha:1.0];
         [self.contentView addSubview:contentButtonSeparator];
-
+        
         // 确认按钮 - 根据模式调整颜色
         self.confirmButton = [UIButton buttonWithType:UIButtonTypeSystem];
         self.confirmButton.frame = CGRectMake(0, contentHeight - buttonHeight + 0.5, 300, 53); 
@@ -128,8 +129,7 @@
         [self.confirmButton setTitleColor:confirmButtonColor forState:UIControlStateNormal];
         [self.confirmButton addTarget:self action:@selector(confirmTapped) forControlEvents:UIControlEventTouchUpInside];
         [self.contentView addSubview:self.confirmButton];
-
-        self.messageTextView.textAlignment = NSTextAlignmentCenter;
+        
     }
     return self;
 }
@@ -137,7 +137,7 @@
 - (void)show {
     UIWindow *window = [UIApplication sharedApplication].keyWindow;
     [window addSubview:self];
-
+    
     [UIView animateWithDuration:0.12 animations:^{
         self.contentView.alpha = 1.0;
         self.contentView.transform = CGAffineTransformIdentity;
