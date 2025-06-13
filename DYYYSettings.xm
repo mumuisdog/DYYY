@@ -2070,12 +2070,14 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    if (newValue) {
 				    [DYYYBottomAlertView showAlertWithTitle:@"禁止熱更新下發配置"
 					message:@"這將暫停接收測試新功能的推播。確定要繼續嗎？"
+					       avatarURL:nil
 					cancelButtonText:@"取消"
 					confirmButtonText:@"確定"
 					cancelAction:^{
 					  item.isSwitchOn = !newValue;
 					  [DYYYSettingsHelper refreshTableView];
 					}
+					closeAction:nil
 					confirmAction:^{
 					  item.isSwitchOn = newValue;
 					  [DYYYSettingsHelper setUserDefaults:@(newValue) forKey:@"DYYYABTestBlockEnabled"];
@@ -2966,15 +2968,18 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	cleanSettingsItem.cellTappedBlock = ^{
 	  [DYYYBottomAlertView showAlertWithTitle:@"清除設定"
 	      message:@"請選擇要清除的設定類型"
+		         avatarURL:nil
 	      cancelButtonText:@"清除抖音設定"
 	      confirmButtonText:@"清除插件設定"
 	      cancelAction:^{
 		// 清除抖音设置的确认对话框
 		[DYYYBottomAlertView showAlertWithTitle:@"清除抖音設定"
 						message:@"確定要清除抖音所有設定嗎？\n這將無法恢復，應用會自動退出！"
+						      avatarURL:nil
 				       cancelButtonText:@"取消"
 				      confirmButtonText:@"確定"
 					   cancelAction:nil
+					    closeAction:nil
 					  confirmAction:^{
 					    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
 					    if (paths.count > 0) {
@@ -2997,13 +3002,16 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 					    }
 					  }];
 	      }
+		  closeAction:^{}
 	      confirmAction:^{
 		// 清除插件设置的确认对话框
 		[DYYYBottomAlertView showAlertWithTitle:@"清除插件設定"
 						message:@"確定要清除所有插件設定嗎？\n這將無法恢復！"
+						      avatarURL:nil
 				       cancelButtonText:@"取消"
 				      confirmButtonText:@"確定"
 					   cancelAction:nil
+					    closeAction:nil
 					  confirmAction:^{
 					    // 获取所有以DYYY开头的NSUserDefaults键值并清除
 					    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -3015,8 +3023,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 						    }
 					    }
 					    [defaults synchronize];
-
-					    // 显示成功提示
 					    [DYYYManager showToast:@"插件設定已清除，請重啟應用"];
 					  }];
 	      }];
@@ -3035,9 +3041,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	cleanCacheItem.cellTappedBlock = ^{
 	  [DYYYBottomAlertView showAlertWithTitle:@"清理快取"
 					  message:@"確定要清理快取嗎？\n這將刪除臨時檔案和快取"
+					    avatarURL:nil
 				 cancelButtonText:@"取消"
 				confirmButtonText:@"確定"
 				     cancelAction:nil
+					  closeAction:nil
 				    confirmAction:^{
 				      NSFileManager *fileManager = [NSFileManager defaultManager];
 				      NSUInteger totalSize = 0;
