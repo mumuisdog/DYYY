@@ -1390,8 +1390,8 @@
 			};
 			[keywordListView show];
 		      }
+			  closeAction:nil			  
 		      confirmAction:^{
-			  closeAction:nil
 			// 添加或移除用户过滤
 			NSMutableArray *updatedUsers = [NSMutableArray arrayWithArray:userArray];
 			if (userExists) {
