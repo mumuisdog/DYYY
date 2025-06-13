@@ -344,10 +344,6 @@ static CGFloat gStartVal = 0.0;
 - (UILabel *)findCommentLabel:(UIView *)view;
 @end
 
-// 隐藏视频定位
-@interface AWEFeedTemplateAnchorView : UIView
-@end
-
 // 隐藏同城定位
 @interface AWEMarkView : UIView
 @property(nonatomic, readonly) UILabel *markLabel;
@@ -943,14 +939,6 @@ static CGFloat gStartVal = 0.0;
              singleTapBlock:(void (^)(void))singleTapBlock;
 - (void)configWithImageView:(UIImageView *)imageView
                   lockImage:(UIImage *)lockImage
-             titleLabelText:(NSString *)titleText
-           contentLabelText:(NSString *)contentText
-            knownButtonText:(NSString *)knownButtonText
-            toggleTitleText:(NSString *)toggleTitleText
-               defaultState:(BOOL)defaultState
-           defaultLockState:(BOOL)defaultLockState;
-- (void)configWithImageView:(UIImageView *)imageView
-                  lockImage:(UIImage *)lockImage
              lockImageInset:(UIEdgeInsets)lockImageInset
              titleLabelText:(NSString *)titleLabelText
            contentLabelText:(NSString *)contentLabelText
@@ -1208,4 +1196,12 @@ static CGFloat gStartVal = 0.0;
 
 @interface AWEPlayInteractionUserAvatarFollowController : UIViewController
 @property(retain, nonatomic) AWEAwemeModel *model;
+@end
+
+@interface AWECodeGenCommonAnchorBasicInfoModel : UIViewController
+@property(copy, nonatomic) NSString *name;
+@end
+
+@interface AWEFeedTemplateAnchorView : UIView
+@property(retain, nonatomic) AWECodeGenCommonAnchorBasicInfoModel *templateAnchorInfo;
 @end
