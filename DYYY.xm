@@ -348,6 +348,7 @@
 				       cancelButtonText:@"取消"
 				      confirmButtonText:@"關注"
 					   cancelAction:nil
+					    closeAction:nil					   
 					  confirmAction:^{
 					    %orig(gesture);
 					  }];						  
@@ -407,6 +408,7 @@
 				       cancelButtonText:@"取消"
 				      confirmButtonText:@"關注"
 					   cancelAction:nil
+					    closeAction:nil					   
 					  confirmAction:^{
 					    %orig(gesture);
 					  }];									   
@@ -914,7 +916,11 @@
 		dispatch_async(dispatch_get_main_queue(), ^{
 		  [DYYYBottomAlertView showAlertWithTitle:@"收藏確認"
 						  message:@"是否確認/取消收藏？"
+					        avatarURL:nil
+				     cancelButtonText:nil
+				    confirmButtonText:nil						  
 					     cancelAction:nil
+					      closeAction:nil						 
 					    confirmAction:^{
 					      if (r && [r isKindOfClass:NSClassFromString(@"NSBlock")]) {
 						      ((void (^)(void))r)();
@@ -2791,22 +2797,6 @@ static AWEIMReusableCommonCell *currentCell;
 
 %end
 
-// 隐藏拍同款
-%hook AWEFeedAnchorContainerView
-
-- (BOOL)isHidden {
-	BOOL origHidden = %orig;
-	BOOL hideSamestyle = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideFeedAnchorContainer"];
-	return origHidden || hideSamestyle;
-}
-
-- (void)setHidden:(BOOL)hidden {
-	BOOL forceHide = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideFeedAnchorContainer"];
-	%orig(forceHide ? YES : hidden);
-}
-
-%end
-
 // 隐藏合集和声明
 %hook AWEAntiAddictedNoticeBarView
 - (void)layoutSubviews {
@@ -3394,16 +3384,29 @@ static AWEIMReusableCommonCell *currentCell;
 }
 %end
 
-// 隐藏视频定位
+// 隐藏昵称上方
 %hook AWEFeedTemplateAnchorView
 
 - (void)layoutSubviews {
-	%orig;
-
-	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideLocation"]) {
-		[self removeFromSuperview];
-		return;
-	}
+    %orig;
+    
+    BOOL hideFeedAnchor = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideFeedAnchorContainer"];
+    BOOL hideLocation = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideLocation"];
+    
+    if (!hideFeedAnchor && !hideLocation) return;
+    
+    AWECodeGenCommonAnchorBasicInfoModel *anchorInfo = [self valueForKey:@"templateAnchorInfo"];
+    if (!anchorInfo || ![anchorInfo respondsToSelector:@selector(name)]) return;
+    
+    NSString *name = [anchorInfo valueForKey:@"name"];
+    BOOL isPoi = [name isEqualToString:@"poi_poi"];
+    
+    if ((hideFeedAnchor && !isPoi) || (hideLocation && isPoi)) {
+        UIView *parentView = self.superview;
+        if (parentView) {
+            parentView.hidden = YES;
+        }
+    }
 }
 
 %end
