@@ -720,7 +720,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 								   item.detail = valueString;
 								   [DYYYSettingsHelper refreshTableView];
 							   } else {
-								   DYYYAboutDialogView *errorDialog = [[DYYYAboutDialogView alloc] initWithTitle:@"輸入錯誤" message:@"請輸入有效的數字\n\n\n"];
+								   DYYYAboutDialogView *errorDialog = [[DYYYAboutDialogView alloc] initWithTitle:@"輸入錯誤" message:@"\n\n請輸入有效的數字\n\n"];							   
 								   [errorDialog show];
 							   }
 							 }
@@ -2092,13 +2092,13 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		  } else if ([item.identifier isEqualToString:@"DYYYABTestModeString"]) {
 			  // 获取当前的模式
 			  NSString *savedMode = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYABTestModeString"];
-			  BOOL isPatchMode = [savedMode isEqualToString:@"覆寫模式：保留原設定，覆蓋同名項"];
+			  BOOL isPatchMode = ![savedMode isEqualToString:@"替換模式：清除原設定，寫入新數據"];			  
 			  item.detail = isPatchMode ? @"覆寫模式" : @"替換模式";
 
 			  item.cellTappedBlock = ^{
 			    NSString *currentMode = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYABTestModeString"] ?: @"替換模式：清除原設定，寫入新數據";
 
-			    NSArray *modeOptions = @[ @"覆寫模式：保留原設定，覆蓋同名項", @"替換模式：清除原設定，寫入新數據" ];
+			    NSArray *modeOptions = @[ @"覆寫模式：保留原設定，覆蓋同名項", @"替換模式：清除原設定，寫入新數據" ];			  
 
 			    [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYABTestModeString"
 							       optionsArray:modeOptions
@@ -2252,15 +2252,15 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		  } else if ([item.identifier isEqualToString:@"LoadABTestConfigFile"]) {
 			  item.cellTappedBlock = ^{
 			    NSString *savedMode = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYABTestModeString"];
-			    BOOL isPatchMode = [savedMode isEqualToString:@"覆寫模式：保留原設定，覆蓋同名項"];		  
+			    BOOL isPatchMode = ![savedMode isEqualToString:@"替換模式：忽略原設定，寫入新數據"];	
 
 			    NSString *confirmTitle, *confirmMessage;
 			    if (isPatchMode) {
 				    confirmTitle = @"覆寫模式";
-				    confirmMessage = @"覆寫模式將保留原始設定並覆蓋同名項\n確定要繼續嗎？\n";					
+				    confirmMessage = @"\n匯入後將保留原始設定並覆寫同名項，\n\n點選確定後繼續操作。\n";
 			    } else {
 				    confirmTitle = @"替換模式";
-				    confirmMessage = @"替換模式將丟棄原始設定並替換為新數據\n確定要繼續嗎？\n";					
+				    confirmMessage = @"\n匯入後將忽略原設定並寫入新數據，\n\n點選確定後繼續操作。\n";			
 			    }
 			    DYYYAboutDialogView *confirmDialog = [[DYYYAboutDialogView alloc] initWithTitle:confirmTitle message:confirmMessage];
 			    confirmDialog.onConfirm = ^{
