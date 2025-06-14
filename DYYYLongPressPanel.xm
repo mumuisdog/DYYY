@@ -106,6 +106,8 @@
 						shouldHide = YES;
 					} else if ([descString isEqualToString:@"听抖音"] && hideListenDouyin) {
 						shouldHide = YES;
+					} else if ([descString isEqualToString:@"听视频"] && hideListenDouyin) {
+						shouldHide = YES;						
 					} else if ([descString isEqualToString:@"后台播放设置"] && hideBackgroundPlay) {
 						shouldHide = YES;
 					} else if ([descString isEqualToString:@"首页双列快捷入口"] && hideBiserial) {
@@ -568,7 +570,7 @@
 		  NSString *actionButtonText = userExists ? @"取消過濾" : @"新增過濾";
 		  [DYYYBottomAlertView showAlertWithTitle:@"過濾使用者影片"
 		      message:[NSString stringWithFormat:@"用户: %@ (ID: %@)", nickname, shortId]
-			  avatarURL:nil
+		      avatarURL:nil
 		      cancelButtonText:@"管理過濾列表"
 		      confirmButtonText:actionButtonText
 		      cancelAction:^{
@@ -581,7 +583,7 @@
 			};
 			[keywordListView show];
 		      }
-			  closeAction:nil
+		      closeAction:nil
 		      confirmAction:^{
 			// 添加或移除用户过滤
 			NSMutableArray *updatedUsers = [NSMutableArray arrayWithArray:userArray];
@@ -911,6 +913,8 @@
 						shouldHide = YES;
 					} else if ([descString isEqualToString:@"听抖音"] && hideListenDouyin) {
 						shouldHide = YES;
+					} else if ([descString isEqualToString:@"听视频"] && hideListenDouyin) {
+						shouldHide = YES;						
 					} else if ([descString isEqualToString:@"后台播放设置"] && hideBackgroundPlay) {
 						shouldHide = YES;
 					} else if ([descString isEqualToString:@"首页双列快捷入口"] && hideBiserial) {
@@ -1377,7 +1381,7 @@
 		  NSString *actionButtonText = userExists ? @"取消過濾" : @"新增過濾";
 		  [DYYYBottomAlertView showAlertWithTitle:@"過濾使用者影片"
 		      message:[NSString stringWithFormat:@"用户: %@ (ID: %@)", nickname, shortId]
-			  avatarURL:nil
+		      avatarURL:nil
 		      cancelButtonText:@"管理過濾列表"
 		      confirmButtonText:actionButtonText
 		      cancelAction:^{
@@ -1390,7 +1394,7 @@
 			};
 			[keywordListView show];
 		      }
-			  closeAction:nil			  
+		      closeAction:nil
 		      confirmAction:^{
 			// 添加或移除用户过滤
 			NSMutableArray *updatedUsers = [NSMutableArray arrayWithArray:userArray];
