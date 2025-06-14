@@ -4977,7 +4977,6 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
 		if (self.frame.size.height == tabHeight && tabHeight > 0) {
 			UIViewController *vc = [self firstAvailableUIViewController];
 			if ([vc isKindOfClass:NSClassFromString(@"AWEMixVideoPanelDetailTableViewController")] || [vc isKindOfClass:NSClassFromString(@"AWECommentInputViewController")]) {			
-			if ([vc isKindOfClass:NSClassFromString(@"AWEMixVideoPanelDetailTableViewController")]) {
 				self.backgroundColor = [UIColor clearColor];
 			}
 		}
