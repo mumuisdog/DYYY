@@ -17,21 +17,32 @@
 #import "DYYYSettingViewController.h"
 #import "DYYYToast.h"
 
-%hook AWEVideoPlayerScreenBrightnessManager
-- (void)setIsHDRVideo:(BOOL)isHDR {
+%hook AWEVideoPlayerConfiguration
++ (void)setHDRBrightnessStrategy:(id)strategy {
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableFeedHDR"]) {
-        %orig(NO);
+        %orig(nil);
     } else {
-        %orig(isHDR);
+        %orig;
     }
 }
-
-- (BOOL)isHDRVideo {
++ (double)getHDRBrightnessOffset:(double)offset brightness:(double)brightness {
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableFeedHDR"]) {
-        return NO;
+        return 0.0;
     }
     return %orig;
 }
+
+%end
+
+%hook IESFiltersManager
+- (void)setHDRIndensity:(double)intensity {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableFeedHDR"]) {
+        %orig(0.0);
+    } else {
+        %orig;
+    }
+}
+
 %end
 
 // 默认视频流最高画质
@@ -4965,6 +4976,7 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableFullScreen"]) {
 		if (self.frame.size.height == tabHeight && tabHeight > 0) {
 			UIViewController *vc = [self firstAvailableUIViewController];
+			if ([vc isKindOfClass:NSClassFromString(@"AWEMixVideoPanelDetailTableViewController")] || [vc isKindOfClass:NSClassFromString(@"AWECommentInputViewController")]) {			
 			if ([vc isKindOfClass:NSClassFromString(@"AWEMixVideoPanelDetailTableViewController")]) {
 				self.backgroundColor = [UIColor clearColor];
 			}
