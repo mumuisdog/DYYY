@@ -16,33 +16,34 @@
 #import "DYYYConstants.h"
 #import "DYYYSettingViewController.h"
 #import "DYYYToast.h"
+#import "DYYYUtils.h"
 
 %hook AWEVideoPlayerConfiguration
-+ (void)setHDRBrightnessStrategy:(id)strategy {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableFeedHDR"]) {
-        %orig(nil);
-    } else {
-        %orig;
-    }
-}
+
 + (double)getHDRBrightnessOffset:(double)offset brightness:(double)brightness {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableFeedHDR"]) {
-        return 0.0;
-    }
-    return %orig;
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableFeedHDR"]) {
+		return 0.000000;
+	}
+	return %orig;
 }
 
 %end
 
-%hook IESFiltersManager
-- (void)setHDRIndensity:(double)intensity {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableFeedHDR"]) {
-        %orig(0.0);
-    } else {
-        %orig;
-    }
+%hook AWEVideoPlayerScreenBrightnessManager
+- (void)setIsHDRVideo:(BOOL)isHDR {
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableFeedHDR"]) {
+		%orig(NO);
+		return;
+	}
+	%orig;
 }
 
+- (BOOL)isHDRVideo {
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableFeedHDR"]) {
+		return NO;
+	}
+	return %orig;
+}
 %end
 
 // 默认视频流最高画质
@@ -944,9 +945,9 @@
 		dispatch_async(dispatch_get_main_queue(), ^{
 		  [DYYYBottomAlertView showAlertWithTitle:@"收藏確認"
 						  message:@"是否確認/取消收藏？"
-					        avatarURL:nil
-				     cancelButtonText:nil
-				    confirmButtonText:nil						  
+						avatarURL:nil
+					 cancelButtonText:nil
+					confirmButtonText:nil					  
 					     cancelAction:nil
 					      closeAction:nil						 
 					    confirmAction:^{
@@ -2185,6 +2186,17 @@ static BOOL hasChangedSpeed = NO;
 }
 %end
 
+// 强制启用保存他人头像
+%hook AFDProfileAvatarFunctionManager
+- (BOOL)shouldShowSaveAvatarItem {
+	BOOL shouldEnable = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYEnableSaveAvatar"];
+	if (shouldEnable) {
+		return YES;
+	}
+	return %orig;
+}
+%end
+
 %hook AWECommentMediaDownloadConfigLivePhoto
 
 bool commentLivePhotoNotWaterMark = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYCommentLivePhotoNotWaterMark"];
@@ -2272,15 +2284,71 @@ static BOOL isDownloadFlied = NO;
 }
 %end
 
-// 强制启用保存他人头像
-%hook AFDProfileAvatarFunctionManager
-- (BOOL)shouldShowSaveAvatarItem {
-	BOOL shouldEnable = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYEnableSaveAvatar"];
-	if (shouldEnable) {
-		return YES;
+%group EnableStickerSaveMenu
+static __weak YYAnimatedImageView *targetStickerView = nil;
+
+%hook _TtCV28AWECommentPanelListSwiftImpl6NEWAPI27CommentCellStickerComponent
+
+- (void)handleLongPressWithGes:(UILongPressGestureRecognizer *)gesture {
+	if (gesture.state == UIGestureRecognizerStateBegan) {
+		if ([gesture.view isKindOfClass:%c(YYAnimatedImageView)]) {
+			targetStickerView = (YYAnimatedImageView *)gesture.view;
+			NSLog(@"DYYY 長按表情：%@", targetStickerView);
+		} else {
+			targetStickerView = nil;
+		}
 	}
+
+	%orig;
+}
+
+%end
+
+%hook UIMenu
+
++ (instancetype)menuWithTitle:(NSString *)title image:(UIImage *)image identifier:(UIMenuIdentifier)identifier options:(UIMenuOptions)options children:(NSArray<UIMenuElement *> *)children {
+	BOOL hasAddStickerOption = NO;
+	BOOL hasSaveLocalOption = NO;
+
+	for (UIMenuElement *element in children) {
+		NSString *elementTitle = nil;
+
+		if ([element isKindOfClass:%c(UIAction)]) {
+			elementTitle = [(UIAction *)element title];
+		} else if ([element isKindOfClass:%c(UICommand)]) {
+			elementTitle = [(UICommand *)element title];
+		}
+
+		if ([elementTitle isEqualToString:@"添加到表情"]) {
+			hasAddStickerOption = YES;
+		} else if ([elementTitle isEqualToString:@"保存到相册"]) {
+			hasSaveLocalOption = YES;
+		}
+	}
+
+	if (hasAddStickerOption && !hasSaveLocalOption) {
+		NSMutableArray *newChildren = [children mutableCopy];
+
+		UIAction *saveAction = [%c(UIAction) actionWithTitle:@"儲存到照片App"
+									 image:nil
+								    identifier:nil
+								       handler:^(__kindof UIAction *_Nonnull action) {
+									 // 使用全局变量 targetStickerView 保存当前长按的表情
+									 if (targetStickerView) {
+										 [DYYYUtils saveAnimatedSticker:targetStickerView];
+									 } else {
+										 [DYYYManager showToast:@"無法取得表情視圖"];
+									 }
+								       }];
+
+		[newChildren addObject:saveAction];
+		return %orig(title, image, identifier, options, newChildren);
+	}
+
 	return %orig;
 }
+
+%end
 %end
 
 %hook AWEIMEmoticonPreviewV2
@@ -3416,25 +3484,27 @@ static AWEIMReusableCommonCell *currentCell;
 %hook AWEFeedTemplateAnchorView
 
 - (void)layoutSubviews {
-    %orig;
-    
-    BOOL hideFeedAnchor = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideFeedAnchorContainer"];
-    BOOL hideLocation = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideLocation"];
-    
-    if (!hideFeedAnchor && !hideLocation) return;
-    
-    AWECodeGenCommonAnchorBasicInfoModel *anchorInfo = [self valueForKey:@"templateAnchorInfo"];
-    if (!anchorInfo || ![anchorInfo respondsToSelector:@selector(name)]) return;
-    
-    NSString *name = [anchorInfo valueForKey:@"name"];
-    BOOL isPoi = [name isEqualToString:@"poi_poi"];
-    
-    if ((hideFeedAnchor && !isPoi) || (hideLocation && isPoi)) {
-        UIView *parentView = self.superview;
-        if (parentView) {
-            parentView.hidden = YES;
-        }
-    }
+	%orig;
+
+	BOOL hideFeedAnchor = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideFeedAnchorContainer"];
+	BOOL hideLocation = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideLocation"];
+
+	if (!hideFeedAnchor && !hideLocation)
+		return;
+
+	AWECodeGenCommonAnchorBasicInfoModel *anchorInfo = [self valueForKey:@"templateAnchorInfo"];
+	if (!anchorInfo || ![anchorInfo respondsToSelector:@selector(name)])
+		return;
+
+	NSString *name = [anchorInfo valueForKey:@"name"];
+	BOOL isPoi = [name isEqualToString:@"poi_poi"];
+
+	if ((hideFeedAnchor && !isPoi) || (hideLocation && isPoi)) {
+		UIView *parentView = self.superview;
+		if (parentView) {
+			parentView.hidden = YES;
+		}
+	}
 }
 
 %end
@@ -3469,6 +3539,48 @@ static AWEIMReusableCommonCell *currentCell;
 
 %end
 
+// 隐藏暂停关键词
+%hook AWEFeedPauseRelatedWordComponent
+
+- (id)updateViewWithModel:(id)arg0 {
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHidePauseVideoRelatedWord"]) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (id)pauseContentWithModel:(id)arg0 {
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHidePauseVideoRelatedWord"]) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (id)recommendsWords {
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHidePauseVideoRelatedWord"]) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (void)showRelatedRecommendPanelControllerWithSelectedText:(id)arg0 {
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHidePauseVideoRelatedWord"]) {
+		return;
+	}
+	%orig;
+}
+
+- (void)setupUI {
+	%orig;
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHidePauseVideoRelatedWord"]) {
+		if (self.relatedView) {
+			self.relatedView.hidden = YES;
+		}
+	}
+}
+
+%end
+
 // 隐藏短剧合集
 %hook AWETemplatePlayletView
 
@@ -3485,7 +3597,7 @@ static AWEIMReusableCommonCell *currentCell;
 }
 %end
 
-// 隐藏视频上方搜索长框
+// 隐藏视频上方搜索长框、隐藏搜索指示条、应用全局透明
 %hook AWESearchEntranceView
 
 - (void)layoutSubviews {
@@ -3495,19 +3607,22 @@ static AWEIMReusableCommonCell *currentCell;
 		return;
 	}
 
-	NSString *transparentValue = [[NSUserDefaults standardUserDefaults] stringForKey:@"DYYYGlobalTransparency"];
-	if (transparentValue.length > 0) {
-		CGFloat alphaValue = transparentValue.floatValue;
-		if (alphaValue >= 0.0 && alphaValue <= 1.0) {
-			for (UIView *subview in self.subviews) {
-				if (subview.tag != DYYY_IGNORE_GLOBAL_ALPHA_TAG) {
-					if (subview.alpha > 0) {
-						subview.alpha = alphaValue;
-					}
-				}
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideSearchEntranceIndicator"]) {
+		for (UIView *subview in self.subviews) {
+			if ([subview isKindOfClass:[UIImageView class]] && [NSStringFromClass([((UIImageView *)subview).image class]) isEqualToString:@"_UIResizableImage"]) {
+				((UIImageView *)subview).hidden = YES;
 			}
 		}
 	}
+
+	// NSString *transparentValue = [[NSUserDefaults standardUserDefaults] stringForKey:@"DYYYGlobalTransparency"];
+	// if (transparentValue.length > 0) {
+	//     CGFloat alphaValue = transparentValue.floatValue;
+	//     if (alphaValue >= 0.0 && alphaValue <= 1.0) {
+	//         self.alpha = alphaValue;
+	//     }
+	// }
+
 	%orig;
 }
 
@@ -6100,6 +6215,9 @@ static NSString *const kStreamlineSidebarKey = @"DYYYStreamlinethesidebar";
 		BOOL isAutoPlayEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableAutoPlay"];
 		if (isAutoPlayEnabled) {
 			%init(AutoPlay);
+		}
+		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYForceDownloadEmotion"]) {
+			%init(EnableStickerSaveMenu);
 		}
 	}
 }
