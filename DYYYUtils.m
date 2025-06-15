@@ -91,7 +91,13 @@ UIViewController *topView(void) {
                 [DYYYManager showToast:@"需要照片App權限才能儲存"];
                 return;
             }
-            
+
+            // 检查是否为BDImage类型且有HEIF URL
+            if ([self isBDImageWithHeifURL:targetStickerView.image]) {
+                [self saveHeifSticker:targetStickerView];
+                return;
+            }
+
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                 // 获取GIF帧和持续时间
                 NSArray *images = [self getImagesFromYYAnimatedImageView:targetStickerView];
@@ -127,6 +133,63 @@ UIViewController *topView(void) {
                 });
             });
         });
+    }];
+}
+
+// 检查是否为BDImage类型且有HEIF URL
++ (BOOL)isBDImageWithHeifURL:(UIImage *)image {
+    if (!image) return NO;
+    
+    if ([NSStringFromClass([image class]) containsString:@"BDImage"]) {
+        if ([image respondsToSelector:@selector(bd_webURL)]) {
+            NSURL *webURL = [image performSelector:@selector(bd_webURL)];
+            if (webURL) {
+                NSString *urlString = webURL.absoluteString;
+                return [urlString containsString:@".heif"] || 
+                       [urlString containsString:@".heic"];
+            }
+        }
+    }
+    
+    return NO;
+}
+
+// 保存HEIF格式的表情贴纸
++ (void)saveHeifSticker:(YYAnimatedImageView *)stickerView {
+    UIImage *image = stickerView.image;
+    NSURL *heifURL = [image performSelector:@selector(bd_webURL)];
+    
+    if (!heifURL) {
+        [DYYYManager showToast:@"無法取得表情URL"];
+        return;
+    }
+    
+    [DYYYManager convertHeicToGif:heifURL completion:^(NSURL *gifURL, BOOL success) {
+        if (!success || !gifURL) {
+            [DYYYManager showToast:@"表情轉換失敗"];
+            return;
+        }
+        
+        // 保存转换后的图片到相册
+        [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
+            PHAssetCreationRequest *request = [PHAssetCreationRequest creationRequestForAsset];
+            [request addResourceWithType:PHAssetResourceTypePhoto fileURL:gifURL options:nil];
+        } completionHandler:^(BOOL success, NSError * _Nullable error) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (success) {
+                    [DYYYToast showSuccessToastWithMessage:@"已儲存到照片App"];
+                } else {
+                    NSString *errorMsg = error ? error.localizedDescription : @"未知錯誤";
+                    [DYYYManager showToast:[NSString stringWithFormat:@"儲存失敗: %@", errorMsg]];
+                }
+                
+                NSError *removeError = nil;
+                [[NSFileManager defaultManager] removeItemAtURL:gifURL error:&removeError];
+                if (removeError) {
+                    NSLog(@"刪除臨時轉換檔案失敗: %@", removeError);
+                }
+            });
+        }];
     }];
 }
 
