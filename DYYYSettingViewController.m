@@ -149,6 +149,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
             [DYYYSettingItem itemWithTitle:@"推薦過濾低讚" key:@"DYYYfilterLowLikes" type:DYYYSettingItemTypeTextField placeholder:@"填0關閉"],
             [DYYYSettingItem itemWithTitle:@"推薦過濾文案" key:@"DYYYfilterKeywords" type:DYYYSettingItemTypeTextField placeholder:@"不填關閉"],
             [DYYYSettingItem itemWithTitle:@"推薦過濾用戶" key:@"DYYYfilterUsers" type:DYYYSettingItemTypeTextField placeholder:@"不填關閉"],
+            [DYYYSettingItem itemWithTitle:@"推薦過濾HDR" key:@"DYYYfilterFeedHDR" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"推薦影片時限" key:@"DYYYfiltertimelimit" type:DYYYSettingItemTypeTextField placeholder:@"填0關閉，單位為天"],
             [DYYYSettingItem itemWithTitle:@"啟用首頁淨化" key:@"DYYYisEnablePure" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"啟用首頁全螢幕" key:@"DYYYisEnableFullScreen" type:DYYYSettingItemTypeSwitch],
@@ -169,7 +170,6 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
             [DYYYSettingItem itemWithTitle:@"收藏二次確認" key:@"DYYYcollectTips" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"直播預設最高畫質" key:@"DYYYEnableLiveHighestQuality" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"影片預設最高畫質" key:@"DYYYEnableVideoHighestQuality" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"屏蔽影片HDR效果" key:@"DYYYDisableFeedHDR" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"禁用直播PCDN功能" key:@"DYYYDisableLivePCDN" type:DYYYSettingItemTypeSwitch]
         ],
         @[
