@@ -1441,6 +1441,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		  @{@"identifier" : @"DYYYHideReply",
 		    @"title" : @"隱藏私信回復",
 		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{@"identifier" : @"DYYYHidePauseVideoRelatedWord",
+		    @"title" : @"隱藏暫停相關",
+		    @"detail" : @"",
 		    @"cellType" : @6,			
 		    @"imageName" : @"ic_eyeslash_outlined_16"}
 	  ];
