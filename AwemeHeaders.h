@@ -1210,6 +1210,20 @@ static CGFloat gStartVal = 0.0;
 + (void)setHDRBrightnessStrategy:(id)strategy;
 + (double)getHDRBrightnessOffset:(double)offset brightness:(double)brightness;
 @end
+
 @interface IESFiltersManager : NSObject
 - (void)setHDRIndensity:(double)intensity;
+@end
+
+@interface AWEFeedPauseVideoRelatedWordView : UIView
+@end
+
+@interface AWEFeedPauseRelatedWordComponent : NSObject
+@property (nonatomic, strong) AWEFeedPauseVideoRelatedWordView *relatedView;
+@property (nonatomic, strong) AWEAwemeModel *currentAweme;
+@property (nonatomic, assign) long long pauseContentNum;
+
+@end
+
+@interface YYAnimatedImageView : UIImageView
 @end
