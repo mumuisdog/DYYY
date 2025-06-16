@@ -13,6 +13,7 @@ static CGFloat speedButtonSize = 32.0;
 static BOOL isFloatSpeedButtonEnabled = NO;
 static BOOL isForceHidden = NO;
 static BOOL isAppActive = YES;
+static BOOL isInteractionViewVisible = NO;
 
 NSArray *getSpeedOptions() {
 	NSString *speedConfig = [[NSUserDefaults standardUserDefaults] stringForKey:@"DYYYSpeedSettings"] ?: @"1.0,1.25,1.5,2.0";
@@ -91,18 +92,8 @@ NSArray *findViewControllersInHierarchy(UIViewController *rootViewController) {
 	return viewControllers;
 }
 
-void checkAndUpdateButtonVisibility() {
-	if (speedButton) {
-		dispatch_async(dispatch_get_main_queue(), ^{
-		  BOOL shouldShow = isAppActive && !isCommentViewVisible && !isForceHidden;
-		  speedButton.hidden = !shouldShow;
-		});
-	}
-}
-
 void showSpeedButton(void) {
 	isForceHidden = NO;
-	checkAndUpdateButtonVisibility();
 }
 
 void hideSpeedButton(void) {
@@ -122,6 +113,24 @@ void toggleSpeedButtonVisibility(void) {
 			hideSpeedButton();
 		}
 	}
+}
+
+void updateSpeedButtonVisibility() {
+    if (!speedButton || !isFloatSpeedButtonEnabled || !isAppActive)
+        return;
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (!isInteractionViewVisible) {
+            speedButton.hidden = YES;
+            return;
+        }
+
+        // 在交互界面时，根据评论界面状态决定是否显示
+        BOOL shouldHide = isCommentViewVisible || isForceHidden;
+        if (speedButton.hidden != shouldHide) {
+            speedButton.hidden = shouldHide;
+        }
+    });
 }
 
 @interface UIView (SpeedHelper)
@@ -363,17 +372,13 @@ void toggleSpeedButtonVisibility(void) {
 - (void)setAlpha:(CGFloat)alpha {
 	%orig;
 
-	// 当透明度为 0 时隐藏按钮，当透明度为 1 时显示按钮
-	if (speedButton && isFloatSpeedButtonEnabled && !isForceHidden) {
-		dispatch_async(dispatch_get_main_queue(), ^{
-		  if (alpha == 0) {
-			  isCommentViewVisible = YES;
-			  checkAndUpdateButtonVisibility();
-		  } else if (alpha == 1) {
-			  isCommentViewVisible = NO;
-			  checkAndUpdateButtonVisibility();
-		  }
-		});
+	if (speedButton && isFloatSpeedButtonEnabled) {
+		if (alpha == 0) {
+			isCommentViewVisible = YES;
+		} else if (alpha == 1) {
+			isCommentViewVisible = NO;
+		}
+		updateSpeedButtonVisibility();
 	}
 }
 
@@ -390,10 +395,12 @@ void toggleSpeedButtonVisibility(void) {
 %hook AWEAwemePlayVideoViewController
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
-	float defaultSpeed = [[NSUserDefaults standardUserDefaults] floatForKey:@"DYYYDefaultSpeed"];
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"]) {
+		float defaultSpeed = [[NSUserDefaults standardUserDefaults] floatForKey:@"DYYYDefaultSpeed"];
 
-	if (defaultSpeed > 0 && defaultSpeed != 1) {
-		[self setVideoControllerPlaybackRate:defaultSpeed];
+		if (defaultSpeed > 0 && defaultSpeed != 1) {
+			[self setVideoControllerPlaybackRate:defaultSpeed];
+		}
 	}
 	float speed = getCurrentSpeed();
 	if (speed != 1.0) {
@@ -425,10 +432,12 @@ void toggleSpeedButtonVisibility(void) {
 %hook AWEDPlayerFeedPlayerViewController
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
-	float defaultSpeed = [[NSUserDefaults standardUserDefaults] floatForKey:@"DYYYDefaultSpeed"];
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"]) {
+		float defaultSpeed = [[NSUserDefaults standardUserDefaults] floatForKey:@"DYYYDefaultSpeed"];
 
-	if (defaultSpeed > 0 && defaultSpeed != 1) {
-		[self setVideoControllerPlaybackRate:defaultSpeed];
+		if (defaultSpeed > 0 && defaultSpeed != 1) {
+			[self setVideoControllerPlaybackRate:defaultSpeed];
+		}
 	}
 	float speed = getCurrentSpeed();
 	if (speed != 1.0) {
@@ -458,6 +467,29 @@ void toggleSpeedButtonVisibility(void) {
 %end
 
 %hook AWEPlayInteractionViewController
+
+- (void)viewDidAppear:(BOOL)animated {
+    %orig;
+    isInteractionViewVisible = YES;
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIView *stackView = nil;
+        for (UIView *subview in self.view.subviews) {
+            if ([subview isKindOfClass:%c(AWEElementStackView)]) {
+                stackView = subview;
+                break;
+            }
+        }
+        
+        if (stackView) {
+            isCommentViewVisible = (stackView.alpha == 0);
+        } else {
+            isCommentViewVisible = NO;
+        }
+        
+        updateSpeedButtonVisibility();
+    });
+}
 
 - (void)viewDidLayoutSubviews {
 	%orig;
@@ -499,19 +531,13 @@ void toggleSpeedButtonVisibility(void) {
 		[speedButton loadSavedPosition];
 	}
 
-	checkAndUpdateButtonVisibility();
-}
-
-- (void)viewWillAppear:(BOOL)animated {
-	%orig;
-	checkAndUpdateButtonVisibility();
+    updateSpeedButtonVisibility();
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
 	%orig;
-	if (speedButton) {
-		speedButton.hidden = YES;
-	}
+	isInteractionViewVisible = NO;
+    updateSpeedButtonVisibility();
 }
 
 %new
@@ -622,56 +648,14 @@ void toggleSpeedButtonVisibility(void) {
 		dispatch_async(dispatch_get_main_queue(), ^{
 		  [self addSubview:speedButton];
 		  [speedButton loadSavedPosition];
-		  checkAndUpdateButtonVisibility();
+		  updateSpeedButtonVisibility();
 		});
 	}
 }
 %end
 
 %ctor {
-	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-	isFloatSpeedButtonEnabled = [defaults boolForKey:@"DYYYEnableFloatSpeedButton"];
-
-	if (isFloatSpeedButtonEnabled) {
-		%init;
-
-		[[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationWillEnterForegroundNotification
-								  object:nil
-								   queue:[NSOperationQueue mainQueue]
-							      usingBlock:^(NSNotification *_Nonnull note) {
-								isAppActive = YES;
-								dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-								  checkAndUpdateButtonVisibility();
-
-								  // 重新进入前台时应用当前的播放速度
-								  float speed = getCurrentSpeed();
-								  if (speed != 1.0) {
-									  UIViewController *rootVC = [UIApplication sharedApplication].keyWindow.rootViewController;
-									  while (rootVC.presentedViewController) {
-										  rootVC = rootVC.presentedViewController;
-									  }
-
-									  NSArray *viewControllers = findViewControllersInHierarchy(rootVC);
-									  for (UIViewController *vc in viewControllers) {
-										  if ([vc isKindOfClass:%c(AWEAwemePlayVideoViewController)]) {
-											  [(AWEAwemePlayVideoViewController *)vc setVideoControllerPlaybackRate:speed];
-										  }
-										  if ([vc isKindOfClass:%c(AWEDPlayerFeedPlayerViewController)]) {
-											  [(AWEDPlayerFeedPlayerViewController *)vc setVideoControllerPlaybackRate:speed];
-										  }
-									  }
-								  }
-								});
-							      }];
-
-		[[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidEnterBackgroundNotification
-								  object:nil
-								   queue:[NSOperationQueue mainQueue]
-							      usingBlock:^(NSNotification *_Nonnull note) {
-								isAppActive = NO;
-								if (speedButton) {
-									speedButton.hidden = YES;
-								}
-							      }];
-	}
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    isFloatSpeedButtonEnabled = [defaults boolForKey:@"DYYYEnableFloatSpeedButton"];
+    %init;
 }
