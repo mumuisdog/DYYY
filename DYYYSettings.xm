@@ -610,6 +610,16 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  // 【杂项设置】分类
 	  NSMutableArray<AWESettingItemModel *> *miscellaneousItems = [NSMutableArray array];
 	  NSArray *miscellaneousSettings = @[
+		  @{@"identifier" : @"DYYYEnableLiveHighestQuality",
+		    @"title" : @"直播預設最高畫質",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_video_outlined_20"},
+		  @{@"identifier" : @"DYYYEnableVideoHighestQuality",
+		    @"title" : @"影片預設最高畫質",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_squaretriangletwo_outlined_20"},
 		  @{@"identifier" : @"DYYYisHideStatusbar",
 		    @"title" : @"隱藏系統頂欄",
 		    @"detail" : @"",
@@ -658,7 +668,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"推薦過濾使用者",
 		    @"detail" : @"",
 		    @"cellType" : @26,
-		    @"imageName" : @"ic_userban_outlined_20"},			
+		    @"imageName" : @"ic_userban_outlined_20"},	
 		  @{@"identifier" : @"DYYYfiltertimelimit",
 		    @"title" : @"推薦影片時限",
 		    @"detail" : @"",
@@ -668,7 +678,12 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"推薦過濾HDR",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_sun_outlined"},			
+		    @"imageName" : @"ic_sun_outlined"},
+		  @{@"identifier" : @"DYYYfilterProp",
+		    @"title" : @"推薦過濾拍同款",
+		    @"detail" : @"",
+		    @"cellType" : @26,
+		    @"imageName" : @"ic_tag_outlined_20"},			
 		  @{@"identifier" : @"DYYYNoAds",
 		    @"title" : @"啟用屏蔽廣告",
 		    @"detail" : @"",
@@ -684,16 +699,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_circletop_outlined"},
-		  @{@"identifier" : @"DYYYEnableLiveHighestQuality",
-		    @"title" : @"直播預設最高畫質",
-		    @"detail" : @"",
-		    @"cellType" : @6,
-		    @"imageName" : @"ic_video_outlined_20"},
-		  @{@"identifier" : @"DYYYEnableVideoHighestQuality",
-		    @"title" : @"影片預設最高畫質",
-		    @"detail" : @"",
-		    @"cellType" : @6,
-		    @"imageName" : @"ic_squaretriangletwo_outlined_20"},
 		  @{@"identifier" : @"DYYYDisableLivePCDN",
 		    @"title" : @"屏蔽直播PCDN功能",
 		    @"detail" : @"",
@@ -779,6 +784,22 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 							 }
 							  onCancel:nil];
 			  };
+		  } else if ([item.identifier isEqualToString:@"DYYYfilterProp"]) {
+			  NSString *savedValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYfilterProp"];
+			  item.detail = savedValue ?: @"";
+			  item.cellTappedBlock = ^{
+			    NSString *savedKeywords = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYfilterProp"] ?: @"";
+			    NSArray *keywordArray = [savedKeywords length] > 0 ? [savedKeywords componentsSeparatedByString:@","] : @[];
+			    DYYYKeywordListView *keywordListView = [[DYYYKeywordListView alloc] initWithTitle:@"設定過濾詞（支援部分匹配）" keywords:keywordArray];
+			    keywordListView.onConfirm = ^(NSArray *keywords) {
+			      NSString *keywordString = [keywords componentsJoinedByString:@","];
+
+			      [DYYYSettingsHelper setUserDefaults:keywordString forKey:@"DYYYfilterProp"];
+			      item.detail = keywordString;
+			      [DYYYSettingsHelper refreshTableView];
+			    };
+			    [keywordListView show];
+			  };			  
 		  }
 		  [filterItems addObject:item];
 	  }
