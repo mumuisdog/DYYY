@@ -466,6 +466,34 @@ void updateSpeedButtonVisibility() {
 
 %end
 
+
+%hook AWECommentContainerViewController
+
+- (void)viewWillAppear:(BOOL)animated {
+    %orig;
+    isCommentViewVisible = YES;
+    updateSpeedButtonVisibility();
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    %orig;
+    isCommentViewVisible = YES;
+    updateSpeedButtonVisibility();
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    %orig;
+    updateSpeedButtonVisibility();
+}
+
+- (void)viewDidDisappear:(BOOL)animated {
+    %orig;
+    isCommentViewVisible = NO;
+    updateSpeedButtonVisibility();
+}
+
+%end
+
 %hook AWEPlayInteractionViewController
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -473,20 +501,7 @@ void updateSpeedButtonVisibility() {
     isInteractionViewVisible = YES;
 
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIView *stackView = nil;
-        for (UIView *subview in self.view.subviews) {
-            if ([subview isKindOfClass:%c(AWEElementStackView)]) {
-                stackView = subview;
-                break;
-            }
-        }
-        
-        if (stackView) {
-            isCommentViewVisible = (stackView.alpha == 0);
-        } else {
-            isCommentViewVisible = NO;
-        }
-        
+        isCommentViewVisible = self.isCommentVCShowing;
         updateSpeedButtonVisibility();
     });
 }
