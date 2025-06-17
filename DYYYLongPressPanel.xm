@@ -281,11 +281,11 @@
 						  completion:^(BOOL success) {
 						    if (success) {
 						    } else {
-							    [DYYYManager showToast:@"圖片儲存已取消"];
+							    [DYYYUtils showToast:@"圖片儲存已取消"];
 						    }
 						  }];
 			  } else {
-				  [DYYYManager showToast:@"沒有找到合適格式的圖片"];
+				  [DYYYUtils showToast:@"沒有找到合適格式的圖片"];
 			  }
 		  }
 		  AWELongPressPanelManager *panelManager = [%c(AWELongPressPanelManager) shareInstance];
@@ -354,7 +354,7 @@
 		  }
 
 		  if (livePhotos.count == 0 && imageURLs.count == 0) {
-			  [DYYYManager showToast:@"没有找到合适格式的图片"];
+			  [DYYYUtils showToast:@"没有找到合适格式的图片"];
 		  }
 
 		  AWELongPressPanelManager *panelManager = [%c(AWELongPressPanelManager) shareInstance];
@@ -374,7 +374,7 @@
 		apiDownload.action = ^{
 		  NSString *shareLink = [self.awemeModel valueForKey:@"shareURL"];
 		  if (shareLink.length == 0) {
-			  [DYYYManager showToast:@"無法取得分享連結"];
+			  [DYYYUtils showToast:@"無法取得分享連結"];
 			  return;
 		  }
 		  // 使用封装的方法进行解析下载
@@ -402,7 +402,7 @@
 					  completion:^(BOOL success) {
 					    if (success) {
 					    } else {
-						    [DYYYManager showToast:@"封面儲存已取消"];
+						    [DYYYUtils showToast:@"封面儲存已取消"];
 					    }
 					  }];
 		  }
@@ -493,7 +493,7 @@
 		      completion:^(BOOL success, NSString *message) {
 			if (success) {
 			} else {
-				[DYYYManager showToast:[NSString stringWithFormat:@"影片製作失敗: %@", message]];
+				[DYYYUtils showToast:[NSString stringWithFormat:@"影片製作失敗: %@", message]];
 			}
 		      }];
 
@@ -577,7 +577,7 @@
 			  NSString *userString = [users componentsJoinedByString:@","];
 			  [[NSUserDefaults standardUserDefaults] setObject:userString forKey:@"DYYYfilterUsers"];
 			  [[NSUserDefaults standardUserDefaults] synchronize];
-			  [DYYYManager showToast:@"過濾用戶列表已更新"];
+			  [DYYYUtils showToast:@"過濾用戶列表已更新"];
 			};
 			[keywordListView show];
 		      }
@@ -598,11 +598,11 @@
 					}
 				}
 				[updatedUsers removeObjectsInArray:toRemove];
-				[DYYYManager showToast:@"已從過濾列表中移除此使用者"];
+				[DYYYUtils showToast:@"已從過濾列表中移除此使用者"];
 			} else {
 				// 添加用户
 				[updatedUsers addObject:currentUserFilter];
-				[DYYYManager showToast:@"已新增此使用者到過濾列表"];
+				[DYYYUtils showToast:@"已新增此使用者到過濾列表"];
 			}
 			// 保存更新后的列表
 			NSString *updatedUserString = [updatedUsers componentsJoinedByString:@","];
@@ -634,7 +634,7 @@
 			    }
 			    [[NSUserDefaults standardUserDefaults] setObject:newKeywords forKey:@"DYYYfilterKeywords"];
 			    [[NSUserDefaults standardUserDefaults] synchronize];
-			    [DYYYManager showToast:[NSString stringWithFormat:@"已新增過濾詞: %@", selectedText]];
+			    [DYYYUtils showToast:[NSString stringWithFormat:@"已新增過濾詞: %@", selectedText]];
 		    }
 		  };
 		  // 设置过滤关键词按钮回调
@@ -652,7 +652,7 @@
 		      [[NSUserDefaults standardUserDefaults] setObject:keywordString forKey:@"DYYYfilterKeywords"];
 		      [[NSUserDefaults standardUserDefaults] synchronize];
 		      // 显示提示
-		      [DYYYManager showToast:@"過濾關鍵詞已更新"];
+		      [DYYYUtils showToast:@"過濾關鍵詞已更新"];
 		    };
 		    // 显示关键词列表视图
 		    [keywordListView show];
@@ -681,7 +681,7 @@
 		  if (hasActiveTimer) {
 			  [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"DYYYTimerShutdownTime"];
 			  [[NSUserDefaults standardUserDefaults] synchronize];
-			  [DYYYManager showToast:@"已取消定時關閉任務"];
+			  [DYYYUtils showToast:@"已取消定時關閉任務"];
 			  return;
 		  }
 		  // 读取上次设置的时间
@@ -703,7 +703,7 @@
 		    NSTimeInterval shutdownTimeValue = [[NSDate date] timeIntervalSince1970] + seconds;
 		    [[NSUserDefaults standardUserDefaults] setObject:@(shutdownTimeValue) forKey:@"DYYYTimerShutdownTime"];
 		    [[NSUserDefaults standardUserDefaults] synchronize];
-		    [DYYYManager showToast:[NSString stringWithFormat:@"抖音將在%ld分鐘後關閉...", (long)minutes]];
+		    [DYYYUtils showToast:[NSString stringWithFormat:@"抖音將在%ld分鐘後關閉...", (long)minutes]];
 		    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(seconds * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
 		      NSNumber *currentShutdownTime = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYTimerShutdownTime"];
 		      if (currentShutdownTime != nil && [currentShutdownTime doubleValue] <= [[NSDate date] timeIntervalSince1970]) {
@@ -1090,11 +1090,11 @@
 						  completion:^(BOOL success) {
 						    if (success) {
 						    } else {
-							    [DYYYManager showToast:@"圖片儲存已取消"];
+							    [DYYYUtils showToast:@"圖片儲存已取消"];
 						    }
 						  }];
 			  } else {
-				  [DYYYManager showToast:@"沒有找到合適格式的圖片"];
+				  [DYYYUtils showToast:@"沒有找到合適格式的圖片"];
 			  }
 		  }
 		  AWELongPressPanelManager *panelManager = [%c(AWELongPressPanelManager) shareInstance];
@@ -1163,7 +1163,7 @@
 		  }
 
 		  if (livePhotos.count == 0 && imageURLs.count == 0) {
-			  [DYYYManager showToast:@"沒有找到合適格式的圖片"];
+			  [DYYYUtils showToast:@"沒有找到合適格式的圖片"];
 		  }
 
 		  AWELongPressPanelManager *panelManager = [%c(AWELongPressPanelManager) shareInstance];
@@ -1183,7 +1183,7 @@
 		apiDownload.action = ^{
 		  NSString *shareLink = [self.awemeModel valueForKey:@"shareURL"];
 		  if (shareLink.length == 0) {
-			  [DYYYManager showToast:@"無法取得分享連結"];
+			  [DYYYUtils showToast:@"無法取得分享連結"];
 			  return;
 		  }
 		  // 使用封装的方法进行解析下载
@@ -1211,7 +1211,7 @@
 					  completion:^(BOOL success) {
 					    if (success) {
 					    } else {
-						    [DYYYManager showToast:@"封面儲存已取消"];
+						    [DYYYUtils showToast:@"封面儲存已取消"];
 					    }
 					  }];
 		  }
@@ -1302,7 +1302,7 @@
 		      completion:^(BOOL success, NSString *message) {
 			if (success) {
 			} else {
-				[DYYYManager showToast:[NSString stringWithFormat:@"影片製作失敗: %@", message]];
+				[DYYYUtils showToast:[NSString stringWithFormat:@"影片製作失敗: %@", message]];
 			}
 		      }];
 
@@ -1386,7 +1386,7 @@
 			  NSString *userString = [users componentsJoinedByString:@","];
 			  [[NSUserDefaults standardUserDefaults] setObject:userString forKey:@"DYYYfilterUsers"];
 			  [[NSUserDefaults standardUserDefaults] synchronize];
-			  [DYYYManager showToast:@"過濾用戶列表已更新"];
+			  [DYYYUtils showToast:@"過濾用戶列表已更新"];
 			};
 			[keywordListView show];
 		      }
@@ -1407,11 +1407,11 @@
 					}
 				}
 				[updatedUsers removeObjectsInArray:toRemove];
-				[DYYYManager showToast:@"已從過濾列表中移除此使用者"];
+				[DYYYUtils showToast:@"已從過濾列表中移除此使用者"];
 			} else {
 				// 添加用户
 				[updatedUsers addObject:currentUserFilter];
-				[DYYYManager showToast:@"已新增此使用者到過濾列表"];
+				[DYYYUtils showToast:@"已新增此使用者到過濾列表"];
 			}
 			// 保存更新后的列表
 			NSString *updatedUserString = [updatedUsers componentsJoinedByString:@","];
@@ -1443,7 +1443,7 @@
 			    }
 			    [[NSUserDefaults standardUserDefaults] setObject:newKeywords forKey:@"DYYYfilterKeywords"];
 			    [[NSUserDefaults standardUserDefaults] synchronize];
-			    [DYYYManager showToast:[NSString stringWithFormat:@"已新增過濾詞: %@", selectedText]];
+			    [DYYYUtils showToast:[NSString stringWithFormat:@"已新增過濾詞: %@", selectedText]];
 		    }
 		  };
 		  // 设置过滤关键词按钮回调
@@ -1461,7 +1461,7 @@
 		      [[NSUserDefaults standardUserDefaults] setObject:keywordString forKey:@"DYYYfilterKeywords"];
 		      [[NSUserDefaults standardUserDefaults] synchronize];
 		      // 显示提示
-		      [DYYYManager showToast:@"過濾關鍵詞已更新"];
+		      [DYYYUtils showToast:@"過濾關鍵詞已更新"];
 		    };
 		    // 显示关键词列表视图
 		    [keywordListView show];
@@ -1490,7 +1490,7 @@
 		  if (hasActiveTimer) {
 			  [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"DYYYTimerShutdownTime"];
 			  [[NSUserDefaults standardUserDefaults] synchronize];
-			  [DYYYManager showToast:@"已取消定時關閉任務"];
+			  [DYYYUtils showToast:@"已取消定時關閉任務"];
 			  return;
 		  }
 		  // 读取上次设置的时间
@@ -1512,7 +1512,7 @@
 		    NSTimeInterval shutdownTimeValue = [[NSDate date] timeIntervalSince1970] + seconds;
 		    [[NSUserDefaults standardUserDefaults] setObject:@(shutdownTimeValue) forKey:@"DYYYTimerShutdownTime"];
 		    [[NSUserDefaults standardUserDefaults] synchronize];
-		    [DYYYManager showToast:[NSString stringWithFormat:@"抖音將在%ld分鐘後關閉", (long)minutes]];
+		    [DYYYUtils showToast:[NSString stringWithFormat:@"抖音將在%ld分鐘後關閉", (long)minutes]];
 		    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(seconds * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
 		      NSNumber *currentShutdownTime = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYTimerShutdownTime"];
 		      if (currentShutdownTime != nil && [currentShutdownTime doubleValue] <= [[NSDate date] timeIntervalSince1970]) {
