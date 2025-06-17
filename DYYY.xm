@@ -2244,7 +2244,7 @@ static BOOL isDownloadFlied = NO;
 				}
 
 				NSURL *heifURL = [NSURL URLWithString:urlString];
-				[DYYYUtils downloadMedia:heifURL
+				[DYYYManager downloadMedia:heifURL
 						 mediaType:MediaTypeHeic
 						completion:^(BOOL success){
 						}];
@@ -2307,7 +2307,7 @@ static __weak YYAnimatedImageView *targetStickerView = nil;
 								       handler:^(__kindof UIAction *_Nonnull action) {
 									 // 使用全局变量 targetStickerView 保存当前长按的表情
 									 if (targetStickerView) {
-										 [DYYYUtils saveAnimatedSticker:targetStickerView];
+										 [DYYYManager saveAnimatedSticker:targetStickerView];
 									 } else {
 										 [DYYYUtils showToast:@"無法取得表情視圖"];
 									 }
