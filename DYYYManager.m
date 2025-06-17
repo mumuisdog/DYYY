@@ -2671,7 +2671,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
                              completion:nil];
 
                     // 下载封面
-                    if (coverURL && coverURL.length > 0) {Add commentMore actions
+                    if (coverURL && coverURL.length > 0) {
                       NSURL *coverDownloadURL = [NSURL URLWithString:coverURL];
                       [self downloadMedia:coverDownloadURL
                                 mediaType:MediaTypeImage
