@@ -203,7 +203,7 @@
 }
 // 下载成功动画方法
 - (void)showSuccessAnimation:(void (^)(void))completion {
-  BOOL isDarkMode = [DYYYManager isDarkMode];
+  BOOL isDarkMode = [DYYYUtils isDarkMode];
 
   UIColor *successColor = isDarkMode ? [UIColor colorWithRed:48 / 255.0
                                                        green:209 / 255.0
