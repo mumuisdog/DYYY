@@ -403,12 +403,12 @@ static void showUserAgreementAlert() {
 	      if ([text isEqualToString:@"我已閱讀並同意繼續使用"]) {
 		      [DYYYSettingsHelper setUserDefaults:@"YES" forKey:@"DYYYUserAgreementAccepted"];
 	      } else {
-		      [DYYYManager showToast:@"請正確輸入內容"];
+		      [DYYYUtils showToast:@"請正確輸入內容"];
 		      showUserAgreementAlert();
 	      }
 	    }
 	    onCancel:^(void) {
-	      [DYYYManager showToast:@"請立即移除本插件"];
+	      [DYYYUtils showToast:@"請立即移除本插件"];
 	      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
 		exit(0);
 	      });
@@ -526,7 +526,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"設定長按倍速",
 		    @"detail" : @"",
 		    @"cellType" : @26,
-		    @"imageName" : @"ic_speed_outlined_20"},			
+		    @"imageName" : @"ic_speed_outlined_20"},
 		  @{@"identifier" : @"DYYYisEnableArea",
 		    @"title" : @"時間屬地顯示",
 		    @"detail" : @"",
@@ -683,7 +683,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"推薦過濾拍同款",
 		    @"detail" : @"",
 		    @"cellType" : @26,
-		    @"imageName" : @"ic_tag_outlined_20"},			
+		    @"imageName" : @"ic_tag_outlined_20"},
 		  @{@"identifier" : @"DYYYNoAds",
 		    @"title" : @"啟用屏蔽廣告",
 		    @"detail" : @"",
@@ -799,7 +799,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			      [DYYYSettingsHelper refreshTableView];
 			    };
 			    [keywordListView show];
-			  };			  
+			  };
 		  }
 		  [filterItems addObject:item];
 	  }
@@ -878,7 +878,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"評論底欄透明",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_msgnut_outlined_20"},			
+		    @"imageName" : @"ic_msgnut_outlined_20"},
 		  @{@"identifier" : @"DYYYCommentBlurTransparent",
 		    @"title" : @"毛玻璃透明度",
 		    @"detail" : @"0-1小數",
@@ -1010,11 +1010,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  // 【主介面元素】分类
 	  NSMutableArray<AWESettingItemModel *> *mainUiItems = [NSMutableArray array];
 	  NSArray *mainUiSettings = @[
-		  @{@"identifier" : @"DYYYHideDoubleColumnEntry",
-		    @"title" : @"隱藏雙列箭頭",
-		    @"detail" : @"",
-		    @"cellType" : @6,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},	  
 		  @{@"identifier" : @"DYYYisHiddenBottomBg",
 		    @"title" : @"隱藏底欄背景",
 		    @"detail" : @"",
@@ -1022,6 +1017,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYisHiddenBottomDot",
 		    @"title" : @"隱藏底欄紅點",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{@"identifier" : @"DYYYHideDoubleColumnEntry",
+		    @"title" : @"隱藏雙列箭頭",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
@@ -1059,7 +1059,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"隱藏底欄熱榜",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},			
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideTopBarBadge",
 		    @"title" : @"隱藏頂欄紅點",
 		    @"detail" : @"",
@@ -1159,7 +1159,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"隱藏側欄元素",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},	  
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYisHiddenSidebarDot",
 		    @"title" : @"隱藏側欄紅點",
 		    @"detail" : @"",
@@ -1179,7 +1179,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"隱藏設定關於",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},			
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
 	  ];
 
 	  for (NSDictionary *dict in sidebarSettings) {
@@ -1264,23 +1264,23 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{@"identifier" : @"DYYYHideDiscover",
+		    @"title" : @"隱藏右上搜尋",	
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideCommentDiscover",
 		    @"title" : @"隱藏評論搜尋",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
-		  @{@"identifier" : @"DYYYHideDiscover",
-		    @"title" : @"隱藏右上搜尋",
+		  @{@"identifier" : @"DYYYHideInteractionSearch",
+		    @"title" : @"隱藏相關搜尋",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideSearchBubble",
 		    @"title" : @"隱藏彈出熱搜",
-		    @"detail" : @"",
-		    @"cellType" : @6,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},			
-		  @{@"identifier" : @"DYYYHideInteractionSearch",
-		    @"title" : @"隱藏相關搜尋",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
@@ -1290,7 +1290,12 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideSearchEntrance",
-		    @"title" : @"隱藏長框搜尋",
+		    @"title" : @"隱藏頂部搜尋框",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{@"identifier" : @"DYYYHideSearchEntranceIndicator",
+		    @"title" : @"隱藏搜尋指示條",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
@@ -1467,7 +1472,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		  @{@"identifier" : @"DYYYHidePauseVideoRelatedWord",
 		    @"title" : @"隱藏暫停相關",
 		    @"detail" : @"",
-		    @"cellType" : @6,			
+		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"}
 	  ];
 
@@ -1476,7 +1481,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		  [infoItems addObject:item];
 	  }
 
-	  // 【直播介面淨化】分类
+	  // 【直播界面净化】分类
 	  NSMutableArray<AWESettingItemModel *> *livestreamItems = [NSMutableArray array];
 	  NSArray *livestreamSettings = @[
 		  @{@"identifier" : @"DYYYHideLivePlayground",
@@ -1538,7 +1543,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"隱藏退出清除螢幕",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_eyeslash_outlined_16"}			
+		    @"imageName" : @"ic_eyeslash_outlined_16"}
 
 	  ];
 	  for (NSDictionary *dict in livestreamSettings) {
@@ -1546,7 +1551,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		  [livestreamItems addObject:item];
 	  }
 
-	  // 【長按面板】分类
+	  // 【长按面板】分类
 	  NSMutableArray<AWESettingItemModel *> *modernpanels = [NSMutableArray array];
 	  NSArray *modernpanelSettings = @[
 		  @{@"identifier" : @"DYYYHidePanelDaily",
@@ -1628,7 +1633,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"隱藏面板定時關閉",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},			
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHidePanelBiserial",
 		    @"title" : @"隱藏雙列快捷入口",
 		    @"detail" : @"",
@@ -1648,7 +1653,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"隱藏評論分享",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},	  
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideCommentLongPressCopy",
 		    @"title" : @"隱藏評論複製",
 		    @"detail" : @"",
@@ -1978,7 +1983,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"儲存聊天頁表情包",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_emoji_outlined"},			
+		    @"imageName" : @"ic_emoji_outlined"},
 		  @{@"identifier" : @"DYYYHapticFeedbackEnabled",
 		    @"title" : @"下載完成震動反饋",
 		    @"detail" : @"",
@@ -2179,7 +2184,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    NSDictionary *currentData = getCurrentABTestData();
 
 			    if (!currentData) {
-				    [DYYYManager showToast:@"ABTest設定獲取失敗"];
+				    [DYYYUtils showToast:@"ABTest設定獲取失敗"];
 				    return;
 			    }
 
@@ -2187,7 +2192,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    NSData *sortedJsonData = [NSJSONSerialization dataWithJSONObject:currentData options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys error:&error];
 
 			    if (error) {
-				    [DYYYManager showToast:@"ABTest設定序列化失敗"];
+				    [DYYYUtils showToast:@"ABTest設定序列化失敗"];
 				    return;
 			    }
 
@@ -2200,7 +2205,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    BOOL success = [sortedJsonData writeToFile:tempFilePath atomically:YES];
 
 			    if (!success) {
-				    [DYYYManager showToast:@"臨時檔案建立失敗"];				
+				    [DYYYUtils showToast:@"臨時檔案建立失敗"];				
 				    return;
 			    }
 
@@ -2210,7 +2215,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    DYYYBackupPickerDelegate *pickerDelegate = [[DYYYBackupPickerDelegate alloc] init];
 			    pickerDelegate.tempFilePath = tempFilePath;
 			    pickerDelegate.completionBlock = ^(NSURL *url) {
-			      [DYYYManager showToast:@"ABTest設定已儲存"];
+			      [DYYYUtils showToast:@"ABTest設定已儲存"];
 			    };
 
 			    static char kABTestPickerDelegateKey;
@@ -2235,21 +2240,21 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 
 			    NSData *jsonData = [NSData dataWithContentsOfFile:jsonFilePath];
 			    if (!jsonData) {
-				    [DYYYManager showToast:@"本機設定獲取失敗"];
+				    [DYYYUtils showToast:@"本機設定獲取失敗"];
 				    return;					
 			    }
 
 			    NSError *error;
 			    NSDictionary *originalData = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&error];
 			    if (error || ![originalData isKindOfClass:[NSDictionary class]]) {
-				    [DYYYManager showToast:@"本機設定序列化失敗"];
-				    return;					
+				    [DYYYUtils showToast:@"本機設定序列化失敗"];
+				    return;
 			    }
 
 			    NSData *sortedJsonData = [NSJSONSerialization dataWithJSONObject:originalData options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys error:&error];
 			    if (error || !sortedJsonData) {
-				    [DYYYManager showToast:@"排序資料序列化失敗"];
-				    return;				
+				    [DYYYUtils showToast:@"排序資料序列化失敗"];
+				    return;
 			    }
 
 			    // 创建临时文件
@@ -2260,8 +2265,8 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    NSString *tempFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFile];
 
 			    if (![sortedJsonData writeToFile:tempFilePath atomically:YES]) {
-				    [DYYYManager showToast:@"臨時檔案建立失敗"];
-				    return;				
+				    [DYYYUtils showToast:@"臨時檔案建立失敗"];
+				    return;
 			    }
 
 			    UIDocumentPickerViewController *documentPicker = [[UIDocumentPickerViewController alloc] initWithURLs:@[ [NSURL fileURLWithPath:tempFilePath] ]
@@ -2270,7 +2275,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    DYYYBackupPickerDelegate *pickerDelegate = [[DYYYBackupPickerDelegate alloc] init];
 			    pickerDelegate.tempFilePath = tempFilePath;
 			    pickerDelegate.completionBlock = ^(NSURL *url) {
-			      [DYYYManager showToast:@"本機設定已儲存"];
+			      [DYYYUtils showToast:@"本機設定已儲存"];
 			    };
 
 			    static char kABTestConfigPickerDelegateKey;
@@ -2318,7 +2323,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 				BOOL success = [[NSFileManager defaultManager] copyItemAtPath:sourcePath toPath:destPath error:&error];
 
 				NSString *message = success ? @"設定已匯入，重啟抖音生效" : [NSString stringWithFormat:@"匯入失敗: %@", error.localizedDescription];
-				[DYYYManager showToast:message];
+				[DYYYUtils showToast:message];
 
 				if (success) {
 					gFixedABTestData = nil;
@@ -2350,18 +2355,18 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 				    BOOL success = [[NSFileManager defaultManager] removeItemAtPath:configPath error:&error];
 
 				    NSString *message = success ? @"本機設定已刪除成功" : [NSString stringWithFormat:@"刪除失敗: %@", error.localizedDescription];
-				    [DYYYManager showToast:message];
+				    [DYYYUtils showToast:message];
 
 				    if (success) {
 					    gFixedABTestData = nil;
 					    onceToken = 0;
 					    // 删除成功后修改 SaveABTestConfigFile item 的状态
-					    saveABTestConfigFileItemRef.detail = @"(文件已刪除)";
+					    saveABTestConfigFileItemRef.detail = @"(檔案已刪除)";
 					    saveABTestConfigFileItemRef.isEnable = NO;
 					    [DYYYSettingsHelper refreshTableView];
 				    }
 			    } else {
-				    [DYYYManager showToast:@"本機設定不存在"];
+				    [DYYYUtils showToast:@"本機設定不存在"];
 			    }
 			  };
 		  }
@@ -2381,7 +2386,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"禁止側滑進入邊欄",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_circlearrowin_outlined_20"},			
+		    @"imageName" : @"ic_circlearrowin_outlined_20"},
 		  @{@"identifier" : @"DYYYVideoGesture",
 		    @"title" : @"橫向影片交互增強",
 		    @"detail" : @"",
@@ -2451,7 +2456,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"title" : @"禁用點擊首頁重新整理",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_arrowcircle_outlined_20"}			
+		    @"imageName" : @"ic_arrowcircle_outlined_20"}
 	  ];
 
 	  for (NSDictionary *dict in interactionSettings) {
@@ -2668,7 +2673,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 						   buttonSizeItem.detail = [NSString stringWithFormat:@"%.0f", (CGFloat)size];
 						   [DYYYSettingsHelper refreshTableView];
 					   } else {
-						   [DYYYManager showToast:@"請輸入20-60之間的有效數值"];
+						   [DYYYUtils showToast:@"請輸入20-60之間的有效數值"];
 					   }
 					 }
 					  onCancel:nil];
@@ -2717,7 +2722,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 						   clearButtonSizeItem.detail = [NSString stringWithFormat:@"%.0f", (CGFloat)size];
 						   [DYYYSettingsHelper refreshTableView];
 					   } else {
-						   [DYYYManager showToast:@"請輸入20-60之間的有效數值"];
+						   [DYYYUtils showToast:@"請輸入20-60之間的有效數值"];
 					   }
 					 }
 					  onCancel:nil];
@@ -2861,7 +2866,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  NSData *sortedJsonData = [NSJSONSerialization dataWithJSONObject:dyyySettings options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys error:&error];
 
 	  if (error) {
-		  [DYYYManager showToast:@"備份失敗：無法序列化設定資料"];
+		  [DYYYUtils showToast:@"備份失敗：無法序列化設定資料"];
 		  return;
 	  }
 
@@ -2875,7 +2880,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  BOOL success = [sortedJsonData writeToFile:tempFilePath atomically:YES];
 
 	  if (!success) {
-		  [DYYYManager showToast:@"備份失敗：無法建立臨時檔案"];
+		  [DYYYUtils showToast:@"備份失敗：無法建立臨時檔案"];
 		  return;
 	  }
 
@@ -2887,7 +2892,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  pickerDelegate.tempFilePath = tempFilePath; // 设置临时文件路径
 	  pickerDelegate.completionBlock = ^(NSURL *url) {
 	    // 备份成功
-	    [DYYYManager showToast:@"備份成功"];
+	    [DYYYUtils showToast:@"備份成功"];
 	  };
 
 	  static char kDYYYBackupPickerDelegateKey;
@@ -2919,7 +2924,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	    NSData *jsonData = [NSData dataWithContentsOfURL:url];
 
 	    if (!jsonData) {
-		    [DYYYManager showToast:@"無法讀取備份檔案"];
+		    [DYYYUtils showToast:@"無法讀取備份檔案"];
 		    return;
 	    }
 
@@ -2927,7 +2932,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	    NSDictionary *dyyySettings = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&jsonError];
 
 	    if (jsonError || ![dyyySettings isKindOfClass:[NSDictionary class]]) {
-		    [DYYYManager showToast:@"備份檔案格式錯誤"];
+		    [DYYYUtils showToast:@"備份檔案格式錯誤"];
 		    return;
 	    }
 
@@ -2966,7 +2971,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	    }
 	    [defaults synchronize];
 
-	    [DYYYManager showToast:@"設定已恢復，請重啟應用以應用所有更改"];
+	    [DYYYUtils showToast:@"設定已恢復，請重啟應用以應用所有更改"];
 
 	    [DYYYSettingsHelper refreshTableView];
 	  };
@@ -3022,13 +3027,13 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 						    [[NSFileManager defaultManager] removeItemAtPath:plistPath error:&error];
 
 						    if (!error) {
-							    [DYYYManager showToast:@"抖音設定已清除，應用即將退出"];
+							    [DYYYUtils showToast:@"抖音設定已清除，應用即將退出"];
 
 							    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
 							      exit(0);
 							    });
 						    } else {
-							    [DYYYManager showToast:[NSString stringWithFormat:@"清除失敗: %@", error.localizedDescription]];
+							    [DYYYUtils showToast:[NSString stringWithFormat:@"清除失敗: %@", error.localizedDescription]];
 						    }
 					    }
 					  }];
@@ -3055,7 +3060,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 						    }
 					    }
 					    [defaults synchronize];
-					    [DYYYManager showToast:@"插件設定已清除，請重啟應用"];
+					    [DYYYUtils showToast:@"插件設定已清除，請重啟應用"];
 					  }];
 	      }];
 	};
@@ -3104,7 +3109,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 
 				      float sizeInMB = totalSize / 1024.0 / 1024.0;
 				      NSString *toastMsg = [NSString stringWithFormat:@"已清理 %.2f MB 的快取", sizeInMB];
-				      [DYYYManager showToast:toastMsg];
+				      [DYYYUtils showToast:toastMsg];
 				    }];
 	};
 	[cleanupItems addObject:cleanCacheItem];
