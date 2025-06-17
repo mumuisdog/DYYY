@@ -442,7 +442,7 @@
 			timer = nil;
 		}
 		void (^tryFindAndSetPureMode)(void) = ^{
-		  UIWindow *keyWindow = [DYYYManager getActiveWindow];
+		  UIWindow *keyWindow = [DYYYUtils getActiveWindow];
 		  if (keyWindow && keyWindow.rootViewController) {
 			  UIViewController *feedVC = [self findViewController:keyWindow.rootViewController ofClass:NSClassFromString(@"AWEFeedTableViewController")];
 			  if (feedVC) {
@@ -800,7 +800,7 @@
 			}
 		}
 
-		BOOL isDarkMode = [DYYYManager isDarkMode];
+		BOOL isDarkMode = [DYYYUtils isDarkMode];
 
 		UIBlurEffectStyle blurStyle = isDarkMode ? UIBlurEffectStyleDark : UIBlurEffectStyleLight;
 
@@ -1505,7 +1505,7 @@ static CGFloat rightLabelRightMargin = -1;
 	} else {
 		NSString *labelColor = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYLabelColor"];
 		if (labelColor.length > 0) {
-			label.textColor = [DYYYManager colorWithHexString:labelColor];
+			label.textColor = [DYYYUtils colorWithHexString:labelColor];
 		}
 	}
 	return label;
@@ -1805,7 +1805,7 @@ static CGFloat rightLabelRightMargin = -1;
 		}
 	}
 
-	BOOL isDarkMode = [DYYYManager isDarkMode];
+	BOOL isDarkMode = [DYYYUtils isDarkMode];
 	UIBlurEffectStyle blurStyle = isDarkMode ? UIBlurEffectStyleDark : UIBlurEffectStyleLight;
 	UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:blurStyle];
 	UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
@@ -2013,7 +2013,7 @@ static CGFloat rightLabelRightMargin = -1;
 %hook AWELongPressPanelABSettings
 + (NSUInteger)modernLongPressPanelStyleMode {
 	if (DYYYGetBool(@"DYYYModernPanelFollowSystem")) {
-		BOOL isDarkMode = [DYYYManager isDarkMode];
+		BOOL isDarkMode = [DYYYUtils isDarkMode];
 		return isDarkMode ? 1 : 2;
 	} else if (DYYYGetBool(@"DYYYisEnableModernLight")) {
 		return 2;
@@ -2027,7 +2027,7 @@ static CGFloat rightLabelRightMargin = -1;
 %hook AWEModernLongPressPanelUIConfig
 + (NSUInteger)modernLongPressPanelStyleMode {
 	if (DYYYGetBool(@"DYYYModernPanelFollowSystem")) {
-		BOOL isDarkMode = [DYYYManager isDarkMode];
+		BOOL isDarkMode = [DYYYUtils isDarkMode];
 		return isDarkMode ? 1 : 2;
 	} else if (DYYYGetBool(@"DYYYisEnableModernLight")) {
 		return 2;
@@ -2244,7 +2244,7 @@ static BOOL isDownloadFlied = NO;
 				}
 
 				NSURL *heifURL = [NSURL URLWithString:urlString];
-				[DYYYManager downloadMedia:heifURL
+				[DYYYUtils downloadMedia:heifURL
 						 mediaType:MediaTypeHeic
 						completion:^(BOOL success){
 						}];
@@ -2309,7 +2309,7 @@ static __weak YYAnimatedImageView *targetStickerView = nil;
 									 if (targetStickerView) {
 										 [DYYYUtils saveAnimatedSticker:targetStickerView];
 									 } else {
-										 [DYYYManager showToast:@"無法取得表情視圖"];
+										 [DYYYUtils showToast:@"無法取得表情視圖"];
 									 }
 								       }];
 
@@ -2365,7 +2365,7 @@ static __weak YYAnimatedImageView *targetStickerView = nil;
 	// 获取表情包URL
 	AWEIMEmoticonModel *emoticonModel = self.model;
 	if (!emoticonModel) {
-		[DYYYManager showToast:@"無法獲取表情包資訊"];
+		[DYYYUtils showToast:@"無法獲取表情包資訊"];
 		return;
 	}
 
@@ -2389,7 +2389,7 @@ static __weak YYAnimatedImageView *targetStickerView = nil;
 	}
 
 	if (!urlString) {
-		[DYYYManager showToast:@"無法獲取表情包連結"];
+		[DYYYUtils showToast:@"無法獲取表情包連結"];
 		return;
 	}
 
@@ -4621,11 +4621,11 @@ static AWEIMReusableCommonCell *currentCell;
 									      completion:^(BOOL success) {
 										if (success) {
 										} else {
-											[DYYYManager showToast:@"圖片儲存已取消"];
+											[DYYYUtils showToast:@"圖片儲存已取消"];
 										}
 									      }];
 						      } else {
-							      [DYYYManager showToast:@"沒有找到合適格式的圖片"];
+							      [DYYYUtils showToast:@"沒有找到合適格式的圖片"];
 						      }
 					      }
 				      } else if (isNewLivePhoto) {
@@ -4742,7 +4742,7 @@ static AWEIMReusableCommonCell *currentCell;
 					      }
 
 					      if (livePhotos.count == 0 && imageURLs.count == 0) {
-						      [DYYYManager showToast:@"沒有找到合適格式的圖片"];
+						      [DYYYUtils showToast:@"沒有找到合適格式的圖片"];
 					      }
 					    }];
 				[actions addObject:downloadAllAction];
@@ -4773,7 +4773,7 @@ static AWEIMReusableCommonCell *currentCell;
 															  handler:^{
 															    NSString *shareLink = [awemeModel valueForKey:@"shareURL"];
 															    if (shareLink.length == 0) {
-																    [DYYYManager showToast:@"無法取得分享連結"];
+																    [DYYYUtils showToast:@"無法取得分享連結"];
 																    return;
 															    }
 
@@ -4842,7 +4842,7 @@ static AWEIMReusableCommonCell *currentCell;
 						  completion:^(BOOL success, NSString *message) {
 						    if (success) {
 						    } else {
-							    [DYYYManager showToast:[NSString stringWithFormat:@"影片製作失敗: %@", message]];
+							    [DYYYUtils showToast:[NSString stringWithFormat:@"影片製作失敗: %@", message]];
 						    }
 						  }];
 					    }];
@@ -4924,7 +4924,7 @@ static AWEIMReusableCommonCell *currentCell;
 
 %new
 - (void)updateDarkModeAppearance {
-	BOOL isDarkMode = [DYYYManager isDarkMode];
+	BOOL isDarkMode = [DYYYUtils isDarkMode];
 
 	UIView *contentView = self.view.subviews.count > 1 ? self.view.subviews[1] : nil;
 	if (contentView) {
@@ -4997,13 +4997,13 @@ static AWEIMReusableCommonCell *currentCell;
 	%orig;
 
 	if (newWindow) {
-		BOOL isDarkMode = [DYYYManager isDarkMode];
+		BOOL isDarkMode = [DYYYUtils isDarkMode];
 		self.keyboardAppearance = isDarkMode ? UIKeyboardAppearanceDark : UIKeyboardAppearanceLight;
 	}
 }
 
 - (BOOL)becomeFirstResponder {
-	BOOL isDarkMode = [DYYYManager isDarkMode];
+	BOOL isDarkMode = [DYYYUtils isDarkMode];
 	self.keyboardAppearance = isDarkMode ? UIKeyboardAppearanceDark : UIKeyboardAppearanceLight;
 	return %orig;
 }
@@ -5016,13 +5016,13 @@ static AWEIMReusableCommonCell *currentCell;
 	%orig;
 
 	if (newWindow) {
-		BOOL isDarkMode = [DYYYManager isDarkMode];
+		BOOL isDarkMode = [DYYYUtils isDarkMode];
 		self.keyboardAppearance = isDarkMode ? UIKeyboardAppearanceDark : UIKeyboardAppearanceLight;
 	}
 }
 
 - (BOOL)becomeFirstResponder {
-	BOOL isDarkMode = [DYYYManager isDarkMode];
+	BOOL isDarkMode = [DYYYUtils isDarkMode];
 	self.keyboardAppearance = isDarkMode ? UIKeyboardAppearanceDark : UIKeyboardAppearanceLight;
 	return %orig;
 }
@@ -5046,7 +5046,7 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
 		}
 	}
 
-	BOOL isDarkMode = [DYYYManager isDarkMode];
+	BOOL isDarkMode = [DYYYUtils isDarkMode];
 	UIBlurEffectStyle blurStyle = isDarkMode ? UIBlurEffectStyleDark : UIBlurEffectStyleLight;
 
 	if (transparency <= 0 || transparency > 1) {
