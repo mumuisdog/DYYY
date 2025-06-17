@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 #import <signal.h>
 #import "DYYYFloatSpeedButton.h"
+#import "DYYYUtils.h"
 
 void updateClearButtonVisibility(void);
 void showClearButton(void);
@@ -383,7 +384,7 @@ static void initTargetClassNames(void) {
 		// 保存锁定状态
 		[self saveLockState];
 		NSString *toastMessage = self.isLocked ? @"按鈕已鎖定" : @"按鈕已解鎖";
-		[DYYYManager showToast:toastMessage];
+		[DYYYUtils showToast:toastMessage];
 		if (@available(iOS 10.0, *)) {
 			UIImpactFeedbackGenerator *generator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
 			[generator prepare];
