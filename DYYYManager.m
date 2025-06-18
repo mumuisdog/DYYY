@@ -12,6 +12,7 @@
 #import <objc/runtime.h>
 
 #import "DYYYToast.h"
+#import "DYYYUtils.h"
 
 @interface DYYYManager () {
   AVAssetExportSession *session;
@@ -30,12 +31,12 @@
     NSMutableDictionary<NSString *, DYYYToast *> *progressViews;
 @property(nonatomic, strong) NSOperationQueue *downloadQueue;
 @property(nonatomic, strong) NSMutableDictionary<NSString *, NSNumber *>
-    *taskProgressMap; // 添加進度映射
+    *taskProgressMap;
 @property(nonatomic, strong)
     NSMutableDictionary<NSString *, void (^)(BOOL success, NSURL *fileURL)>
-        *completionBlocks; // 添加完成回調儲存
+        *completionBlocks;
 @property(nonatomic, strong) NSMutableDictionary<NSString *, NSNumber *>
-    *mediaTypeMap; // 添加媒體類型映射
+    *mediaTypeMap;
 
 // 批次下載相關屬性
 @property(nonatomic, strong) NSMutableDictionary<NSString *, NSString *>
@@ -74,13 +75,13 @@
     _progressViews = [NSMutableDictionary dictionary];
     _downloadQueue = [[NSOperationQueue alloc] init];
     _downloadQueue.maxConcurrentOperationCount =
-        3; // 最多3個並發下載
+        3;
     _taskProgressMap =
-        [NSMutableDictionary dictionary]; // 初始化進度映射
+        [NSMutableDictionary dictionary];
     _completionBlocks =
-        [NSMutableDictionary dictionary]; // 初始化完成回調
+        [NSMutableDictionary dictionary];
     _mediaTypeMap =
-        [NSMutableDictionary dictionary]; // 初始化媒體類型映射
+        [NSMutableDictionary dictionary];
 
     // 初始化批次下載相關字典
     _downloadToBatchMap = [NSMutableDictionary dictionary];
@@ -91,46 +92,6 @@
     _batchCompletionBlocks = [NSMutableDictionary dictionary];
   }
   return self;
-}
-
-+ (UIWindow *)getActiveWindow {
-  if (@available(iOS 15.0, *)) {
-    for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-      if ([scene isKindOfClass:[UIWindowScene class]] &&
-          scene.activationState == UISceneActivationStateForegroundActive) {
-        for (UIWindow *w in ((UIWindowScene *)scene).windows) {
-          if (w.isKeyWindow)
-            return w;
-        }
-      }
-    }
-    return nil;
-  } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    return [UIApplication sharedApplication].windows.firstObject;
-#pragma clang diagnostic pop
-  }
-}
-
-+ (UIViewController *)getActiveTopController {
-  UIWindow *window = [self getActiveWindow];
-  if (!window)
-    return nil;
-
-  UIViewController *topController = window.rootViewController;
-  while (topController.presentedViewController) {
-    topController = topController.presentedViewController;
-  }
-
-  return topController;
-}
-
-+ (void)showToast:(NSString *)text {
-  Class toastClass = NSClassFromString(@"DUXToast");
-  if (toastClass && [toastClass respondsToSelector:@selector(showText:)]) {
-    [toastClass performSelector:@selector(showText:) withObject:text];
-  }
 }
 
 + (void)saveMedia:(NSURL *)mediaURL
@@ -166,7 +127,7 @@
                                                  }
                                                }];
                               } else {
-                                [self showToast:@"轉換失敗"];
+                                [DYYYUtils showToast:@"轉換失敗"];
                                 // 清理臨時檔案
                                 [[NSFileManager defaultManager]
                                     removeItemAtPath:mediaURL.path
@@ -194,7 +155,7 @@
                                              }
                                            }];
                         } else {
-                          [self showToast:@"轉換失敗"];
+                          [DYYYUtils showToast:@"轉換失敗"];
                           // 清理臨時檔案
                           [[NSFileManager defaultManager]
                               removeItemAtPath:mediaURL.path
@@ -225,7 +186,7 @@
                     completion();
                   }
                 } else {
-                  [self showToast:@"儲存失敗"];
+                  [DYYYUtils showToast:@"儲存失敗"];
                 }
                 // 不管成功失敗都清理臨時檔案
                 [[NSFileManager defaultManager] removeItemAtPath:mediaURL.path
@@ -254,7 +215,7 @@
                   completion();
                 }
               } else {
-                [self showToast:@"儲存失敗"];
+                [DYYYUtils showToast:@"儲存失敗"];
               }
               // 不管成功失敗都清理臨時檔案
               [[NSFileManager defaultManager] removeItemAtPath:mediaURL.path
@@ -350,7 +311,7 @@
             completion();
           }
         } else {
-          [self showToast:@"儲存失敗"];
+          [DYYYUtils showToast:@"儲存失敗"];
         }
         // 不管成功失敗都清理臨時檔案
         [[NSFileManager defaultManager] removeItemAtPath:gifURL.path error:nil];
@@ -1046,7 +1007,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
           [[NSFileManager defaultManager] removeItemAtPath:imagePath error:nil];
           [[NSFileManager defaultManager] removeItemAtPath:videoPath error:nil];
           [manager.fileLinks removeObjectForKey:uniqueKey];
-          [DYYYManager showToast:@"儲存原況照片失敗"];
+          [DYYYUtils showToast:@"儲存原況照片失敗"];
         }
       } else {
         // 清理不完整的檔案
@@ -1055,7 +1016,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
         if (videoExists)
           [[NSFileManager defaultManager] removeItemAtPath:videoPath error:nil];
         [manager.fileLinks removeObjectForKey:uniqueKey];
-        [DYYYManager showToast:@"下載原況照片失敗"];
+        [DYYYUtils showToast:@"下載原況照片失敗"];
       }
 
       if (completion) {
@@ -1630,7 +1591,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
       [self.mediaTypeMap removeObjectForKey:downloadIDForTask];
 
       if (error.code != NSURLErrorCancelled) {
-        [DYYYManager showToast:@"下載失敗"];
+        [DYYYUtils showToast:@"下載失敗"];
       }
 
       if (completionBlock) {
@@ -1702,8 +1663,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
     }];
   } else {
     dispatch_async(dispatch_get_main_queue(), ^{
-      [DYYYManager
-          showToast:@"目前iOS版本不支援原況照片，將分別儲存圖片和影片"];
+      [DYYYUtils showToast:@"目前iOS版本不支援原況照片，將分別儲存圖片和影片"];
     });
   }
 }
@@ -1949,7 +1909,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
 
     if (!supportsLivePhoto) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self showToast:@"目前iOS版本不支援原況照片"];
+            [DYYYUtils showToast:@"目前iOS版本不支援原況照片"];
             if (completion) {
                 completion(0, livePhotos.count);
             }
@@ -2135,7 +2095,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
                     // 没有相册权限
                     dispatch_async(dispatch_get_main_queue(), ^{
                         [progressView dismiss];
-                        [self showToast:@"沒有照片App權限，無法儲存原況照片"];
+                        [DYYYUtils showToast:@"沒有照片App權限，無法儲存原況照片"];
                         
                         [fileManager removeItemAtPath:livePhotoPath error:nil];
                         
@@ -2376,7 +2336,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
 + (void)parseAndDownloadVideoWithShareLink:(NSString *)shareLink
                                     apiKey:(NSString *)apiKey {
   if (shareLink.length == 0 || apiKey.length == 0) {
-    [self showToast:@"分享連結或API提示無效"];
+    [DYYYUtils showToast:@"分享連結或API提示無效"];
     return;
   }
 
@@ -2396,7 +2356,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
                             NSError *error) {
           dispatch_async(dispatch_get_main_queue(), ^{
             if (error) {
-              [self showToast:[NSString
+              [DYYYUtils showToast:[NSString
                                   stringWithFormat:@"接口請求失敗: %@",
                                                    error.localizedDescription]];
               return;
@@ -2408,13 +2368,13 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
                                                 options:0
                                                   error:&jsonError];
             if (jsonError) {
-              [self showToast:@"解析接口返回資料失敗"];
+              [DYYYUtils showToast:@"解析接口返回資料失敗"];
               return;
             }
 
             NSInteger code = [json[@"code"] integerValue];
             if (code != 0 && code != 200) {
-              [self showToast:[NSString stringWithFormat:@"接口返回錯誤: %@",
+              [DYYYUtils showToast:[NSString stringWithFormat:@"接口返回錯誤: %@",
                                                          json[@"msg"]
                                                              ?: @"未知錯誤"]];
               return;
@@ -2422,11 +2382,11 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
 
             NSDictionary *dataDict = json[@"data"];
             if (!dataDict) {
-              [self showToast:@"接口返回資料為空"];
+              [DYYYUtils showToast:@"接口返回資料為空"];
               return;
             }
-
-            // 检测接口格式并处理
+            
+            // 交给handleVideoData处理数据
             [self handleVideoData:dataDict];
           });
         }];
@@ -2435,17 +2395,13 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
 }
 
 + (void)handleVideoData:(NSDictionary *)dataDict {
-    // 尝试获取视频URL
-    NSString *singleVideoURL = nil;
-    if (dataDict[@"url"] && [dataDict[@"url"] length] > 0) {
-        singleVideoURL = dataDict[@"url"];
-    } else if (dataDict[@"video"] && [dataDict[@"video"] length] > 0) {
-        singleVideoURL = dataDict[@"video"];
-    } else if (dataDict[@"video_url"] && [dataDict[@"video_url"] length] > 0) {
-        singleVideoURL = dataDict[@"video_url"];
-    }
-    
-    // 尝试获取封面URL
+    // 首先检查videos和images数组
+    NSArray *videoList = dataDict[@"video_list"];
+    NSArray *videos = dataDict[@"videos"];
+    NSArray *images = dataDict[@"images"];
+    NSArray *imgArray = dataDict[@"img"];
+
+    // 获取封面URL
     NSString *coverURL = nil;
     if (dataDict[@"cover"] && [dataDict[@"cover"] length] > 0) {
         coverURL = dataDict[@"cover"];
@@ -2453,93 +2409,30 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
         coverURL = dataDict[@"pics"];
     }
     
-    // 尝试获取音乐URL
-    NSString *musicURL = nil;
-    if (dataDict[@"music"] && [dataDict[@"music"] length] > 0) {
-        musicURL = dataDict[@"music"];
-    } else if (dataDict[@"music_url"] && [dataDict[@"music_url"] length] > 0) {
-        musicURL = dataDict[@"music_url"];
-    }
-    
-    // 获取其他信息
-    NSString *title = dataDict[@"title"];
-    NSString *author = dataDict[@"author"];
-    
-    // 如果有单一视频URL，处理单视频格式
-    if (singleVideoURL && singleVideoURL.length > 0) {
-        [self handleSingleVideoFormat:@{
-            @"url": singleVideoURL,
-            @"cover": coverURL ?: @"",
-            @"music": musicURL ?: @"",
-            @"title": title ?: @"",
-            @"author": author ?: @""
-        }];
-        return;
-    }
-    
-    // 处理多媒体格式（原有逻辑）
-    NSArray *videos = dataDict[@"videos"];
-    NSArray *images = dataDict[@"images"];
-    NSArray *videoList = dataDict[@"video_list"];
-    NSArray *imgArray = dataDict[@"img"];
-    
-    BOOL hasVideos = [videos isKindOfClass:[NSArray class]] && videos.count > 0;
-    BOOL hasImages = [images isKindOfClass:[NSArray class]] && images.count > 0;
-    BOOL hasImgArray = [imgArray isKindOfClass:[NSArray class]] && imgArray.count > 0;
+    // 检查是否有视频列表(优先处理)
     BOOL hasVideoList = [videoList isKindOfClass:[NSArray class]] && videoList.count > 0;
-    BOOL shouldShowQualityOptions = [[NSUserDefaults standardUserDefaults]
-                                      boolForKey:@"DYYYShowAllVideoQuality"];
-
-    // 如果启用了显示清晰度选项，并且存在 videoList，则弹出选择面板
-    if (shouldShowQualityOptions && hasVideoList) {
-        AWEUserActionSheetView *actionSheet =
-            [[NSClassFromString(@"AWEUserActionSheetView") alloc] init];
+    if (hasVideoList) {
+        AWEUserActionSheetView *actionSheet = [[NSClassFromString(@"AWEUserActionSheetView") alloc] init];
         NSMutableArray *actions = [NSMutableArray array];
 
         for (NSDictionary *videoDict in videoList) {
             NSString *url = videoDict[@"url"];
             NSString *level = videoDict[@"level"];
             if (url.length > 0 && level.length > 0) {
-                AWEUserSheetAction *qualityAction = [NSClassFromString(
-                    @"AWEUserSheetAction")
+                AWEUserSheetAction *qualityAction = [NSClassFromString(@"AWEUserSheetAction")
                     actionWithTitle:level
                             imgName:nil
                             handler:^{
-                              NSURL *videoDownloadUrl =
-                                  [NSURL URLWithString:url];
-                              [self
-                                  downloadMedia:videoDownloadUrl
-                                      mediaType:MediaTypeVideo
-                                     completion:^(BOOL success) {
-                                       if (success) {
-                                       } else {
-                                         [self showToast:
-                                                   [NSString
-                                                       stringWithFormat:
-                                                           @"已取消儲存 (%@)",
-                                                           level]];
-                                       }
-                                     }];
+                              NSURL *videoDownloadUrl = [NSURL URLWithString:url];
+                              [self downloadMedia:videoDownloadUrl
+                                        mediaType:MediaTypeVideo
+                                       completion:^(BOOL success) {
+                                         if (!success) {
+                                         }
+                                       }];
                             }];
                 [actions addObject:qualityAction];
             }
-        }
-
-        // 附加批量下载选项（如果开启清晰度选项 + 有视频/图片）
-        if (hasVideos || hasImages || hasImgArray) {
-            AWEUserSheetAction *batchDownloadAction =
-                [NSClassFromString(@"AWEUserSheetAction")
-                    actionWithTitle:@"批次下載所有資源"
-                            imgName:nil
-                            handler:^{
-                              // 合并图片数组
-                              NSMutableArray *allImages = [NSMutableArray array];
-                              if (hasImages) [allImages addObjectsFromArray:images];
-                              if (hasImgArray) [allImages addObjectsFromArray:imgArray];
-                              
-                              [self batchDownloadResources:videos images:allImages];
-                            }];
-            [actions addObject:batchDownloadAction];
         }
 
         if (actions.count > 0) {
@@ -2549,250 +2442,164 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
         }
     }
 
-    // 如果未开启清晰度选项，但有 video_list，自动下载第一个清晰度
-    if (!shouldShowQualityOptions && hasVideoList) {
-        NSDictionary *firstVideo = videoList.firstObject;
-        NSString *url = firstVideo[@"url"];
-        NSString *level = firstVideo[@"level"] ?: @"預設解析度";
+    // 尝试获取视频URL
+    NSString *singleVideoURL = nil;
+    if (dataDict[@"url"] && [dataDict[@"url"] length] > 0) {
+        singleVideoURL = dataDict[@"url"];
+    } else if (dataDict[@"video"] && [dataDict[@"video"] length] > 0) {
+        singleVideoURL = dataDict[@"video"];
+    } else if (dataDict[@"video_url"] && [dataDict[@"video_url"] length] > 0) {
+        singleVideoURL = dataDict[@"video_url"];
+    }
 
-        if (url.length > 0) {
-            NSURL *videoDownloadUrl = [NSURL URLWithString:url];
-            [self downloadMedia:videoDownloadUrl
-                      mediaType:MediaTypeVideo
-                     completion:^(BOOL success) {
-                       if (success) {
-                       } else {
-                         [self showToast:[NSString stringWithFormat:
-                                                       @"已取消儲存 (%@)",
-                                                       level]];
-                       }
-                     }];
+    // 尝试获取音乐URL
+    NSString *musicURL = nil;
+    if (dataDict[@"music"] && [dataDict[@"music"] length] > 0) {
+        musicURL = dataDict[@"music"];
+    } else if (dataDict[@"music_url"] && [dataDict[@"music_url"] length] > 0) {
+        musicURL = dataDict[@"music_url"];
+    }
+
+    // 确保处理空的videos数组
+    BOOL hasVideos = [videos isKindOfClass:[NSArray class]] && videos.count > 0;
+    BOOL hasImages = [images isKindOfClass:[NSArray class]] && images.count > 0;
+    BOOL hasImgArray = [imgArray isKindOfClass:[NSArray class]] && imgArray.count > 0;
+
+    BOOL shouldShowQualityOptions = [[NSUserDefaults standardUserDefaults]
+                                      boolForKey:@"DYYYShowAllVideoQuality"];
+    
+    // 如果只有图片没有视频，直接处理图片下载
+    if (!hasVideos && singleVideoURL == nil && (hasImages || hasImgArray || coverURL != nil)) {
+        NSMutableArray *allImages = [NSMutableArray array];
+        if (hasImages) [allImages addObjectsFromArray:images];
+        if (hasImgArray) [allImages addObjectsFromArray:imgArray];
+        if (coverURL && coverURL.length > 0 && ![allImages containsObject:coverURL]) {
+            [allImages addObject:coverURL];
+        }
+        
+        if (allImages.count > 0) {
+            if (allImages.count == 1) {
+                // 单张图片直接下载
+                NSURL *imageDownloadUrl = [NSURL URLWithString:allImages[0]];
+                [self downloadMedia:imageDownloadUrl
+                          mediaType:MediaTypeImage
+                         completion:^(BOOL success) {
+                             if (!success) {
+                                 [DYYYUtils showToast:@"圖片下載失敗"];
+                             }
+                         }];
+            } else {
+                // 多张图片批量下载
+                [self downloadAllImages:allImages];
+            }
             return;
         }
     }
 
-    // 合并所有图片数组进行批量下载
+    // 单个视频情况下的处理
+    if (shouldShowQualityOptions && singleVideoURL && singleVideoURL.length > 0) {
+        AWEUserActionSheetView *actionSheet = [[NSClassFromString(@"AWEUserActionSheetView") alloc] init];
+        NSMutableArray *actions = [NSMutableArray array];
+        
+        AWEUserSheetAction *videoAction = [NSClassFromString(@"AWEUserSheetAction")
+            actionWithTitle:@"下載影片"
+                    imgName:nil
+                    handler:^{
+                      NSURL *videoDownloadUrl = [NSURL URLWithString:singleVideoURL];
+                      [self downloadMedia:videoDownloadUrl
+                                mediaType:MediaTypeVideo
+                               completion:^(BOOL success) {
+                                 if (!success) {
+                                 }
+                               }];
+                    }];
+        [actions addObject:videoAction];
+        
+        if (coverURL && coverURL.length > 0) {
+            AWEUserSheetAction *coverAction = [NSClassFromString(@"AWEUserSheetAction")
+                actionWithTitle:@"下載封面圖"
+                        imgName:nil
+                        handler:^{
+                          NSURL *imageDownloadUrl = [NSURL URLWithString:coverURL];
+                          [self downloadMedia:imageDownloadUrl
+                                    mediaType:MediaTypeImage
+                                   completion:^(BOOL success) {
+                                     if (!success) {
+                                     }
+                                   }];
+                        }];
+            [actions addObject:coverAction];
+        }
+        
+        if (musicURL && musicURL.length > 0) {
+            AWEUserSheetAction *musicAction = [NSClassFromString(@"AWEUserSheetAction")
+                actionWithTitle:@"下載背景音樂"
+                        imgName:nil
+                        handler:^{
+                          NSURL *audioDownloadUrl = [NSURL URLWithString:musicURL];
+                          [self downloadMedia:audioDownloadUrl
+                                    mediaType:MediaTypeAudio
+                                   completion:^(BOOL success) {
+                                     if (!success) {
+                                     }
+                                   }];
+                        }];
+            [actions addObject:musicAction];
+        }
+        
+        // 添加批量下载选项
+        NSMutableArray *allImages = [NSMutableArray array];
+        if (hasImages) [allImages addObjectsFromArray:images];
+        if (hasImgArray) [allImages addObjectsFromArray:imgArray];
+        if (coverURL && coverURL.length > 0 && ![allImages containsObject:coverURL]) {
+            [allImages addObject:coverURL];
+        }
+        
+        if (allImages.count > 0 || singleVideoURL.length > 0) {
+            AWEUserSheetAction *batchDownloadAction = [NSClassFromString(@"AWEUserSheetAction")
+                actionWithTitle:@"批次下載所有資源"
+                        imgName:nil
+                        handler:^{
+                          NSMutableArray *singleVideoArray = nil;
+                          if (singleVideoURL.length > 0) {
+                              singleVideoArray = [NSMutableArray arrayWithObject:@{@"url": singleVideoURL}];
+                          }
+                          [self batchDownloadResources:singleVideoArray images:allImages];
+                        }];
+            [actions addObject:batchDownloadAction];
+        }
+        
+        if (actions.count > 0) {
+            [actionSheet setActions:actions];
+            [actionSheet show];
+            return;
+        }
+    }
+
+    if (!shouldShowQualityOptions && singleVideoURL && singleVideoURL.length > 0) {
+        NSURL *videoDownloadUrl = [NSURL URLWithString:singleVideoURL];
+        [self downloadMedia:videoDownloadUrl
+                  mediaType:MediaTypeVideo
+                 completion:^(BOOL success) {
+                   if (!success) {
+                   }
+                 }];
+        return;
+    }
+
+    // 如果前面的条件都不满足，尝试批量下载所有资源
     NSMutableArray *allImages = [NSMutableArray array];
     if (hasImages) [allImages addObjectsFromArray:images];
     if (hasImgArray) [allImages addObjectsFromArray:imgArray];
-    
-    [self batchDownloadResources:videos images:allImages];
-}
-
-+ (void)handleSingleVideoFormat:(NSDictionary *)dataDict {
-  NSString *videoURL = dataDict[@"url"];
-  NSString *coverURL = dataDict[@"cover"];
-  NSString *musicURL = dataDict[@"music"]; // 新增音乐URL支持  
-  NSString *title = dataDict[@"title"];
-  NSString *author = dataDict[@"author"];
-  
-  if (!videoURL || videoURL.length == 0) {
-    [self showToast:@"影片連結無效"];
-    return;
-  }
-  
-  BOOL shouldShowQualityOptions = [[NSUserDefaults standardUserDefaults]
-      boolForKey:@"DYYYShowAllVideoQuality"];
-  
-  if (shouldShowQualityOptions) {
-    AWEUserActionSheetView *actionSheet =
-        [[NSClassFromString(@"AWEUserActionSheetView") alloc] init];
-    NSMutableArray *actions = [NSMutableArray array];
-    
-    AWEUserSheetAction *videoAction = [NSClassFromString(@"AWEUserSheetAction")
-        actionWithTitle:@"下載影片"
-                imgName:nil
-                handler:^{
-                  NSURL *downloadURL = [NSURL URLWithString:videoURL];
-                  [self downloadMedia:downloadURL
-                            mediaType:MediaTypeVideo
-                           completion:^(BOOL success) {
-                             if (!success) {
-                               [self showToast:@"影片下載失敗"];
-                             }
-                           }];
-                }];
-    [actions addObject:videoAction];
-    
-    if (coverURL && coverURL.length > 0) {
-      AWEUserSheetAction *coverAction = [NSClassFromString(@"AWEUserSheetAction")
-          actionWithTitle:@"下載封面"
-                  imgName:nil
-                  handler:^{
-                    NSURL *downloadURL = [NSURL URLWithString:coverURL];
-                    [self downloadMedia:downloadURL
-                              mediaType:MediaTypeImage
-                             completion:^(BOOL success) {
-                               if (!success) {
-                                 [self showToast:@"封面下載失敗"];
-                               }
-                             }];
-                  }];
-      [actions addObject:coverAction];
+    if (coverURL && coverURL.length > 0 && ![allImages containsObject:coverURL]) {
+        [allImages addObject:coverURL];
     }
     
-    // 下载背景音乐
-    if (musicURL && musicURL.length > 0) {
-      AWEUserSheetAction *musicAction = [NSClassFromString(@"AWEUserSheetAction")
-          actionWithTitle:@"下載背景音樂"
-                  imgName:nil
-                  handler:^{
-                    NSURL *downloadURL = [NSURL URLWithString:musicURL];
-                    [self downloadMedia:downloadURL
-                              mediaType:MediaTypeAudio
-                             completion:^(BOOL success) {
-                               if (!success) {
-                                 [self showToast:@"背景音樂下載失敗"];
-                               }
-                             }];
-                  }];
-      [actions addObject:musicAction];
+    if (allImages.count > 0 || hasVideos) {
+        [self batchDownloadResources:videos images:allImages];
+    } else {
+        [DYYYUtils showToast:@"沒有找到可下載的資源"];
     }
-    
-    // 下载全部选
-    if ((coverURL && coverURL.length > 0) || (musicURL && musicURL.length > 0)) {
-      NSMutableString *allTitle = [NSMutableString stringWithString:@"下載"];
-      [allTitle appendString:@"影片"];
-      if (coverURL && coverURL.length > 0) {
-        [allTitle appendString:@"和封面"];
-      }
-      if (musicURL && musicURL.length > 0) {
-        [allTitle appendString:@"和背景音樂"];
-      }
-
-      AWEUserSheetAction *allAction = [NSClassFromString(@"AWEUserSheetAction")
-          actionWithTitle:allTitle
-                  imgName:nil
-                  handler:^{
-                    // 下载视频				  
-                    NSURL *videoDownloadURL = [NSURL URLWithString:videoURL];
-                    [self downloadMedia:videoDownloadURL
-                              mediaType:MediaTypeVideo
-                             completion:nil];
-
-                    // 下载封面
-                    if (coverURL && coverURL.length > 0) {
-                      NSURL *coverDownloadURL = [NSURL URLWithString:coverURL];
-                      [self downloadMedia:coverDownloadURL
-                                mediaType:MediaTypeImage
-                               completion:nil];
-                    }
-                    
-                    // 下载背景音乐
-                    if (musicURL && musicURL.length > 0) {
-                      NSURL *musicDownloadURL = [NSURL URLWithString:musicURL];
-                      [self downloadMedia:musicDownloadURL
-                                mediaType:MediaTypeAudio
-                               completion:nil];
-                    }
-                  }];
-      [actions addObject:allAction];
-    }
-    
-    if (actions.count > 0) {
-      [actionSheet setActions:actions];
-      [actionSheet show];
-    }
-  } else {
-    NSURL *downloadURL = [NSURL URLWithString:videoURL];
-    [self downloadMedia:downloadURL
-              mediaType:MediaTypeVideo
-             completion:^(BOOL success) {
-               if (!success) {
-                 [self showToast:@"影片下載失敗"];
-               }
-             }];
-  }
-}
-
-+ (void)batchDownloadResources:(NSArray *)videos images:(NSArray *)images {
-  BOOL hasVideos = [videos isKindOfClass:[NSArray class]] && videos.count > 0;
-  BOOL hasImages = [images isKindOfClass:[NSArray class]] && images.count > 0;
-
-  NSMutableArray<id> *videoFiles =
-      [NSMutableArray arrayWithCapacity:videos.count];
-  NSMutableArray<id> *imageFiles =
-      [NSMutableArray arrayWithCapacity:images.count];
-  for (NSInteger i = 0; i < videos.count; i++)
-    [videoFiles addObject:[NSNull null]];
-  for (NSInteger i = 0; i < images.count; i++)
-    [imageFiles addObject:[NSNull null]];
-
-  dispatch_group_t downloadGroup = dispatch_group_create();
-  __block NSInteger totalDownloads = 0;
-  __block NSInteger completedDownloads = 0;
-  __block NSInteger successfulDownloads = 0;
-
-  if (hasVideos) {
-    totalDownloads += videos.count;
-    for (NSInteger i = 0; i < videos.count; i++) {
-      NSDictionary *videoDict = videos[i];
-      NSString *videoUrl = videoDict[@"url"];
-      if (videoUrl.length == 0) {
-        completedDownloads++;
-        continue;
-      }
-      dispatch_group_enter(downloadGroup);
-      NSURL *videoDownloadUrl = [NSURL URLWithString:videoUrl];
-      [self downloadMediaWithProgress:videoDownloadUrl
-                            mediaType:MediaTypeVideo
-                             progress:nil
-                           completion:^(BOOL success, NSURL *fileURL) {
-                             if (success && fileURL) {
-                               @synchronized(videoFiles) {
-                                 videoFiles[i] = fileURL;
-                               }
-                               successfulDownloads++;
-                             }
-                             completedDownloads++;
-                             dispatch_group_leave(downloadGroup);
-                           }];
-    }
-  }
-
-  if (hasImages) {
-    totalDownloads += images.count;
-    for (NSInteger i = 0; i < images.count; i++) {
-      NSString *imageUrl = images[i];
-      if (imageUrl.length == 0) {
-        completedDownloads++;
-        continue;
-      }
-      dispatch_group_enter(downloadGroup);
-      NSURL *imageDownloadUrl = [NSURL URLWithString:imageUrl];
-      [self downloadMediaWithProgress:imageDownloadUrl
-                            mediaType:MediaTypeImage
-                             progress:nil
-                           completion:^(BOOL success, NSURL *fileURL) {
-                             if (success && fileURL) {
-                               @synchronized(imageFiles) {
-                                 imageFiles[i] = fileURL;
-                               }
-                               successfulDownloads++;
-                             }
-                             completedDownloads++;
-                             dispatch_group_leave(downloadGroup);
-                           }];
-    }
-  }
-
-  dispatch_group_notify(downloadGroup, dispatch_get_main_queue(), ^{
-    NSInteger videoSuccessCount = 0;
-    for (id file in videoFiles) {
-      if ([file isKindOfClass:[NSURL class]]) {
-        [self saveMedia:(NSURL *)file mediaType:MediaTypeVideo completion:nil];
-        videoSuccessCount++;
-      }
-    }
-
-    NSInteger imageSuccessCount = 0;
-    for (id file in imageFiles) {
-      if ([file isKindOfClass:[NSURL class]]) {
-        [self saveMedia:(NSURL *)file mediaType:MediaTypeImage completion:nil];
-        imageSuccessCount++;
-      }
-    }
-  });
 }
 
 #define DYYYLogVideo(format, ...) NSLog((@"[DYYY影片合成] " format), ##__VA_ARGS__)
@@ -2802,7 +2609,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
                       bgmURL:(NSString *)bgmURL
                     progress:(void (^)(NSInteger current, NSInteger total, NSString *status))progressBlock
                   completion:(void (^)(BOOL success, NSString *message))completion {
-    DYYYLogVideo(@"開始創建影片 - 圖片數量: %lu, 原況照片數量: %lu, 背景音樂: %@", 
+    DYYYLogVideo(@"開始建立影片 - 圖片數量: %lu, 原況照片數量: %lu, 背景音樂: %@", 
                 (unsigned long)imageURLs.count, 
                 (unsigned long)livePhotos.count, 
                 bgmURL.length > 0 ? @"有" : @"無");
@@ -2840,13 +2647,13 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
         NSError *dirError = nil;
         [fileManager createDirectoryAtPath:mediaPath withIntermediateDirectories:YES attributes:nil error:&dirError];
         if (dirError) {
-            DYYYLogVideo(@"創建臨時目錄失敗: %@", dirError);
+            DYYYLogVideo(@"建立臨時目錄失敗: %@", dirError);
             if (completion) {
-                completion(NO, @"創建臨時資料夾失敗");
+                completion(NO, @"建立臨時資料夾失敗");
             }
             return;
         }
-        DYYYLogVideo(@"成功創建臨時目錄: %@", mediaPath);
+        DYYYLogVideo(@"成功建立臨時目錄: %@", mediaPath);
         
         // 計算總共需要下載的檔案數和合成步驟
         NSInteger totalImages = imageURLs.count;
@@ -3184,11 +2991,11 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
                         @"path": tempVideoPath,
                         @"duration": @5.0
                     }];
-                    DYYYLogVideo(@"成功創建圖片影片片段 %ld/%ld: %@", 
+                    DYYYLogVideo(@"成功建立圖片影片片段 %ld/%ld: %@", 
                                (long)(i+1), (long)imageFiles.count, tempVideoPath);
                 }
             } else {
-                DYYYLogVideo(@"錯誤: 創建圖片影片片段失敗 %ld/%ld", (long)(i+1), (long)imageFiles.count);
+                DYYYLogVideo(@"錯誤: 建立圖片影片片段失敗 %ld/%ld", (long)(i+1), (long)imageFiles.count);
             }
             dispatch_group_leave(processingGroup);
         }];
@@ -3230,7 +3037,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
         }
         
         // 創建AVMutableComposition作為容器
-        DYYYLogVideo(@"開始創建影片合成容器");
+        DYYYLogVideo(@"開始建立影片合成容器");
         AVMutableComposition *composition = [AVMutableComposition composition];
         AVMutableVideoComposition *videoComposition = [AVMutableVideoComposition videoComposition];
         videoComposition.frameDuration = CMTimeMake(1, 30); // 30fps
@@ -3240,7 +3047,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
         AVMutableCompositionTrack *videoTrack = [composition addMutableTrackWithMediaType:AVMediaTypeVideo 
                                                                          preferredTrackID:kCMPersistentTrackID_Invalid];
         if (!videoTrack) {
-            DYYYLogVideo(@"錯誤: 無法創建影片軌道");
+            DYYYLogVideo(@"錯誤: 無法建立影片軌道");
             if (completion) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     completion(NO);
@@ -3253,7 +3060,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
         AVMutableCompositionTrack *audioTrack = [composition addMutableTrackWithMediaType:AVMediaTypeAudio
                                                                          preferredTrackID:kCMPersistentTrackID_Invalid];
         if (!audioTrack) {
-            DYYYLogVideo(@"錯誤: 無法創建音訊軌道");
+            DYYYLogVideo(@"錯誤: 無法建立音訊軌道");
             if (completion) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     completion(NO);
@@ -3425,10 +3232,10 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
         }
         
         // 設置匯出會話
-        DYYYLogVideo(@"創建影片匯出會話，使用最高品質編碼");
+        DYYYLogVideo(@"建立影片匯出會話，使用最高品質編碼");
         AVAssetExportSession *exportSession = [[AVAssetExportSession alloc] initWithAsset:composition presetName:AVAssetExportPresetHighestQuality];
         if (!exportSession) {
-            DYYYLogVideo(@"錯誤: 創建匯出會話失敗");
+            DYYYLogVideo(@"錯誤: 建立匯出會話失敗");
             if (completion) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     completion(NO);
@@ -3523,7 +3330,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
                                                            fileType:AVFileTypeMPEG4
                                                               error:&error];
     if (error) {
-        NSLog(@"創建影片寫入器失敗: %@", error);
+        NSLog(@"建立影片寫入器失敗: %@", error);
         if (completion) completion(NO);
         return;
     }
@@ -3699,13 +3506,13 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
 // 动画贴纸和GIF相关方法迁移自 DYYYUtils.m
 + (void)saveAnimatedSticker:(YYAnimatedImageView *)targetStickerView {
     if (!targetStickerView) {
-        [DYYYManager showToast:@"無法取得表情視圖"];
+        [DYYYUtils showToast:@"無法取得表情視圖"];
         return;
     }
     [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if (status != PHAuthorizationStatusAuthorized) {
-                [DYYYManager showToast:@"需要照片App權限才能儲存"];
+                [DYYYUtils showToast:@"需要照片App權限才能儲存"];
                 return;
             }
             if ([self isBDImageWithHeifURL:targetStickerView.image]) {
@@ -3717,7 +3524,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
                 CGFloat duration = [self getDurationFromYYAnimatedImageView:targetStickerView];
                 if (!images || images.count == 0) {
                     dispatch_async(dispatch_get_main_queue(), ^{
-                        [DYYYManager showToast:@"無法取得表情幀"];
+                        [DYYYUtils showToast:@"無法取得表情幀"];
                     });
                     return;
                 }
@@ -3733,7 +3540,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
                             [DYYYToast showSuccessToastWithMessage:@"已儲存到照片App"];
                         } else {
                             NSString *errorMsg = error ? error.localizedDescription : @"未知錯誤";
-                            [DYYYManager showToast:[NSString stringWithFormat:@"儲存失敗: %@", errorMsg]];
+                            [DYYYUtils showToast:[NSString stringWithFormat:@"儲存失敗: %@", errorMsg]];
                         }
                     }];
                 });
@@ -3758,12 +3565,12 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
     UIImage *image = stickerView.image;
     NSURL *heifURL = [image performSelector:@selector(bd_webURL)];
     if (!heifURL) {
-        [DYYYManager showToast:@"無法取得表情URL"];
+        [DYYYUtils showToast:@"無法取得表情URL"];
         return;
     }
     [DYYYManager convertHeicToGif:heifURL completion:^(NSURL *gifURL, BOOL success) {
         if (!success || !gifURL) {
-            [DYYYManager showToast:@"表情轉換失敗"];
+            [DYYYUtils showToast:@"表情轉換失敗"];
             return;
         }
         [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
@@ -3775,7 +3582,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width,
                     [DYYYToast showSuccessToastWithMessage:@"已儲存到照片App"];
                 } else {
                     NSString *errorMsg = error ? error.localizedDescription : @"未知錯誤";
-                    [DYYYManager showToast:[NSString stringWithFormat:@"儲存失敗: %@", errorMsg]];
+                    [DYYYUtils showToast:[NSString stringWithFormat:@"儲存失敗: %@", errorMsg]];
                 }
                 NSError *removeError = nil;
                 [[NSFileManager defaultManager] removeItemAtURL:gifURL error:&removeError];
