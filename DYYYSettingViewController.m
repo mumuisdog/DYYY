@@ -361,7 +361,6 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
             [DYYYSettingItem itemWithTitle:@"啟用自動勾選原圖" key:@"DYYYisAutoSelectOriginalPhoto" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"資料預設進入作品" key:@"DYYYDefaultEnterWorks" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"禁用自動進入直播" key:@"DYYYDisableAutoEnterLive" type:DYYYSettingItemTypeSwitch],			
-            [DYYYSettingItem itemWithTitle:@"啟用儲存他人頭像" key:@"DYYYEnableSaveAvatar" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"左側邊欄快捷入口" key:@"DYYYentrance" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"接口解析儲存媒體" key:@"DYYYInterfaceDownload" type:DYYYSettingItemTypeTextField placeholder:@"不填關閉"],
             [DYYYSettingItem itemWithTitle:@"接口顯示解析度選項" key:@"DYYYShowAllVideoQuality" type:DYYYSettingItemTypeSwitch],
@@ -369,10 +368,12 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
             [DYYYSettingItem itemWithTitle:@"移除評論圖片水印" key:@"DYYYCommentNotWaterMark" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"禁用雙擊影片按讚" key:@"DYYYDouble" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"儲存評論區表情包" key:@"DYYYForceDownloadEmotion" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"啟用儲存他人頭像" key:@"DYYYEnableSaveAvatar" type:DYYYSettingItemTypeSwitch],			
             [DYYYSettingItem itemWithTitle:@"儲存預覽頁表情包" key:@"DYYYForceDownloadPreviewEmotion" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"儲存聊天頁表情包" key:@"DYYYForceDownloadIMEmotion" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"長按評論複製文案" key:@"DYYYCommentCopyText" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"下載完成震動回饋" key:@"DYYYHapticFeedbackEnabled" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"長按簡介複製文案" key:@"DYYYBioCopyText" type:DYYYSettingItemTypeSwitch],			
             [DYYYSettingItem itemWithTitle:@"禁用點擊首頁重新整理" key:@"DYYYDisableHomeRefresh" type:DYYYSettingItemTypeSwitch]			
         ],
         @[
