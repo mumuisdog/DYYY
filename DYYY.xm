@@ -18,6 +18,45 @@
 #import "DYYYToast.h"
 #import "DYYYUtils.h"
 
+// 长按复制个人简介
+%hook AWEProfileMentionLabel
+
+- (void)layoutSubviews {
+    %orig;
+    
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYBioCopyText"]) {
+        return;
+    }
+    
+    BOOL hasLongPressGesture = NO;
+    for (UIGestureRecognizer *gesture in self.gestureRecognizers) {
+        if ([gesture isKindOfClass:[UILongPressGestureRecognizer class]]) {
+            hasLongPressGesture = YES;
+            break;
+        }
+    }
+    
+    if (!hasLongPressGesture) {
+        UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
+        longPressGesture.minimumPressDuration = 0.5;
+        [self addGestureRecognizer:longPressGesture];
+        self.userInteractionEnabled = YES;
+    }
+}
+
+%new
+- (void)handleLongPress:(UILongPressGestureRecognizer *)gesture {
+    if (gesture.state == UIGestureRecognizerStateBegan) {
+        NSString *bioText = self.text;
+        if (bioText && bioText.length > 0) {
+            [[UIPasteboard generalPasteboard] setString:bioText];
+            [DYYYToast showSuccessToastWithMessage:@"個人簡介已複製"];
+        }
+    }
+}
+
+%end
+
 // 默认视频流最高画质
 %hook AWEVideoModel
 
@@ -3744,11 +3783,8 @@ static AWEIMReusableCommonCell *currentCell;
 - (void)layoutSubviews {
 	%orig;
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideRecommendTips"]) {
-		UIView *parentView = self.superview;
-		if (parentView) {
-			parentView.hidden = YES;
-		} else {
-			self.hidden = YES;
+		if(self.accessibilityLabel) {
+			[self removeFromSuperview];
 		}
 	}
 }
