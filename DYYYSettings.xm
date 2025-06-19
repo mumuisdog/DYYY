@@ -2403,12 +2403,17 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_personcircleclean_outlined_20"},			
 		  @{@"identifier" : @"DYYYCommentCopyText",
-		    @"title" : @"長按評論複製文案",
+		    @"title" : @"長按評論複製評論",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_at_outlined_20"},
 		  @{@"identifier" : @"DYYYBioCopyText",
-		    @"title" : @"長按簡介複製文案",
+		    @"title" : @"長按簡介複製簡介",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_rectangleonrectangleup_outlined_20"},
+		  @{@"identifier" : @"DYYYLongPressCopyTextEnabled",
+		    @"title" : @"長按文案複製文案",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_rectangleonrectangleup_outlined_20"},			
@@ -3080,8 +3085,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	cleanCacheItem.cellType = 26;
 	cleanCacheItem.colorStyle = 0;
 	cleanCacheItem.isEnable = YES;
-
-	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 	  NSString *tempDir = NSTemporaryDirectory();
 	  NSArray<NSString *> *customDirs = @[ @"Caches", @"BDByteCast", @"kitelog" ];
 	  NSString *libraryDir = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES).firstObject;
@@ -3092,61 +3095,28 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			  [allPaths addObject:fullPath];
 		  }
 	  }
+
 	  unsigned long long cacheSize = 0;
 	  for (NSString *basePath in allPaths) {
-		  cacheSize += [DYYYUtils directorySizeAtPath:basePath];
+		  beforeSize += [DYYYUtils directorySizeAtPath:basePath];
 	  }
 	  float cacheMB = cacheSize / 1024.0 / 1024.0;
-
 	  cleanCacheItem.detail = [NSString stringWithFormat:@"%.2f MB", cacheMB];
 	  [DYYYSettingsHelper refreshTableView];
-	});
 
-	cleanCacheItem.cellTappedBlock = ^{
-	  cleanCacheItem.isEnable = NO;
-	  cleanCacheItem.detail = @"清理中...";
-	  [DYYYSettingsHelper refreshTableView];
+	  for (NSString *basePath in allPaths) {
+		  [DYYYUtils removeAllContentsAtPath:basePath];
+	  }
 
-	  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-	    NSString *tempDir = NSTemporaryDirectory();
-	    NSArray<NSString *> *customDirs = @[ @"Caches", @"BDByteCast", @"kitelog" ];
-	    NSString *libraryDir = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES).firstObject;
-	    NSMutableArray<NSString *> *allPaths = [NSMutableArray arrayWithObject:tempDir];
-	    for (NSString *sub in customDirs) {
-		    NSString *fullPath = [libraryDir stringByAppendingPathComponent:sub];
-		    if ([[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
-			    [allPaths addObject:fullPath];
-		    }
-	    }
-
-	    unsigned long long beforeSize = 0;
-	    for (NSString *basePath in allPaths) {
-		    beforeSize += [DYYYUtils directorySizeAtPath:basePath];
-	    }
-	    float beforeMB = beforeSize / 1024.0 / 1024.0;
-
-	    for (NSString *basePath in allPaths) {
-		    [DYYYUtils removeAllContentsAtPath:basePath];
-	    }
-
-	    // 统计清理后大小
-	    unsigned long long afterSize = 0;
-	    for (NSString *basePath in allPaths) {
-		    afterSize += [DYYYUtils directorySizeAtPath:basePath];
-	    }
-	    float afterMB = afterSize / 1024.0 / 1024.0;
-	    float clearedMB = beforeMB - afterMB;
-	    if (clearedMB < 0)
-		    clearedMB = 0;
-
-	    dispatch_async(dispatch_get_main_queue(), ^{
-	      [DYYYUtils showToast:[NSString stringWithFormat:@"已清理 %.2f MB 快取", clearedMB]];
-	      cleanCacheItem.detail = [NSString stringWithFormat:@"%.2f MB", afterMB];
-	      cleanCacheItem.isEnable = YES;
-	      [DYYYSettingsHelper refreshTableView];
-	    });
-	  });
-	  [DYYYSettingsHelper refreshTableView];
+	  unsigned long long afterSize = 0;
+	  for (NSString *basePath in allPaths) {
+		  afterSize += [DYYYUtils directorySizeAtPath:basePath];
+	  }
+	  float afterMB = afterSize / 1024.0 / 1024.0;
+	  float clearedMB = beforeMB - afterMB;
+	  if (clearedMB < 0)
+		  clearedMB = 0;
+	  [DYYYUtils showToast:[NSString stringWithFormat:@"已清理 %.2f MB 快取 clearedMB]];
 	};
 	[cleanupItems addObject:cleanCacheItem];
 
