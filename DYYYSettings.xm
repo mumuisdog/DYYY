@@ -3116,7 +3116,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  float clearedMB = beforeMB - afterMB;
 	  if (clearedMB < 0)
 		  clearedMB = 0;
-	  [DYYYUtils showToast:[NSString stringWithFormat:@"已清理 %.2f MB 快取 clearedMB]];
+	  [DYYYUtils showToast:[NSString stringWithFormat:@"已清理 %.2f MB 快取", clearedMB]];
 	};
 	[cleanupItems addObject:cleanCacheItem];
 
