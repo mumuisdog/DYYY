@@ -3088,7 +3088,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  NSMutableArray<NSString *> *allPaths = [NSMutableArray arrayWithObject:tempDir];
 	  for (NSString *sub in customDirs) {
 		  NSString *fullPath = [libraryDir stringByAppendingPathComponent:sub];
-		  if ([[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {Add commentMore actions
+		  if ([[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
 			  [allPaths addObject:fullPath];
 		  }
 	  }
