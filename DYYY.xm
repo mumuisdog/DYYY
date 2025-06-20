@@ -1069,14 +1069,6 @@ static CGFloat rightLabelRightMargin = -1;
 		BOOL showLeftCompleteTime = [scheduleStyle isEqualToString:@"進度條左側完整"];
 
 		NSString *labelColorHex = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYProgressLabelColor"];
-		UIColor *labelColor = [UIColor whiteColor];
-		if (labelColorHex && labelColorHex.length > 0) {
-			SEL colorSelector = NSSelectorFromString(@"colorWithHexString:");
-			Class dyyyManagerClass = NSClassFromString(@"DYYYManager");
-			if (dyyyManagerClass && [dyyyManagerClass respondsToSelector:colorSelector]) {
-				labelColor = [dyyyManagerClass performSelector:colorSelector withObject:labelColorHex];
-			}
-		}
 
 		CGFloat labelYPosition = sliderOriginalFrameInParent.origin.y + verticalOffset;
 		CGFloat labelHeight = 15.0;
@@ -1085,7 +1077,6 @@ static CGFloat rightLabelRightMargin = -1;
 		if (!showRemainingTime && !showCompleteTime) {
 			UILabel *leftLabel = [[UILabel alloc] init];
 			leftLabel.backgroundColor = [UIColor clearColor];
-			leftLabel.textColor = labelColor;
 			leftLabel.font = labelFont;
 			leftLabel.tag = 10001;
 			if (showLeftRemainingTime)
@@ -1103,12 +1094,13 @@ static CGFloat rightLabelRightMargin = -1;
 
 			leftLabel.frame = CGRectMake(leftLabelLeftMargin, labelYPosition, leftLabel.frame.size.width, labelHeight);
 			[parentView addSubview:leftLabel];
+
+			[DYYYUtils applyColorSettingsToLabel:leftLabel colorHexString:labelColorHex];
 		}
 
 		if (!showLeftRemainingTime && !showLeftCompleteTime) {
 			UILabel *rightLabel = [[UILabel alloc] init];
 			rightLabel.backgroundColor = [UIColor clearColor];
-			rightLabel.textColor = labelColor;
 			rightLabel.font = labelFont;
 			rightLabel.tag = 10002;
 			if (showRemainingTime)
@@ -1126,6 +1118,8 @@ static CGFloat rightLabelRightMargin = -1;
 
 			rightLabel.frame = CGRectMake(rightLabelRightMargin, labelYPosition, rightLabel.frame.size.width, labelHeight);
 			[parentView addSubview:rightLabel];
+
+			[DYYYUtils applyColorSettingsToLabel:rightLabel colorHexString:labelColorHex];
 		}
 
 		[self setNeedsLayout];
@@ -1169,14 +1163,7 @@ static CGFloat rightLabelRightMargin = -1;
 		UILabel *rightLabel = [parentView viewWithTag:10002];
 
 		NSString *labelColorHex = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYProgressLabelColor"];
-		UIColor *labelColor = [UIColor whiteColor];
-		if (labelColorHex && labelColorHex.length > 0) {
-			SEL colorSelector = NSSelectorFromString(@"colorWithHexString:");
-			Class dyyyManagerClass = NSClassFromString(@"DYYYManager");
-			if (dyyyManagerClass && [dyyyManagerClass respondsToSelector:colorSelector]) {
-				labelColor = [dyyyManagerClass performSelector:colorSelector withObject:labelColorHex];
-			}
-		}
+
 		NSString *scheduleStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
 		BOOL showRemainingTime = [scheduleStyle isEqualToString:@"進度條右側剩餘"];
 		BOOL showCompleteTime = [scheduleStyle isEqualToString:@"進度條右側完整"];
@@ -1204,7 +1191,7 @@ static CGFloat rightLabelRightMargin = -1;
 				leftFrame.size.height = 15.0;
 				leftLabel.frame = leftFrame;
 			}
-			leftLabel.textColor = labelColor;
+			[DYYYUtils applyColorSettingsToLabel:leftLabel colorHexString:labelColorHex];
 		}
 
 		// 更新右标签
@@ -1228,7 +1215,7 @@ static CGFloat rightLabelRightMargin = -1;
 				rightFrame.size.height = 15.0;
 				rightLabel.frame = rightFrame;
 			}
-			rightLabel.textColor = labelColor;
+			[DYYYUtils applyColorSettingsToLabel:leftLabel colorHexString:labelColorHex];
 		}
 	}
 }
@@ -1309,6 +1296,10 @@ static CGFloat rightLabelRightMargin = -1;
 
 - (id)timestampLabel {
     UILabel *label = %orig;
+    NSString *labelColorHex = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYLabelColor"];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYEnabsuijiyanse"]) {
+		labelColorHex = @"random_rainbow";
+	}	
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableArea"]) {
         NSString *originalText = label.text ?: @"";
         NSString *cityCode = self.model.cityCode;
@@ -1388,7 +1379,7 @@ static CGFloat rightLabelRightMargin = -1;
                           }
                       }
                       
-                      [DYYYUtils applyColorSettingsToLabel:label];
+                      [DYYYUtils applyColorSettingsToLabel:label colorHexString:labelColorHex];;
                     });
                 } else {
                     [CityManager
@@ -1447,7 +1438,7 @@ static CGFloat rightLabelRightMargin = -1;
                                          }
                                      }
                                      
-                                     [DYYYUtils applyColorSettingsToLabel:label];
+                                     [DYYYUtils applyColorSettingsToLabel:label colorHexString:labelColorHex];;
                                    });
                                }
                              }];
@@ -1471,8 +1462,6 @@ static CGFloat rightLabelRightMargin = -1;
                         label.text = [NSString stringWithFormat:@"%@  IP位置：%@", originalText, cityName];
                     }
                 }
-
-                [DYYYUtils applyColorSettingsToLabel:label];
             }
         }
     }
@@ -1493,7 +1482,7 @@ static CGFloat rightLabelRightMargin = -1;
         label.font = originalFont;
     }
     
-    [DYYYUtils applyColorSettingsToLabel:label];
+    [DYYYUtils applyColorSettingsToLabel:label colorHexString:labelColorHex];;
     
     return label;
 }
@@ -5721,13 +5710,13 @@ static CGFloat currentScale = 1.0;
 	%orig(hidden);
 
 	Class generalButtonClass = %c(AWENormalModeTabBarGeneralButton);
+	BOOL disableHomeRefresh = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableHomeRefresh"];
+	
 	for (UIView *subview in self.subviews) {
 		if ([subview isKindOfClass:generalButtonClass]) {
 			AWENormalModeTabBarGeneralButton *button = (AWENormalModeTabBarGeneralButton *)subview;
-			if ([button.accessibilityLabel isEqualToString:@"首页"] && [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableHomeRefresh"] && button.status == 2) {
-				button.userInteractionEnabled = NO;
-			} else if ([button.accessibilityLabel isEqualToString:@"首页"] && [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDisableHomeRefresh"] && button.status == 1) {
-				button.userInteractionEnabled = YES;
+			if ([button.accessibilityLabel isEqualToString:@"首页"] && disableHomeRefresh) {
+				button.userInteractionEnabled = (button.status != 2);
 			}
 		}
 	}
