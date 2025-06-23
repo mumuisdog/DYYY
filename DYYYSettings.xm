@@ -108,8 +108,8 @@ static AWESettingItemModel *createIconCustomizationItem(NSString *identifier, NS
 			NSError *error = nil;
 			[[NSFileManager defaultManager] removeItemAtPath:imagePath error:&error];
 			if (!error) {
-				item.detail = @"預設";
-				[DYYYSettingsHelper refreshTableView];
+                                item.detail = @"預設";
+                                [item refreshCell];
 			}
 		}
 	      },
@@ -149,8 +149,8 @@ static AWESettingItemModel *createIconCustomizationItem(NSString *identifier, NS
 
 			  // 延迟执行UI更新，确保图片选择器已完全消失且视图已恢复
 			  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-			    item.detail = @"已设置";
-			    [DYYYSettingsHelper refreshTableView];
+                            item.detail = @"已設定";
+                            [item refreshCell];
 			  });
 		  }
 		};
@@ -188,176 +188,120 @@ static void *kViewModelKey = &kViewModelKey;
 %end
 
 static void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed);
+
+static void addDYYYTapGesture(UIView *view, id target) {
+    view.userInteractionEnabled = YES;
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:target action:@selector(openDYYYSettings)];
+    [view addGestureRecognizer:tapGesture];
+}
+
+static UIViewController *findViewController(UIResponder *responder) {
+    while (responder) {
+        if ([responder isKindOfClass:[UIViewController class]]) {
+            return (UIViewController *)responder;
+        }
+        responder = [responder nextResponder];
+    }
+    return nil;
+}
+
+static void openDYYYSettingsWithViewController(UIViewController *vc) {
+    BOOL hasAgreed = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"];
+    showDYYYSettingsVC(vc, hasAgreed);
+}
+
+static void openDYYYSettingsFromView(UIView *view) {
+    UIViewController *currentVC = findViewController(view);
+    if ([currentVC isKindOfClass:%c(AWELeftSideBarViewController)]) {
+        openDYYYSettingsWithViewController(currentVC);
+    }
+}
+
 %hook AWELeftSideBarWeatherLabel
 - (id)initWithFrame:(CGRect)frame {
-	id orig = %orig;
-
-	// 启用用户交互
-	self.userInteractionEnabled = YES;
-
-	// 添加点击手势
-	UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(openDYYYSettings)];
-	[self addGestureRecognizer:tapGesture];
-
-	return orig;
+    id orig = %orig;
+    self.userInteractionEnabled = YES;
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:[UIView class] action:@selector(openDYYYSettingsFromSender:)];
+    objc_setAssociatedObject(tapGesture, "targetView", self, OBJC_ASSOCIATION_ASSIGN);
+    [self addGestureRecognizer:tapGesture];
+    return orig;
 }
-// 重写drawTextInRect方法
+
 - (void)drawTextInRect:(CGRect)rect {
-
-	CGContextRef context = UIGraphicsGetCurrentContext();
-	CGContextSaveGState(context);
-
-	// 清除原有内容
-	CGContextClearRect(context, rect);
-
-	// 设置文本属性
-	UIFont *smallFont = [UIFont systemFontOfSize:12.0];
-	NSDictionary *attributes = @{NSFontAttributeName : smallFont, NSForegroundColorAttributeName : self.textColor};
-
-	[@"DYYY" drawInRect:rect withAttributes:attributes];
-
-	CGContextRestoreGState(context);
-}
-%new
-- (void)openDYYYSettings {
-	// 获取当前视图控制器
-	UIViewController *currentVC = nil;
-	UIResponder *responder = self;
-	while (responder) {
-		if ([responder isKindOfClass:[UIViewController class]]) {
-			currentVC = (UIViewController *)responder;
-			break;
-		}
-		responder = [responder nextResponder];
-	}
-
-	if (!currentVC || ![currentVC isKindOfClass:%c(AWELeftSideBarViewController)]) {
-		return;
-	}
-
-	AWELeftSideBarViewController *sidebarVC = (AWELeftSideBarViewController *)currentVC;
-
-	// 检查用户是否已同意协议
-	BOOL hasAgreed = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"];
-
-	showDYYYSettingsVC(sidebarVC, hasAgreed);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextClearRect(context, rect);
+    
+    NSDictionary *attributes = @{
+        NSFontAttributeName: [UIFont systemFontOfSize:12.0],
+        NSForegroundColorAttributeName: self.textColor
+    };
+    [@"DYYY" drawInRect:rect withAttributes:attributes];
 }
 %end
+
 %hook AWELeftSideBarWeatherView
 - (void)didMoveToSuperview {
-	%orig;
-
-	// 在视图添加到父视图后下移10点
-	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-	  CGRect frame = self.frame;
-	  frame.origin.y += 10;
-	  self.frame = frame;
-	});
+    %orig;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        CGRect frame = self.frame;
+        frame.origin.y += 10;
+        self.frame = frame;
+    });
 }
 
 - (void)layoutSubviews {
-	%orig;
-
-	self.userInteractionEnabled = YES;
-
-	if (![self.gestureRecognizers containsObject:[self tapGestureForDYYY]]) {
-		[self addGestureRecognizer:[self tapGestureForDYYY]];
-	}
-
-	for (UIView *subview in self.subviews) {
-		// 启用子视图交互并添加手势
-		subview.userInteractionEnabled = YES;
-		if (![subview.gestureRecognizers containsObject:[self tapGestureForSubview:subview]]) {
-			[subview addGestureRecognizer:[self tapGestureForSubview:subview]];
-		}
-
-		for (UIView *childView in subview.subviews) {
-			if (![childView isKindOfClass:%c(AWELeftSideBarWeatherLabel)]) {
-				[childView removeFromSuperview];
-			}
-		}
-	}
-}
-%new
-- (UITapGestureRecognizer *)tapGestureForDYYY {
-	static UITapGestureRecognizer *tapGesture = nil;
-	if (!tapGesture) {
-		tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(openDYYYSettings)];
-	}
-	return tapGesture;
-}
-%new
-- (UITapGestureRecognizer *)tapGestureForSubview:(UIView *)subview {
-	// 为每个子视图创建唯一的手势识别器
-	UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(openDYYYSettings)];
-
-	objc_setAssociatedObject(subview, "DYYYTapGesture", tapGesture, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-	return tapGesture;
-}
-%new
-- (void)openDYYYSettings {
-	// 获取当前视图控制器
-	UIViewController *currentVC = nil;
-	UIResponder *responder = self;
-	while (responder) {
-		if ([responder isKindOfClass:[UIViewController class]]) {
-			currentVC = (UIViewController *)responder;
-			break;
-		}
-		responder = [responder nextResponder];
-	}
-
-	if (!currentVC || ![currentVC isKindOfClass:%c(AWELeftSideBarViewController)]) {
-		return;
-	}
-
-	AWELeftSideBarViewController *sidebarVC = (AWELeftSideBarViewController *)currentVC;
-
-	// 检查用户是否已同意协议
-	BOOL hasAgreed = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"];
-
-	showDYYYSettingsVC(sidebarVC, hasAgreed);
+    %orig;
+    self.userInteractionEnabled = YES;
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:[UIView class] action:@selector(openDYYYSettingsFromSender:)];
+    objc_setAssociatedObject(tapGesture, "targetView", self, OBJC_ASSOCIATION_ASSIGN);
+    [self addGestureRecognizer:tapGesture];
+    
+    for (UIView *subview in self.subviews) {
+        subview.userInteractionEnabled = YES;
+        UITapGestureRecognizer *subTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:[UIView class] action:@selector(openDYYYSettingsFromSender:)];
+        objc_setAssociatedObject(subTapGesture, "targetView", self, OBJC_ASSOCIATION_ASSIGN);
+        [subview addGestureRecognizer:subTapGesture];
+        
+        [subview.subviews enumerateObjectsUsingBlock:^(UIView *childView, NSUInteger idx, BOOL *stop) {
+            if (![childView isKindOfClass:%c(AWELeftSideBarWeatherLabel)]) {
+                [childView removeFromSuperview];
+            }
+        }];
+    }
 }
 %end
 
 %hook AWELeftSideBarEntranceView
 - (void)leftSideBarEntranceViewTapped:(UITapGestureRecognizer *)gesture {
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYentrance"]) {
+        %orig;
+        return;
+    }
+    
+    UIViewController *feedVC = findViewController(self);
+    if (![feedVC isKindOfClass:%c(AWEFeedContainerViewController)]) {
+        feedVC = UIApplication.sharedApplication.keyWindow.rootViewController;
+        while (feedVC && ![feedVC isKindOfClass:%c(AWEFeedContainerViewController)]) {
+            feedVC = feedVC.presentedViewController;
+        }
+    }
 
-	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYentrance"]) {
-
-		UIViewController *feedVC = nil;
-		UIResponder *resp = self;
-		Class feedCls = %c(AWEFeedContainerViewController);
-
-		while (resp) {
-			if ([resp isKindOfClass:feedCls]) {
-				feedVC = (UIViewController *)resp;
-				break;
-			}
-			resp = [resp nextResponder];
-		}
-
-		if (!feedVC) {
-			UIViewController *root = UIApplication.sharedApplication.keyWindow.rootViewController;
-			while (root) {
-				if ([root isKindOfClass:feedCls]) {
-					feedVC = root;
-					break;
-				}
-				root = root.presentedViewController;
-			}
-		}
-
-		if (feedVC) {
-			BOOL hasAgreed = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"];
-			showDYYYSettingsVC(feedVC, hasAgreed);
-			return;
-		}
-	}
-
-	%orig;
+    if (feedVC) {
+        openDYYYSettingsWithViewController(feedVC);
+    } else {
+        %orig;
+    }
 }
+%endAdd commentMore actions
 
+%hook UIView
+%new
++ (void)openDYYYSettingsFromSender:(UITapGestureRecognizer *)sender {
+    UIView *targetView = objc_getAssociatedObject(sender, "targetView");
+    if (targetView) {
+        openDYYYSettingsFromView(targetView);
+    }
+}
 %end
 
 static AWESettingBaseViewController *createSubSettingsViewController(NSString *title, NSArray *sectionsArray) {
@@ -489,8 +433,9 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  NSArray *videoSettings = @[
 		  @{@"identifier" : @"DYYYVideoBGColor",
 		    @"title" : @"影片背景顏色",
+			@"subTitle" : @"可自訂部分橫向螢幕影片的背景顏色",
 		    @"detail" : @"",
-		    @"cellType" : @26,
+		    @"cellType" : @18,
 		    @"imageName" : @"ic_tv_outlined_20"},	  
 		  @{@"identifier" : @"DYYYisShowScheduleDisplay",
 		    @"title" : @"顯示進度時長",
@@ -539,8 +484,9 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"imageName" : @"ic_location_outlined_20"},
 		  @{@"identifier" : @"DYYYGeonamesUsername",
 		    @"title" : @"國外解析帳號",
+			@"subTitle" : @"使用 Geonames.org 帳號解析國外 IP 位置",			
 		    @"detail" : @"",
-		    @"cellType" : @26,
+		    @"cellType" : @18,
 		    @"imageName" : @"ic_location_outlined_20"},
 		  @{@"identifier" : @"DYYYLabelColor",
 		    @"title" : @"屬地標籤顏色",
@@ -570,7 +516,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 							     onPresentingVC:topView()
 							   selectionChanged:^(NSString *selectedValue) {
 							     item.detail = selectedValue;
-							     [DYYYSettingsHelper refreshTableView];
+                                                               [item refreshCell];
 							   }];
 			  };
 		  }
@@ -588,7 +534,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 							     onPresentingVC:topView()
 							   selectionChanged:^(NSString *selectedValue) {
 							     item.detail = selectedValue;
-							     [DYYYSettingsHelper refreshTableView];
+                                                             [item refreshCell];
 							   }];
 			  };
 		  }
@@ -605,7 +551,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 							     onPresentingVC:topView()
 							   selectionChanged:^(NSString *selectedValue) {
 							     item.detail = selectedValue;
-							     [DYYYSettingsHelper refreshTableView];
+                                                               [item refreshCell];
 							   }];
 			  };
 		  }
@@ -733,7 +679,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 								   [DYYYSettingsHelper setUserDefaults:valueString forKey:@"DYYYfilterLowLikes"];
 
 								   item.detail = valueString;
-								   [DYYYSettingsHelper refreshTableView];
+                                                               [item refreshCell];
 							   } else {
 								   DYYYAboutDialogView *errorDialog = [[DYYYAboutDialogView alloc] initWithTitle:@"輸入錯誤" message:@"\n\n請輸入有效的數字\n\n"];
 								   [errorDialog show];
@@ -753,7 +699,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			      NSString *keywordString = [keywords componentsJoinedByString:@","];
 			      [DYYYSettingsHelper setUserDefaults:keywordString forKey:@"DYYYfilterUsers"];
 			      item.detail = keywordString;
-			      [DYYYSettingsHelper refreshTableView];
+                                                               [item refreshCell];
 			    };
 
 			    [keywordListView show];
@@ -770,7 +716,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 
 			      [DYYYSettingsHelper setUserDefaults:keywordString forKey:@"DYYYfilterKeywords"];
 			      item.detail = keywordString;
-			      [DYYYSettingsHelper refreshTableView];
+                                                               [item refreshCell];
 			    };
 			    [keywordListView show];
 			  };
@@ -801,7 +747,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 
 			      [DYYYSettingsHelper setUserDefaults:keywordString forKey:@"DYYYfilterProp"];
 			      item.detail = keywordString;
-			      [DYYYSettingsHelper refreshTableView];
+                                                               [item refreshCell];
 			    };
 			    [keywordListView show];
 			  };
@@ -1027,8 +973,9 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideDoubleColumnEntry",
 		    @"title" : @"隱藏雙列箭頭",
+			@"subTitle" : @"隱藏底欄首頁旁的雙列箭頭",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,			
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideShopButton",
 		    @"title" : @"隱藏底欄商城",
@@ -1840,7 +1787,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			      NSString *keywordString = [keywords componentsJoinedByString:@","];
 			      [DYYYSettingsHelper setUserDefaults:keywordString forKey:@"DYYYHideOtherChannel"];
 			      item.detail = keywordString;
-			      [DYYYSettingsHelper refreshTableView];
+                                                               [item refreshCell];
 			    };
 
 			    // 显示关键词列表视图
@@ -2017,7 +1964,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 
 							   item.detail = trimmedText.length > 0 ? trimmedText : @"不填關閉";
 
-							   [DYYYSettingsHelper refreshTableView];
+                                                             [item refreshCell];
 							 }
 							  onCancel:nil];
 			  };
@@ -2090,7 +2037,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			    saveABTestConfigFileItemRef.isEnable = NO;
 		    }
 	    }
-	    [DYYYSettingsHelper refreshTableView];
+              [saveABTestConfigFileItemRef refreshCell];
 	  };
 
 	  for (NSDictionary *dict in hotUpdateSettings) {
@@ -2108,7 +2055,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 					confirmButtonText:@"確定"
 					cancelAction:^{
 					  item.isSwitchOn = !newValue;
-					  [DYYYSettingsHelper refreshTableView];
+                                            [item refreshCell];
 					}
 					closeAction:nil
 					confirmAction:^{
@@ -2146,7 +2093,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 								     onceToken = 0;
 								     ensureABTestDataLoaded();
 							     }
-							     [DYYYSettingsHelper refreshTableView];
+                                                               [item refreshCell];
 							   }];
 			  };
 		  } else if ([item.identifier isEqualToString:@"SaveCurrentABTestData"]) {
@@ -2351,7 +2298,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 					    // 删除成功后修改 SaveABTestConfigFile item 的状态
 					    saveABTestConfigFileItemRef.detail = @"(檔案已刪除)";
 					    saveABTestConfigFileItemRef.isEnable = NO;
-					    [DYYYSettingsHelper refreshTableView];
+                                              [saveABTestConfigFileItemRef refreshCell];
 				    }
 			    } else {
 				    [DYYYUtils showToast:@"本機設定不存在"];
@@ -2605,7 +2552,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 					   [[NSUserDefaults standardUserDefaults] setObject:trimmedText forKey:@"DYYYSpeedSettings"];
 					   [[NSUserDefaults standardUserDefaults] synchronize];
 					   speedSettingsItem.detail = trimmedText;
-					   [DYYYSettingsHelper refreshTableView];
+                                             [speedSettingsItem refreshCell];
 					 }
 					  onCancel:nil];
 	  };
@@ -2669,7 +2616,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 						   [[NSUserDefaults standardUserDefaults] setFloat:size forKey:@"DYYYSpeedButtonSize"];
 						   [[NSUserDefaults standardUserDefaults] synchronize];
 						   buttonSizeItem.detail = [NSString stringWithFormat:@"%.0f", (CGFloat)size];
-						   [DYYYSettingsHelper refreshTableView];
+                                                     [buttonSizeItem refreshCell];
 					   } else {
 						   [DYYYUtils showToast:@"請輸入20-60之間的有效數值"];
 					   }
@@ -2718,7 +2665,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 						   [[NSUserDefaults standardUserDefaults] setFloat:size forKey:@"DYYYEnableFloatClearButtonSize"];
 						   [[NSUserDefaults standardUserDefaults] synchronize];
 						   clearButtonSizeItem.detail = [NSString stringWithFormat:@"%.0f", (CGFloat)size];
-						   [DYYYSettingsHelper refreshTableView];
+                                                     [clearButtonSizeItem refreshCell];
 					   } else {
 						   [DYYYUtils showToast:@"請輸入20-60之間的有效數值"];
 					   }
@@ -2971,7 +2918,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 
 	    [DYYYUtils showToast:@"設定已恢復，請重啟應用以應用所有更改"];
 
-	    [DYYYSettingsHelper refreshTableView];
+              [restoreItem refreshCell];
 	  };
 
 	  static char kDYYYRestorePickerDelegateKey;
@@ -3094,7 +3041,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
             if (strongCleanCacheItem) {
                 strongCleanCacheItem.detail = [DYYYUtils formattedSize:initialSize];
                 strongCleanCacheItem.isEnable = YES;
-                [DYYYSettingsHelper refreshTableView];
+                  [strongCleanCacheItem refreshCell];
             }
         });
     });
@@ -3105,7 +3052,8 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  }
 	  // Disable the button to prevent multiple triggers
 	  strongCleanCacheItem.isEnable = NO;
-	  [DYYYSettingsHelper refreshTableView];
+      strongCleanCacheItem.detail = @"清理中...";	  
+            [strongCleanCacheItem refreshCell];
 
 	  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 		  for (NSString *basePath in allPaths) {
@@ -3125,7 +3073,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 			  strongCleanCacheItem.detail = [DYYYUtils formattedSize:afterSize];
 			  // Re-enable the button after cleaning is done
 			  strongCleanCacheItem.isEnable = YES;
-			  [DYYYSettingsHelper refreshTableView];
+                            [strongCleanCacheItem refreshCell];
 		  });
 	  });
 	};
