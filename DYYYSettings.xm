@@ -21,7 +21,7 @@
 static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSString *saveFilename, void (^onClear)(void), void (^onSelect)(void));
 
 #import "DYYYImagePickerDelegate.h"
-#import "DYYYBackupPickerDelegate.h
+#import "DYYYBackupPickerDelegate.h"
 
 
 #ifdef __cplusplus
