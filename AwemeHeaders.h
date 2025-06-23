@@ -787,7 +787,6 @@ static CGFloat gStartVal = 0.0;
 - (void)applyCustomProgressStyle;
 @end
 
-// 添加 DUXContentSheet 相关声明
 @protocol IESIMContentSheetVCProtocol
 , AWEMRGlobalAlertTrackProtocol;
 @interface DUXBasicSheet : UIViewController
@@ -799,6 +798,7 @@ static CGFloat gStartVal = 0.0;
 @interface AWESettingItemModel : NSObject
 @property(nonatomic, copy) NSString *identifier;
 @property(nonatomic, copy) NSString *title;
+@property(nonatomic, copy) NSString *subTitle;
 @property(nonatomic, copy) NSString *detail;
 @property(nonatomic, assign) NSInteger type;
 @property(nonatomic, copy) NSString *iconImageName;
@@ -809,6 +809,7 @@ static CGFloat gStartVal = 0.0;
 @property(nonatomic, assign) BOOL isSwitchOn;
 @property(nonatomic, copy) void (^cellTappedBlock)(void);
 @property(nonatomic, copy) void (^switchChangedBlock)(void);
+- (void)refreshCell;
 @end
 
 @interface AWESettingBaseViewModel : NSObject
@@ -1236,4 +1237,7 @@ static CGFloat gStartVal = 0.0;
 
 @interface AWEProfileMentionLabel : UILabel
 @property(copy, nonatomic) NSString *text;
+@end
+
+@interface MTKView : UIView
 @end
