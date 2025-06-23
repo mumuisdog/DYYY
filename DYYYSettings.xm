@@ -21,49 +21,8 @@
 static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSString *saveFilename, void (^onClear)(void), void (^onSelect)(void));
 
 #import "DYYYImagePickerDelegate.h"
+#import "DYYYBackupPickerDelegate.h
 
-@implementation DYYYImagePickerDelegate
-- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
-	if (self.completionBlock) {
-		self.completionBlock(info);
-	}
-	[picker dismissViewControllerAnimated:YES completion:nil];
-}
-
-- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
-	[picker dismissViewControllerAnimated:YES completion:nil];
-}
-@end
-
-@interface DYYYBackupPickerDelegate : NSObject <UIDocumentPickerDelegate>
-@property(nonatomic, copy) void (^completionBlock)(NSURL *url);
-@property(nonatomic, copy) NSString *tempFilePath;
-@end
-
-@implementation DYYYBackupPickerDelegate
-- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
-	if (urls.count > 0 && self.completionBlock) {
-		self.completionBlock(urls.firstObject);
-	}
-
-	[self cleanupTempFile];
-}
-
-- (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
-	[self cleanupTempFile];
-}
-
-// 添加清理临时文件的方法
-- (void)cleanupTempFile {
-	if (self.tempFilePath && [[NSFileManager defaultManager] fileExistsAtPath:self.tempFilePath]) {
-		NSError *error = nil;
-		[[NSFileManager defaultManager] removeItemAtPath:self.tempFilePath error:&error];
-		if (error) {
-			NSLog(@"[DYYY] 清理臨時檔案失敗: %@", error.localizedDescription);
-		}
-	}
-}
-@end
 
 #ifdef __cplusplus
 extern "C" {
@@ -232,8 +191,9 @@ extern "C"
 		    @"imageName" : @"ic_dansquare_outlined_20"},
 		  @{@"identifier" : @"DYYYdanmuColor",
 		    @"title" : @"自訂彈幕顏色",
+			@"subTitle" : @"填入 random 使用隨機色彩彈幕",			
 		    @"detail" : @"十六進位",
-		    @"cellType" : @26,
+		    @"cellType" : @18,
 		    @"imageName" : @"ic_dansquarenut_outlined_20"},
 	  ];
 
@@ -781,8 +741,9 @@ extern "C"
 	  NSArray *mainUiSettings = @[
 		  @{@"identifier" : @"DYYYisHiddenBottomBg",
 		    @"title" : @"隱藏底欄背景",
+			@"subTitle" : @"完全透明化底欄，可能需要配合首頁全螢幕使用",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYisHiddenBottomDot",
 		    @"title" : @"隱藏底欄紅點",
@@ -1474,8 +1435,8 @@ extern "C"
 	  [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"訊息頁與我的頁" items:messageAndMineItems]];
 	  [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"提示與位置資訊" items:infoItems]];
 	  [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"直播間介面" items:livestreamItems]];
-	  [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"隱藏面板功能" items:modernpanels]];
-	  [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"隱藏長按評論功能" items:commentpanel]];
+	  [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"隱藏面板功能" footerTitle:@"隱藏影片長按面板中的功能" items:modernpanels]];
+	  [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"隱藏長按評論功能" footerTitle:@"隱藏評論長按面板中的功能" items:commentpanel]];	  
 	  // 创建并推入二级设置页面
 	  AWESettingBaseViewController *subVC = [DYYYSettingsHelper createSubSettingsViewController:@"隱藏設定" sections:sections];
 	  [rootVC.navigationController pushViewController:(UIViewController *)subVC animated:YES];
@@ -1743,8 +1704,9 @@ extern "C"
 		    @"imageName" : @"ic_removeimage_outlined_20"},
 		  @{@"identifier" : @"DYYYForceDownloadEmotion",
 		    @"title" : @"儲存評論區表情包",
+			@"subTitle" : @"iOS 17+的用戶請長按表情本身儲存",			
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_emoji_outlined"},
 		  @{@"identifier" : @"DYYYForceDownloadPreviewEmotion",
 		    @"title" : @"儲存預覽頁表情包",
@@ -1955,7 +1917,7 @@ extern "C"
 			    [formatter setDateFormat:@"yyyyMMdd_HHmmss"];
 			    NSString *timestamp = [formatter stringFromDate:[NSDate date]];
 			    NSString *tempFile = [NSString stringWithFormat:@"ABTest_Config_%@.json", timestamp];
-			    NSString *tempFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFile];
+                            NSString *tempFilePath = [DYYYUtils cachePathForFilename:tempFile];
 
 			    BOOL success = [sortedJsonData writeToFile:tempFilePath atomically:YES];
 
@@ -2017,7 +1979,7 @@ extern "C"
 			    [formatter setDateFormat:@"yyyyMMdd_HHmmss"];
 			    NSString *timestamp = [formatter stringFromDate:[NSDate date]];
 			    NSString *tempFile = [NSString stringWithFormat:@"abtest_data_fixed_%@.json", timestamp];
-			    NSString *tempFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFile];
+                            NSString *tempFilePath = [DYYYUtils cachePathForFilename:tempFile];
 
 			    if (![sortedJsonData writeToFile:tempFilePath atomically:YES]) {
 				    [DYYYUtils showToast:@"臨時檔案建立失敗"];
@@ -2642,8 +2604,7 @@ extern "C"
 	  [formatter setDateFormat:@"yyyyMMdd_HHmmss"];
 	  NSString *timestamp = [formatter stringFromDate:[NSDate date]];
 	  NSString *backupFileName = [NSString stringWithFormat:@"DYYY_Backup_%@.json", timestamp];
-	  NSString *tempDir = NSTemporaryDirectory();
-	  NSString *tempFilePath = [tempDir stringByAppendingPathComponent:backupFileName];
+      NSString *tempFilePath = [DYYYUtils cachePathForFilename:backupFileName];
 
 	  BOOL success = [sortedJsonData writeToFile:tempFilePath atomically:YES];
 
@@ -2836,7 +2797,7 @@ extern "C"
 
 	NSArray<NSString *> *customDirs = @[ @"Application Support/gurd_cache", @"Caches", @"BDByteCast", @"kitelog" ];
 	NSString *libraryDir = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES).firstObject;
-	NSMutableArray<NSString *> *allPaths = [NSMutableArray arrayWithObject:NSTemporaryDirectory()];
+    NSMutableArray<NSString *> *allPaths = [NSMutableArray arrayWithObject:[DYYYUtils cacheDirectory]];
 	for (NSString *sub in customDirs) {
 		NSString *fullPath = [libraryDir stringByAppendingPathComponent:sub];
 		if ([[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
@@ -2879,9 +2840,10 @@ extern "C"
 	  [strongCleanCacheItem refreshCell];
 
 	  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-	    for (NSString *basePath in allPaths) {
-		    [DYYYUtils removeAllContentsAtPath:basePath];
-	    }
+            [DYYYUtils clearCacheDirectory];
+            for (NSString *basePath in allPaths) {
+                    [DYYYUtils removeAllContentsAtPath:basePath];
+            }
 
 	    unsigned long long afterSize = 0;
 	    for (NSString *basePath in allPaths) {
