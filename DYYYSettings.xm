@@ -292,7 +292,7 @@ static void openDYYYSettingsFromView(UIView *view) {
         %orig;
     }
 }
-%endAdd commentMore actions
+%end
 
 %hook UIView
 %new
