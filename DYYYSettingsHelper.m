@@ -150,7 +150,7 @@
         NSArray *exclusiveItems = mutualExclusive[sourceKey];
         if ([exclusiveItems containsObject:item.identifier]) {
             BOOL sourceValue = [self getUserDefaults:sourceKey];
-            item.isEnable = !sourceValue; // 当源设置关闭时，目标设置才能激活
+            item.isEnable = !sourceValue;
             return;
         }
     }
@@ -377,13 +377,12 @@
     AWESettingItemModel *item = [[NSClassFromString(@"AWESettingItemModel") alloc] init];
     item.identifier = dict[@"identifier"];
     item.title = dict[@"title"];
+    item.subTitle = dict[@"subTitle"];	
 
-    // 获取保存的实际值
     NSString *savedDetail = [[NSUserDefaults standardUserDefaults] objectForKey:item.identifier];
     NSString *placeholder = dict[@"detail"];
     item.detail = savedDetail ?: @"";
 
-    item.type = 1000;
     item.svgIconImageName = dict[@"imageName"];
     item.cellType = [dict[@"cellType"] integerValue];
     item.colorStyle = 0;
@@ -391,7 +390,7 @@
     item.isSwitchOn = [self getUserDefaults:item.identifier];
 
     [self applyDependencyRulesForItem:item];
-    if (item.cellType == 26 && cellTapHandlers != nil) {
+    if ((item.cellType == 18 || item.cellType == 26) && cellTapHandlers != nil) {
         cellTapHandlers[item.identifier] = ^{
           if (!item.isEnable)
               return;
@@ -411,7 +410,7 @@
           } onCancel:nil];
         };
         item.cellTappedBlock = cellTapHandlers[item.identifier];
-    } else if (item.cellType == 6) {
+    } else if (item.cellType == 6 || item.cellType == 37) {
         __weak AWESettingItemModel *weakItem = item;
         item.switchChangedBlock = ^{
           __strong AWESettingItemModel *strongItem = weakItem;
@@ -421,10 +420,6 @@
               BOOL isSwitchOn = !strongItem.isSwitchOn;
               strongItem.isSwitchOn = isSwitchOn;
               [self setUserDefaults:@(isSwitchOn) forKey:strongItem.identifier];
-
-              if ([strongItem.identifier isEqualToString:@"DYYYForceDownloadEmotion"] && isSwitchOn) {
-                  [self showAboutDialog:@"防蠢提示" message:@"這裡指的是長按整條評論而非表情圖片\n" onConfirm:nil];
-              }
               [self handleConflictsAndDependenciesForSetting:strongItem.identifier isEnabled:isSwitchOn];
           }
         };
