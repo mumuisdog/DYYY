@@ -128,7 +128,7 @@ static dispatch_once_t s_loadOnceToken;
  * 新增类方法
  */
 + (void)applyFixedABTestData {
-    if (!s_abTestBlockEnabled || !s_dataLoaded) {Add commentMore actions
+    if (!s_abTestBlockEnabled || !s_dataLoaded) {
         NSLog(@"[DYYY] 不符合應用本機設定的條件 (禁止下發=%@, 資料載入=%@, 資料是否為空=%@)",
             s_abTestBlockEnabled ? @"開啟" : @"關閉",
             s_dataLoaded ? @"成功" : @"失敗",
