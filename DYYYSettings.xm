@@ -2028,7 +2028,7 @@ extern "C"
 
 			      DYYYBackupPickerDelegate *pickerDelegate = [[DYYYBackupPickerDelegate alloc] init];
 			      pickerDelegate.completionBlock = ^(NSURL *url) {
-				NSString *sourcePath = [url path];Add commentMore actions
+				NSString *sourcePath = [url path];
 
 				NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 				NSString *documentsDirectory = [paths firstObject];
@@ -2855,7 +2855,7 @@ extern "C"
 
 	  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 	    [DYYYUtils clearCacheDirectory];
-	    for (NSString *basePath in allPaths) {Add commentMore actions
+	    for (NSString *basePath in allPaths) {
 		    [DYYYUtils removeAllContentsAtPath:basePath];
 	    }
 
