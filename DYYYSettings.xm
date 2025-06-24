@@ -2188,13 +2188,13 @@ extern "C"
 		    @"imageName" : @"ic_xiaoxihuazhonghua_outlined_20"},
 		  @{@"identifier" : @"DYYYDefaultEnterWorks",
 		    @"title" : @"資料預設進入作品",
-			@"subTitle" : @"禁止個人資料頁自動進入櫥窗等頁面",			
+			@"subTitle" : @"禁止個人資料頁自動進入櫥窗等頁面",
 		    @"detail" : @"",
 		    @"cellType" : @37,
 		    @"imageName" : @"ic_playsquarestack_outlined_20"},
 		  @{@"identifier" : @"DYYYDisableHomeRefresh",
 		    @"title" : @"禁用點擊首頁重新整理",
-			@"subTitle" : @"無法與雙擊開啟評論同時啟用"			
+			@"subTitle" : @"無法與雙擊開啟評論同時啟用",
 		    @"detail" : @"",
 		    @"cellType" : @18,
 		    @"imageName" : @"ic_arrowcircle_outlined_20"}
