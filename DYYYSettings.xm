@@ -20,9 +20,8 @@
 @class DYYYIconOptionsDialogView;
 static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSString *saveFilename, void (^onClear)(void), void (^onSelect)(void));
 
-#import "DYYYImagePickerDelegate.h"
 #import "DYYYBackupPickerDelegate.h"
-
+#import "DYYYImagePickerDelegate.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -189,12 +188,14 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_dansquare_outlined_20"},
-		  @{@"identifier" : @"DYYYdanmuColor",
-		    @"title" : @"自訂彈幕顏色",
-			@"subTitle" : @"填入 random 使用隨機色彩彈幕",			
-		    @"detail" : @"十六進位",
-		    @"cellType" : @18,
-		    @"imageName" : @"ic_dansquarenut_outlined_20"},
+		  @{
+			  @"identifier" : @"DYYYdanmuColor",
+			  @"title" : @"自訂彈幕顏色",
+			  @"subTitle" : @"填入 random 使用隨機色彩彈幕",
+			  @"detail" : @"十六進位",
+			  @"cellType" : @18,
+			  @"imageName" : @"ic_dansquarenut_outlined_20"
+		  },			
 	  ];
 
 	  for (NSDictionary *dict in appearanceSettings) {
@@ -240,8 +241,9 @@ extern "C"
 		    @"imageName" : @"ic_playertime_outlined_20"},
 		  @{@"identifier" : @"DYYYisEnableAutoPlay",
 		    @"title" : @"啟用自動播放",
+			@"subTitle" : @"暫時僅支援推薦、搜尋和個人主頁的自動連播",			
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_play_outlined_12"},
 		  @{@"identifier" : @"DYYYDefaultSpeed",
 		    @"title" : @"設定預設倍速",
@@ -405,8 +407,9 @@ extern "C"
 		    @"imageName" : @"ic_playertime_outlined_20"},
 		  @{@"identifier" : @"DYYYfilterFeedHDR",
 		    @"title" : @"推薦過濾HDR",
+			@"subTitle" : @"開啟後推薦頁面會屏蔽 HDR 影片",			
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_sun_outlined"},
 		  @{@"identifier" : @"DYYYfilterProp",
 		    @"title" : @"推薦過濾拍同款",
@@ -739,12 +742,14 @@ extern "C"
 	  // 【主介面元素】分类
 	  NSMutableArray<AWESettingItemModel *> *mainUiItems = [NSMutableArray array];
 	  NSArray *mainUiSettings = @[
-		  @{@"identifier" : @"DYYYisHiddenBottomBg",
-		    @"title" : @"隱藏底欄背景",
-			@"subTitle" : @"完全透明化底欄，可能需要配合首頁全螢幕使用",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{
+			  @"identifier" : @"DYYYisHiddenBottomBg",
+			  @"title" : @"隱藏底欄背景",
+			  @"subTitle" : @"完全透明化底欄，可能需要配合首頁全螢幕使用",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_eyeslash_outlined_16"
+		  },	  
 		  @{@"identifier" : @"DYYYisHiddenBottomDot",
 		    @"title" : @"隱藏底欄紅點",
 		    @"detail" : @"",
@@ -979,9 +984,10 @@ extern "C"
 	  NSArray *infoSettings = @[
 		  @{@"identifier" : @"DYYYHidekeyboardai",
 		    @"title" : @"隱藏鍵盤AI",
+			@"subTitle" : @"隱藏搜尋下方的 AI 和語音搜尋按鈕",
 		    @"detail" : @"",
-		    @"cellType" : @6,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},	  
+		    @"cellType" : @37,
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHidenLiveView",
 		    @"title" : @"隱藏關注頂端",
 		    @"detail" : @"",
@@ -1153,9 +1159,10 @@ extern "C"
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideLiveCapsuleView",
-		    @"title" : @"隱藏直播膠囊",
+		    @"title" : @"隱藏直播紅點",
+			@"subTitle" : @"隱藏頂欄的直播中提示",		  
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideStoryProgressSlide",
 		    @"title" : @"隱藏影片滑條",
@@ -1189,8 +1196,9 @@ extern "C"
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHidePendantGroup",
 		    @"title" : @"隱藏紅包懸浮",
+			@"subTitle" : @"隱藏抖音極速版的紅包懸浮按鈕，可能失效，不修復。",			
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideScancode",
 		    @"title" : @"隱藏輸入掃碼",
@@ -1702,12 +1710,14 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_removeimage_outlined_20"},
-		  @{@"identifier" : @"DYYYForceDownloadEmotion",
-		    @"title" : @"儲存評論區表情包",
-			@"subTitle" : @"iOS 17+的用戶請長按表情本身儲存",			
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_emoji_outlined"},
+		  @{
+			  @"identifier" : @"DYYYForceDownloadEmotion",
+			  @"title" : @"儲存評論區表情包",
+			  @"subTitle" : @"iOS 17+的用戶請長按表情本身儲存",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_emoji_outlined"
+		  },
 		  @{@"identifier" : @"DYYYForceDownloadPreviewEmotion",
 		    @"title" : @"儲存預覽頁表情包",
 		    @"detail" : @"",
@@ -1802,7 +1812,8 @@ extern "C"
 	    NSString *dyyyFolderPath = [documentsDirectory stringByAppendingPathComponent:@"DYYY"];
 	    NSString *jsonFilePath = [dyyyFolderPath stringByAppendingPathComponent:@"abtest_data_fixed.json"];
 
-	    NSString *loadingStatus = gDataLoaded ? @"已加載：" : @"未加載：";
+	    NSString *loadingStatus = [DYYYABTestHook isLocalConfigLoaded] ? @"已加載：" : @"未加載：";
+
 	    if (![fileManager fileExistsAtPath:jsonFilePath]) {
 		    saveABTestConfigFileItemRef.detail = [NSString stringWithFormat:@"%@ (文件不存在)", loadingStatus];
 		    saveABTestConfigFileItemRef.isEnable = NO;
@@ -1844,7 +1855,7 @@ extern "C"
 					  item.isSwitchOn = newValue;
 					  [DYYYSettingsHelper setUserDefaults:@(newValue) forKey:@"DYYYABTestBlockEnabled"];
 
-					  abTestBlockEnabled = newValue;
+					  [DYYYABTestHook setABTestBlockEnabled:newValue];
 					}];
 			    } else {
 				    item.isSwitchOn = newValue;
@@ -1852,9 +1863,8 @@ extern "C"
 			    }
 			  };
 		  } else if ([item.identifier isEqualToString:@"DYYYABTestModeString"]) {
-			  // 获取当前的模式
-			  NSString *savedMode = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYABTestModeString"];
-			  BOOL isPatchMode = ![savedMode isEqualToString:@"替換模式：清除原設定，寫入新數據"];			  
+			  // 使用 DYYYABTestHook 的类方法获取当前的模式
+			  BOOL isPatchMode = [DYYYABTestHook isPatchMode];
 			  item.detail = isPatchMode ? @"覆寫模式" : @"替換模式";
 
 			  item.cellTappedBlock = ^{
@@ -1867,13 +1877,11 @@ extern "C"
 								 headerText:@"選擇本機設定的應用方式"
 							     onPresentingVC:topView()
 							   selectionChanged:^(NSString *selectedValue) {
-							     BOOL isPatchMode = [selectedValue isEqualToString:@"覆寫模式：保留原設定，覆蓋同名項"];
+							     BOOL isPatchMode = [DYYYABTestHook isPatchMode];
 							     item.detail = isPatchMode ? @"覆寫模式" : @"替換模式";
 
 							     if (![selectedValue isEqualToString:currentMode]) {
-								     gFixedABTestData = nil;
-								     onceToken = 0;
-								     ensureABTestDataLoaded();
+								     [DYYYABTestHook applyFixedABTestData];
 							     }
 							     [item refreshCell];
 							   }];
@@ -1881,7 +1889,7 @@ extern "C"
 		  } else if ([item.identifier isEqualToString:@"SaveCurrentABTestData"]) {
 			  item.detail = @"(獲取中...)";
 
-			  NSDictionary *currentData = getCurrentABTestData();
+			  NSDictionary *currentData = [DYYYABTestHook getCurrentABTestData];
 
 			  if (!currentData) {
 				  item.detail = @"(獲取失敗)";
@@ -1898,7 +1906,7 @@ extern "C"
 			  }
 
 			  item.cellTappedBlock = ^{
-			    NSDictionary *currentData = getCurrentABTestData();
+			    NSDictionary *currentData = [DYYYABTestHook getCurrentABTestData];
 
 			    if (!currentData) {
 				    [DYYYUtils showToast:@"ABTest設定獲取失敗"];
@@ -1917,7 +1925,7 @@ extern "C"
 			    [formatter setDateFormat:@"yyyyMMdd_HHmmss"];
 			    NSString *timestamp = [formatter stringFromDate:[NSDate date]];
 			    NSString *tempFile = [NSString stringWithFormat:@"ABTest_Config_%@.json", timestamp];
-                            NSString *tempFilePath = [DYYYUtils cachePathForFilename:tempFile];
+			    NSString *tempFilePath = [DYYYUtils cachePathForFilename:tempFile];
 
 			    BOOL success = [sortedJsonData writeToFile:tempFilePath atomically:YES];
 
@@ -1979,7 +1987,7 @@ extern "C"
 			    [formatter setDateFormat:@"yyyyMMdd_HHmmss"];
 			    NSString *timestamp = [formatter stringFromDate:[NSDate date]];
 			    NSString *tempFile = [NSString stringWithFormat:@"abtest_data_fixed_%@.json", timestamp];
-                            NSString *tempFilePath = [DYYYUtils cachePathForFilename:tempFile];
+			    NSString *tempFilePath = [DYYYUtils cachePathForFilename:tempFile];
 
 			    if (![sortedJsonData writeToFile:tempFilePath atomically:YES]) {
 				    [DYYYUtils showToast:@"臨時檔案建立失敗"];
@@ -2004,8 +2012,7 @@ extern "C"
 			  };
 		  } else if ([item.identifier isEqualToString:@"LoadABTestConfigFile"]) {
 			  item.cellTappedBlock = ^{
-			    NSString *savedMode = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYABTestModeString"];
-			    BOOL isPatchMode = ![savedMode isEqualToString:@"替換模式：忽略原設定，寫入新數據"];	
+			    BOOL isPatchMode = [DYYYABTestHook isPatchMode];
 
 			    NSString *confirmTitle, *confirmMessage;
 			    if (isPatchMode) {
@@ -2021,7 +2028,7 @@ extern "C"
 
 			      DYYYBackupPickerDelegate *pickerDelegate = [[DYYYBackupPickerDelegate alloc] init];
 			      pickerDelegate.completionBlock = ^(NSURL *url) {
-				NSString *sourcePath = [url path];
+				NSString *sourcePath = [url path];Add commentMore actions
 
 				NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 				NSString *documentsDirectory = [paths firstObject];
@@ -2039,13 +2046,13 @@ extern "C"
 
 				BOOL success = [[NSFileManager defaultManager] copyItemAtPath:sourcePath toPath:destPath error:&error];
 
-				NSString *message = success ? @"設定已匯入，重啟抖音生效" : [NSString stringWithFormat:@"匯入失敗: %@", error.localizedDescription];
+				NSString *message = success ? @"設定已導入，若沒生效請重開抖音" : [NSString stringWithFormat:@"導入失敗: %@", error.localizedDescription];
 				[DYYYUtils showToast:message];
 
 				if (success) {
-					gFixedABTestData = nil;
-					onceToken = 0;
-					ensureABTestDataLoaded();
+					[DYYYABTestHook cleanLocalABTestData];
+					[DYYYABTestHook loadLocalABTestConfig];
+					[DYYYABTestHook applyFixedABTestData];
 					// 导入成功后更新 SaveABTestConfigFile item 的状态
 					refreshSaveABTestConfigFileItem();
 				}
@@ -2075,8 +2082,7 @@ extern "C"
 				    [DYYYUtils showToast:message];
 
 				    if (success) {
-					    gFixedABTestData = nil;
-					    onceToken = 0;
+					    [DYYYABTestHook cleanLocalABTestData];
 					    // 删除成功后修改 SaveABTestConfigFile item 的状态
 					    saveABTestConfigFileItemRef.detail = @"(檔案已刪除)";
 					    saveABTestConfigFileItemRef.isEnable = NO;
@@ -2096,8 +2102,9 @@ extern "C"
 	  NSArray *interactionSettings = @[
 		  @{@"identifier" : @"DYYYentrance",
 		    @"title" : @"左側邊欄快捷入口",
+			@"subTitle" : @"將側邊欄替換為 DYYY 快速入口",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_circlearrowin_outlined_20"},
 		  @{@"identifier" : @"DYYYDisableSidebarGesture",
 		    @"title" : @"禁止側滑進入邊欄",
@@ -2106,13 +2113,15 @@ extern "C"
 		    @"imageName" : @"ic_circlearrowin_outlined_20"},
 		  @{@"identifier" : @"DYYYVideoGesture",
 		    @"title" : @"橫向影片交互增強",
+			@"subTitle" : @"啟用橫向螢幕影片的手勢功能",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_phonearrowdown_outlined_20"},
 		  @{@"identifier" : @"DYYYDisableAutoEnterLive",
 		    @"title" : @"禁用自動進入直播",
+			@"subTitle" : @"禁止頂欄-直播下自動進入直播間",			
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_video_outlined_20"},
 		  @{@"identifier" : @"DYYYEnableSaveAvatar",
 		    @"title" : @"啟用儲存他人頭像",
@@ -2120,19 +2129,21 @@ extern "C"
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_personcircleclean_outlined_20"},
 		  @{@"identifier" : @"DYYYCommentCopyText",
-		    @"title" : @"長按評論複製評論",
+		    @"title" : @"複製評論移除暱稱",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_at_outlined_20"},
 		  @{@"identifier" : @"DYYYBioCopyText",
 		    @"title" : @"長按簡介複製簡介",
+			@"subTitle" : @"長按個人主頁的簡介複製",			
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_rectangleonrectangleup_outlined_20"},
 		  @{@"identifier" : @"DYYYLongPressCopyTextEnabled",
 		    @"title" : @"長按文案複製文案",
+			@"subTitle" : @"長按影片左下角的文案複製",			
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_rectangleonrectangleup_outlined_20"},
 		  @{@"identifier" : @"DYYYMusicCopyText",
 		    @"title" : @"評論音樂點擊複製",
@@ -2146,8 +2157,9 @@ extern "C"
 		    @"imageName" : @"ic_image_outlined_20"},
 		  @{@"identifier" : @"DYYYisEnableModern",
 		    @"title" : @"啟用新版玻璃面板",
+			@"subTitle" : @"啟用抖音灰階測試的長按毛玻璃面板功能",			
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_moon_outlined"},
 		  @{@"identifier" : @"DYYYisEnableModernLight",
 		    @"title" : @"啟用新版淺色面板",
@@ -2176,13 +2188,15 @@ extern "C"
 		    @"imageName" : @"ic_xiaoxihuazhonghua_outlined_20"},
 		  @{@"identifier" : @"DYYYDefaultEnterWorks",
 		    @"title" : @"資料預設進入作品",
+			@"subTitle" : @"禁止個人資料頁自動進入櫥窗等頁面",			
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_playsquarestack_outlined_20"},
 		  @{@"identifier" : @"DYYYDisableHomeRefresh",
 		    @"title" : @"禁用點擊首頁重新整理",
+			@"subTitle" : @"無法與雙擊開啟評論同時啟用"			
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @18,
 		    @"imageName" : @"ic_arrowcircle_outlined_20"}
 	  ];
 
@@ -2604,7 +2618,7 @@ extern "C"
 	  [formatter setDateFormat:@"yyyyMMdd_HHmmss"];
 	  NSString *timestamp = [formatter stringFromDate:[NSDate date]];
 	  NSString *backupFileName = [NSString stringWithFormat:@"DYYY_Backup_%@.json", timestamp];
-      NSString *tempFilePath = [DYYYUtils cachePathForFilename:backupFileName];
+	  NSString *tempFilePath = [DYYYUtils cachePathForFilename:backupFileName];
 
 	  BOOL success = [sortedJsonData writeToFile:tempFilePath atomically:YES];
 
@@ -2840,10 +2854,10 @@ extern "C"
 	  [strongCleanCacheItem refreshCell];
 
 	  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            [DYYYUtils clearCacheDirectory];
-            for (NSString *basePath in allPaths) {
-                    [DYYYUtils removeAllContentsAtPath:basePath];
-            }
+	    [DYYYUtils clearCacheDirectory];
+	    for (NSString *basePath in allPaths) {Add commentMore actions
+		    [DYYYUtils removeAllContentsAtPath:basePath];
+	    }
 
 	    unsigned long long afterSize = 0;
 	    for (NSString *basePath in allPaths) {
