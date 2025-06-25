@@ -1952,7 +1952,7 @@ extern "C"
 					  detailText = @"(獲取失敗)";
 					  isItemEnable = NO;
 				  } else {
-					  NSError *serializationError = nil;20
+					  NSError *serializationError = nil;
 					  jsonDataForSize = [NSJSONSerialization dataWithJSONObject:currentData options:NSJSONWritingPrettyPrinted error:&serializationError];
 					  if (!serializationError && jsonDataForSize) {
 						  detailText = [DYYYUtils formattedSize:jsonDataForSize.length];
