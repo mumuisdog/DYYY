@@ -18,9 +18,21 @@
 
 @implementation DYYYKeywordListView
 
+- (void)setAddItemTitle:(NSString *)addItemTitle {
+  _addItemTitle = [addItemTitle copy];
+  NSString *addTitle = _addItemTitle ?: @"新增";
+  if (self.addButton) {
+    [self.addButton setTitle:[@"+ " stringByAppendingString:addTitle]
+                     forState:UIControlStateNormal];
+  }
+}
+
 - (instancetype)initWithTitle:(NSString *)title keywords:(NSArray *)keywords {
   if (self = [super initWithFrame:UIScreen.mainScreen.bounds]) {
     self.keywords = [NSMutableArray arrayWithArray:keywords ?: @[]];
+    self.addItemTitle = @"新增過濾項目";
+    self.editItemTitle = @"編輯過濾項目";
+    self.inputPlaceholder = @"請輸入過濾項目";
     self.backgroundColor = [UIColor colorWithWhite:0 alpha:0.2];
 
     BOOL isDarkMode = [DYYYUtils isDarkMode];
@@ -88,7 +100,9 @@
         [UIColor colorWithRed:45/255.0 green:45/255.0 blue:45/255.0 alpha:1.0] :
         [UIColor colorWithRed:245/255.0 green:245/255.0 blue:245/255.0 alpha:1.0];
     self.addButton.layer.cornerRadius = 8;
-    [self.addButton setTitle:@"+ 新增過濾項目" forState:UIControlStateNormal];
+    NSString *addTitle = self.addItemTitle ?: @"新增";
+    [self.addButton setTitle:[@"+ " stringByAppendingString:addTitle]
+                         forState:UIControlStateNormal];
     [self.addButton setTitleColor:[UIColor colorWithRed:11/255.0
                                                   green:223/255.0
                                                    blue:154/255.0
@@ -186,9 +200,9 @@
 
 - (void)addKeywordTapped {
   DYYYCustomInputView *inputView = [[DYYYCustomInputView alloc]
-      initWithTitle:@"新增過濾項目"
+      initWithTitle:self.addItemTitle
         defaultText:nil
-        placeholder:@"請輸入過濾項目，多個用逗號分隔"];
+        placeholder:self.inputPlaceholder];
 
   __weak typeof(self) weakSelf = self;
   inputView.onConfirm = ^(NSString *text) {
@@ -303,9 +317,9 @@
 
   NSString *currentKeyword = self.keywords[indexPath.row];
   DYYYCustomInputView *inputView =
-      [[DYYYCustomInputView alloc] initWithTitle:@"編輯過濾項目"
+      [[DYYYCustomInputView alloc] initWithTitle:self.editItemTitle
                                      defaultText:currentKeyword
-                                     placeholder:@"請輸入過濾項目"];
+                                     placeholder:self.inputPlaceholder];
 
   __weak typeof(self) weakSelf = self;
   inputView.onConfirm = ^(NSString *text) {
