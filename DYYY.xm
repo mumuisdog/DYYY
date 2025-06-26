@@ -1050,7 +1050,7 @@
 			if (sliderWidth < 0)
 				sliderWidth = 0;
 
-f.frame = CGRectMake(sliderX, sliderY, sliderWidth, sliderHeight);
+			self.frame = CGRectMake(sliderX, sliderY, sliderWidth, sliderHeight);
 		}
 	}
 }
