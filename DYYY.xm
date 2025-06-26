@@ -600,44 +600,15 @@
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYEnableDanmuColor"]) {
 		NSString *danmuColor = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYdanmuColor"];
 
-		if ([danmuColor.lowercaseString isEqualToString:@"random"] || [danmuColor.lowercaseString isEqualToString:@"#random"]) {
-			textColor = [UIColor colorWithRed:(arc4random_uniform(256)) / 255.0
-						    green:(arc4random_uniform(256)) / 255.0
-						     blue:(arc4random_uniform(256)) / 255.0
-						    alpha:CGColorGetAlpha(textColor.CGColor)];
-			self.layer.shadowOffset = CGSizeZero;
-			self.layer.shadowOpacity = 0.0;
-		} else if ([danmuColor hasPrefix:@"#"]) {
-			textColor = [self colorFromHexString:danmuColor baseColor:textColor];
-			self.layer.shadowOffset = CGSizeZero;
-			self.layer.shadowOpacity = 0.0;
-		} else {
-			textColor = [self colorFromHexString:@"#FFFFFF" baseColor:textColor];
-		}
-	}
+		self.layer.shadowOffset = CGSizeZero;
+		self.layer.shadowOpacity = 0.0;
+		[DYYYUtils applyColorSettingsToLabel:self colorHexString:danmuColor];
+        return;
+    }
 
 	%orig(textColor);
 }
 
-%new
-- (UIColor *)colorFromHexString:(NSString *)hexString baseColor:(UIColor *)baseColor {
-	if ([hexString hasPrefix:@"#"]) {
-		hexString = [hexString substringFromIndex:1];
-	}
-	if ([hexString length] != 6) {
-		return [baseColor colorWithAlphaComponent:1];
-	}
-	unsigned int red, green, blue;
-	[[NSScanner scannerWithString:[hexString substringWithRange:NSMakeRange(0, 2)]] scanHexInt:&red];
-	[[NSScanner scannerWithString:[hexString substringWithRange:NSMakeRange(2, 2)]] scanHexInt:&green];
-	[[NSScanner scannerWithString:[hexString substringWithRange:NSMakeRange(4, 2)]] scanHexInt:&blue];
-
-	if (red < 128 && green < 128 && blue < 128) {
-		return [UIColor whiteColor];
-	}
-
-	return [UIColor colorWithRed:(red / 255.0) green:(green / 255.0) blue:(blue / 255.0) alpha:CGColorGetAlpha(baseColor.CGColor)];
-}
 %end
 
 %hook AWEMarkView
@@ -659,45 +630,6 @@
 	}
 }
 
-%end
-
-%hook AWEDanmakuItemTextInfo
-- (void)setDanmakuTextColor:(id)arg1 {
-
-	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYEnableDanmuColor"]) {
-		NSString *danmuColor = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYdanmuColor"];
-
-		if ([danmuColor.lowercaseString isEqualToString:@"random"] || [danmuColor.lowercaseString isEqualToString:@"#random"]) {
-			arg1 = [UIColor colorWithRed:(arc4random_uniform(256)) / 255.0 green:(arc4random_uniform(256)) / 255.0 blue:(arc4random_uniform(256)) / 255.0 alpha:1.0];
-		} else if ([danmuColor hasPrefix:@"#"]) {
-			arg1 = [self colorFromHexStringForTextInfo:danmuColor];
-		} else {
-			arg1 = [self colorFromHexStringForTextInfo:@"#FFFFFF"];
-		}
-	}
-
-	%orig(arg1);
-}
-
-%new
-- (UIColor *)colorFromHexStringForTextInfo:(NSString *)hexString {
-	if ([hexString hasPrefix:@"#"]) {
-		hexString = [hexString substringFromIndex:1];
-	}
-	if ([hexString length] != 6) {
-		return [UIColor whiteColor];
-	}
-	unsigned int red, green, blue;
-	[[NSScanner scannerWithString:[hexString substringWithRange:NSMakeRange(0, 2)]] scanHexInt:&red];
-	[[NSScanner scannerWithString:[hexString substringWithRange:NSMakeRange(2, 2)]] scanHexInt:&green];
-	[[NSScanner scannerWithString:[hexString substringWithRange:NSMakeRange(4, 2)]] scanHexInt:&blue];
-
-	if (red < 128 && green < 128 && blue < 128) {
-		return [UIColor whiteColor];
-	}
-
-	return [UIColor colorWithRed:(red / 255.0) green:(green / 255.0) blue:(blue / 255.0) alpha:1.0];
-}
 %end
 
 %group DYYYSettingsGesture
@@ -956,103 +888,15 @@
 			}
 		}
 	}
-	[self dyyy_applyShrinkIfNeeded];
 }
 
-%new
-- (void)dyyy_applyShrinkIfNeeded {
-	if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisShowScheduleDisplay"]) {
-		return;
-	}
-
-	NSString *scheduleStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
-	if (![scheduleStyle isEqualToString:@"進度條兩側左右"]) {
-		NSMutableDictionary *origFrames = objc_getAssociatedObject(self, @selector(dyyy_applyShrinkIfNeeded));
-		if (origFrames) {
-			for (UIView *subview in self.subviews) {
-				NSString *key = [NSString stringWithFormat:@"%p", subview];
-				NSValue *val = origFrames[key];
-				if (val) {
-					subview.frame = [val CGRectValue];
-				}
-			}
-		}
-		return;
-	}
-
-	UILabel *leftLabel = [self viewWithTag:10001];
-	UILabel *rightLabel = [self viewWithTag:10002];
-	if (!leftLabel || !rightLabel) {
-		return;
-	}
-
-	CGFloat padding = 5.0;
-	CGFloat shrinkX = CGRectGetMaxX(leftLabel.frame) + padding;
-	CGFloat shrinkWidth = rightLabel.frame.origin.x - padding - shrinkX;
-	if (shrinkWidth < 0)
-		shrinkWidth = 0;
-
-	NSMutableDictionary *origFrames = objc_getAssociatedObject(self, @selector(dyyy_applyShrinkIfNeeded));
-	if (!origFrames) {
-		origFrames = [NSMutableDictionary dictionary];
-		for (UIView *subview in self.subviews) {
-			NSString *key = [NSString stringWithFormat:@"%p", subview];
-			origFrames[key] = [NSValue valueWithCGRect:subview.frame];
-		}
-		objc_setAssociatedObject(self, @selector(dyyy_applyShrinkIfNeeded), origFrames, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-	}
-
-	for (UIView *subview in self.subviews) {
-		NSString *key = [NSString stringWithFormat:@"%p", subview];
-		CGRect origFrame = [origFrames[key] CGRectValue];
-		if ([subview isKindOfClass:[UILabel class]])
-			continue;
-		CGFloat ratio = origFrame.size.width / origFrame.size.height;
-		if (ratio > 10.0) {
-			CGRect frame = origFrame;
-			frame.origin.x = shrinkX;
-			frame.size.width = shrinkWidth;
-			subview.frame = frame;
-		}
-	}
-}
 %end
 
 %hook AWEFeedProgressSlider
 
 // layoutSubviews 保持不变
 - (void)layoutSubviews {
-	%orig;
-	[self applyCustomProgressStyle];
-}
-
-%new
-
-- (void)applyCustomProgressStyle {
-	NSString *scheduleStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
-	UIView *parentView = self.superview;
-
-	if (!parentView)
-		return;
-
-	if ([scheduleStyle isEqualToString:@"進度條兩側左右"]) {
-		// 尝试获取标签
-		UILabel *leftLabel = [parentView viewWithTag:10001];
-		UILabel *rightLabel = [parentView viewWithTag:10002];
-
-		if (leftLabel && rightLabel) {
-			CGFloat padding = 5.0;
-			CGFloat sliderY = self.frame.origin.y;
-			CGFloat sliderHeight = self.frame.size.height;
-			CGFloat sliderX = leftLabel.frame.origin.x + leftLabel.frame.size.width + padding;
-			CGFloat sliderWidth = rightLabel.frame.origin.x - padding - sliderX;
-
-			if (sliderWidth < 0)
-				sliderWidth = 0;
-
-			self.frame = CGRectMake(sliderX, sliderY, sliderWidth, sliderHeight);
-		}
-	}
+        %orig;
 }
 
 - (void)setAlpha:(CGFloat)alpha {
@@ -1262,27 +1106,6 @@ static CGFloat rightLabelRightMargin = -1;
 }
 
 %end
-
-%hook AWEFakeProgressSliderView
-- (void)layoutSubviews {
-	%orig;
-	[self applyCustomProgressStyle];
-}
-
-%new
-- (void)applyCustomProgressStyle {
-	NSString *scheduleStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
-
-	if ([scheduleStyle isEqualToString:@"進度條兩側左右"]) {
-		for (UIView *subview in self.subviews) {
-			if ([subview class] == [UIView class]) {
-				subview.hidden = YES;
-			}
-		}
-	}
-}
-%end
-
 %hook AWENormalModeTabBarTextView
 
 - (void)layoutSubviews {
@@ -5171,65 +4994,10 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
 							break;
 						}
 					}
-				} else {
-					for (UIView *innerSubview in subview.subviews) {
-						if ([innerSubview isKindOfClass:[UIView class]]) {
-							if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableCommentBarTransparent"]) {
-								// 检查背景颜色
-								UIColor *bgColor = innerSubview.backgroundColor;
-								if (bgColor) {
-									CGFloat red = 0, green = 0, blue = 0, alpha = 0;
-									BOOL isWhite = NO;
-
-									if ([bgColor getRed:&red green:&green blue:&blue alpha:&alpha]) {
-										isWhite = (red > 0.95 && green > 0.95 && blue > 0.95);
-										// 如果背景是透明的，则不处理
-										if (alpha < 0.1) {
-											break;
-										}
-									}
-
-									// 只有当背景是白色时才应用毛玻璃效果
-									if (isWhite) {
-										float userTransparency = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYCommentBlurTransparent"]
-										    floatValue];
-										if (userTransparency <= 0 || userTransparency > 1) {
-											userTransparency = 0.95;
-										}
-										DYYYAddCustomViewToParent(innerSubview, userTransparency);
-									}
-								}
-							} else {
-								float userTransparency = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYCommentBlurTransparent"] floatValue];
-								if (userTransparency <= 0 || userTransparency > 1) {
-									userTransparency = 0.95;
-								}
-								DYYYAddCustomViewToParent(innerSubview, userTransparency);
-							}
-							break;
-						}
-					}
 				}
 			}
 		}
-	}
-	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableFullScreen"] || [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableCommentBlur"]) {
 
-		UIViewController *vc = [self firstAvailableUIViewController];
-		if ([vc isKindOfClass:%c(AWEPlayInteractionViewController)]) {
-			BOOL shouldHideSubview = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableFullScreen"] ||
-						 [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableCommentBlur"];
-
-			if (shouldHideSubview) {
-				for (UIView *subview in self.subviews) {
-					if ([subview isKindOfClass:[UIView class]] && subview.backgroundColor && CGColorEqualToColor(subview.backgroundColor.CGColor, [UIColor blackColor].CGColor)) {
-						subview.hidden = YES;
-					}
-				}
-			}
-		}
-	}
-	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableCommentBlur"]) {
 		NSString *className = NSStringFromClass([self class]);
 		if ([className isEqualToString:@"AWECommentInputViewSwiftImpl.CommentInputContainerView"]) {
 			for (UIView *subview in self.subviews) {
@@ -5243,6 +5011,48 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
 							userTransparency = 0.95;
 						}
 						DYYYAddCustomViewToParent(subview, userTransparency);
+					}
+				}
+			}
+		}
+	}
+
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableCommentBarBlur"]) {
+		for (UIView *subview in self.subviews) {
+			if ([subview isKindOfClass:NSClassFromString(@"AWECommentInputViewSwiftImpl.CommentInputViewMiddleContainer")]) {
+				BOOL containsDanmu = NO;
+				for (UIView *innerSubviewCheck in subview.subviews) {
+					if ([innerSubviewCheck isKindOfClass:[UILabel class]] && [((UILabel *)innerSubviewCheck).text containsString:@"弹幕"]) {
+						containsDanmu = YES;
+						break;
+					}
+				}
+				if (!containsDanmu) {
+					for (UIView *innerSubview in subview.subviews) {
+						if ([innerSubview isKindOfClass:[UIView class]]) {
+							float userTransparency = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYCommentBlurTransparent"] floatValue];
+							if (userTransparency <= 0 || userTransparency > 1) {
+								userTransparency = 0.95;
+									}
+							DYYYAddCustomViewToParent(innerSubview, userTransparency);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableFullScreen"] || [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableCommentBlur"]) {
+		UIViewController *vc = [self firstAvailableUIViewController];
+		if ([vc isKindOfClass:%c(AWEPlayInteractionViewController)]) {
+			BOOL shouldHideSubview = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableFullScreen"] ||
+						 [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableCommentBlur"];
+
+			if (shouldHideSubview) {
+				for (UIView *subview in self.subviews) {
+					if ([subview isKindOfClass:[UIView class]] && subview.backgroundColor && CGColorEqualToColor(subview.backgroundColor.CGColor, [UIColor blackColor].CGColor)) {
+						subview.hidden = YES;
 					}
 				}
 			}
