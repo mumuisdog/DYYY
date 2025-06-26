@@ -275,7 +275,7 @@ extern "C"
 		    @"imageName" : @"ic_location_outlined_20"},
 		  @{@"identifier" : @"DYYYEnabsuijiyanse",
 		    @"title" : @"屬地隨機漸變",
-			@"subTitle" : @"不能與屬地標籤顏色同時開啟",
+			@"subTitle" : @"啟用後將覆蓋上面的屬地標籤顏色",
 		    @"detail" : @"",
 		    @"cellType" : @37,
 		    @"imageName" : @"ic_location_outlined_20"}
@@ -324,7 +324,7 @@ extern "C"
 			  NSString *savedStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
 			  item.detail = savedStyle ?: @"預設";
 			  item.cellTappedBlock = ^{
-			    NSArray *styleOptions = @[ @"進度條兩側上下", @"進度條兩側左右", @"進度條左側剩餘", @"進度條左側完整", @"進度條右側剩餘", @"進度條右側完整" ];
+                            NSArray *styleOptions = @[ @"進度條兩側上下", @"進度條左側剩餘", @"進度條左側完整", @"進度條右側剩餘", @"進度條右側完整" ];
 
 			    [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYScheduleStyle"
 							       optionsArray:styleOptions
@@ -608,18 +608,13 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_comment_outlined_20"},
-		  @{@"identifier" : @"DYYYisEnableCommentBarTransparent",
-		    @"title" : @"評論底欄透明",
+		  @{@"identifier" : @"DYYYisEnableCommentBarBlur",
+		    @"title" : @"評論欄毛玻璃",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_msgnut_outlined_20"},
-		  @{@"identifier" : @"DYYYCommentBlurTransparent",
-		    @"title" : @"毛玻璃透明度",
-		    @"detail" : @"0-1小數",
-		    @"cellType" : @26,
-		    @"imageName" : @"ic_eye_outlined_20"},
 		  @{@"identifier" : @"DYYYEnableNotificationTransparency",
-		    @"title" : @"通知玻璃效果",
+		    @"title" : @"通知欄毛玻璃",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_comment_outlined_20"},
@@ -628,6 +623,11 @@ extern "C"
 		    @"detail" : @"預設12",
 		    @"cellType" : @26,
 		    @"imageName" : @"ic_comment_outlined_20"},
+		  @{@"identifier" : @"DYYYCommentBlurTransparent",
+		    @"title" : @"毛玻璃透明度",
+		    @"detail" : @"0-1小數",
+		    @"cellType" : @26,
+		    @"imageName" : @"ic_eye_outlined_20"},
 	  ];
 
 	  for (NSDictionary *dict in transparencySettings) {
@@ -2703,9 +2703,10 @@ extern "C"
 		  dyyySettings[@"DYYYIconsBase64"] = iconBase64Dict;
 	  }
 
-	  // 转换为JSON数据
-	  NSError *error;
-	  NSData *sortedJsonData = [NSJSONSerialization dataWithJSONObject:dyyySettings options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys error:&error];
+          // 转换为JSON数据
+          NSError *error;
+          id jsonObject = DYYYJSONSafeObject(dyyySettings);
+          NSData *sortedJsonData = [NSJSONSerialization dataWithJSONObject:jsonObject options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys error:&error];
 
 	  if (error) {
 		  [DYYYUtils showToast:@"備份失敗：無法序列化設定資料"];
