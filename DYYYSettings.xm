@@ -2310,8 +2310,9 @@ extern "C"
 		    @"imageName" : @"ic_comment_outlined_20"},
 		  @{@"identifier" : @"DYYYEnableDoubleOpenAlertController",
 		    @"title" : @"啟用雙擊開啟選單",
+			@"subTitle" : @"無法與雙擊開啟評論同時啟用",
 		    @"detail" : @"",
-		    @"cellType" : @26,
+		    @"cellType" : @20,
 		    @"imageName" : @"ic_xiaoxihuazhonghua_outlined_20"},
 		  @{@"identifier" : @"DYYYDefaultEnterWorks",
 		    @"title" : @"資料預設進入作品",
@@ -2321,7 +2322,6 @@ extern "C"
 		    @"imageName" : @"ic_playsquarestack_outlined_20"},
 		  @{@"identifier" : @"DYYYDisableHomeRefresh",
 		    @"title" : @"禁用點擊首頁重新整理",
-			@"subTitle" : @"無法與雙擊開啟評論同時啟用",
 		    @"detail" : @"",
 		    @"cellType" : @20,
 		    @"imageName" : @"ic_arrowcircle_outlined_20"}
