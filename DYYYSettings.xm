@@ -836,13 +836,15 @@ extern "C"
 	  NSArray *videoUiSettings = @[
 		  @{@"identifier" : @"DYYYHideLOTAnimationView",
 		    @"title" : @"隱藏頭像加號",
+			@"subTitle" : @"原始位置可點擊",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideFollowPromptView",
 		    @"title" : @"移除頭像加號",
+			@"subTitle" : @"完全移除不可點擊",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideLikeLabel",
 		    @"title" : @"隱藏按讚數值",
@@ -931,8 +933,9 @@ extern "C"
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideBack",
 		    @"title" : @"隱藏返回按鈕",
+			@"subTitle" : @"主頁影片左上角的返回按鈕",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideSettingsAbout",
 		    @"title" : @"隱藏設定關於",
@@ -1041,8 +1044,9 @@ extern "C"
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideSearchBubble",
 		    @"title" : @"隱藏彈出熱搜",
+			@"subTitle" : @"從右上搜尋位置彈出的熱搜白框",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideSearchSame",
 		    @"title" : @"隱藏搜尋同款",
@@ -1223,8 +1227,9 @@ extern "C"
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideScancode",
 		    @"title" : @"隱藏輸入掃碼",
+			@"subTitle" : @"隱藏點擊搜尋後輸入框右部的掃碼按鈕",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideReply",
 		    @"title" : @"隱藏私信回復",
@@ -1286,6 +1291,18 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{@"identifier" : @"DYYYHideLiveDetail",
+		    @"title" : @"隱藏直播熱榜",
+			@"subTitle" : @"隱藏使用者下方的小時榜、人氣榜、熱度等資訊",
+		    @"detail" : @"",
+		    @"cellType" : @37,
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{@"identifier" : @"DYYYHideTouchView",
+		    @"title" : @"隱藏紅包懸浮",
+			@"subTitle" : @"隱藏使用者下方的紅包、積分等懸浮按鈕",
+		    @"detail" : @"",
+		    @"cellType" : @37,
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideLiveGoodsMsg",
 		    @"title" : @"隱藏商品資訊",
 		    @"detail" : @"",
@@ -1298,6 +1315,16 @@ extern "C"
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideCellularAlert",
 		    @"title" : @"隱藏流量提醒",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{@"identifier" : @"DYYYHideLivePopup",
+		    @"title" : @"隱藏進場特效",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{@"identifier" : @"DYYYHideStickerView",
+		    @"title" : @"隱藏文字貼紙",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
@@ -1734,7 +1761,7 @@ extern "C"
 		  @{
 			  @"identifier" : @"DYYYForceDownloadEmotion",
 			  @"title" : @"儲存評論區表情包",
-			  @"subTitle" : @"iOS 17+的用戶請長按表情本身儲存",
+			  @"subTitle" : @"iOS 17+的使用者請長按表情本身儲存",
 			  @"detail" : @"",
 			  @"cellType" : @37,
 			  @"imageName" : @"ic_emoji_outlined"
@@ -2206,8 +2233,9 @@ extern "C"
 		    @"imageName" : @"ic_circlearrowin_outlined_20"},
 		  @{@"identifier" : @"DYYYDisableSidebarGesture",
 		    @"title" : @"禁止側滑進入邊欄",
+			@"subTitle" : @"禁止在首頁最左邊的頁面時右滑進入側邊欄",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_circlearrowin_outlined_20"},
 		  @{@"identifier" : @"DYYYVideoGesture",
 		    @"title" : @"橫向影片交互增強",
@@ -2245,8 +2273,9 @@ extern "C"
 		    @"imageName" : @"ic_rectangleonrectangleup_outlined_20"},
 		  @{@"identifier" : @"DYYYMusicCopyText",
 		    @"title" : @"評論音樂點擊複製",
+			@"subTitle" : @"含有音樂的影片開啟留言區頂部時，移除去汽水聽，點擊複製歌曲名稱",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_quaver_outlined_20"},
 		  @{@"identifier" : @"DYYYisAutoSelectOriginalPhoto",
 		    @"title" : @"啟用自動勾選原圖",
@@ -2589,8 +2618,9 @@ extern "C"
 	      createSettingItem:
 		  @{@"identifier" : @"DYYYEnabshijianjindu",
 		    @"title" : @"清除螢幕移除進度",
+			@"subTitle" : @"清除螢幕狀態下完全移除時間進度條",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_eyeslash_outlined_16"}];
 	  [clearButtonItems addObject:enableqingButton];
 	  // 清屏隐藏时间进度
@@ -2598,32 +2628,36 @@ extern "C"
 	      createSettingItem:
 		  @{@"identifier" : @"DYYYHideTimeProgress",
 		    @"title" : @"清除螢幕隱藏進度",
+			@"subTitle" : @"原始位置可拖曳時間進度條",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_eyeslash_outlined_16"}];
 	  [clearButtonItems addObject:enableqingButton1];
 	  AWESettingItemModel *hideSliderButton = [DYYYSettingsHelper
 	      createSettingItem:
 		  @{@"identifier" : @"DYYYHideSlider",
 		    @"title" : @"清除螢幕隱藏滑條",
+			@"subTitle" : @"清除螢幕狀態下隱藏多圖片下方的滑條",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_eyeslash_outlined_16"}];
 	  [clearButtonItems addObject:hideSliderButton];
 	  AWESettingItemModel *hideChapterButton = [DYYYSettingsHelper
 	      createSettingItem:
 		  @{@"identifier" : @"DYYYHideChapter",
 		    @"title" : @"清除螢幕隱藏章節",
+			@"subTitle" : @"清除螢幕狀態下隱藏部分影片出現的章節進度顯示",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_eyeslash_outlined_16"}];
 	  [clearButtonItems addObject:hideChapterButton];
 	  AWESettingItemModel *hideTabButton = [DYYYSettingsHelper
 	      createSettingItem:
 		  @{@"identifier" : @"DYYYHideTabBar",
 		    @"title" : @"清除螢幕隱藏底欄",
+			@"subTitle" : @"清除螢幕狀態下隱藏DYYY的倍速按鈕",
 		    @"detail" : @"",
-		    @"cellType" : @6,
+		    @"cellType" : @37,
 		    @"imageName" : @"ic_eyeslash_outlined_16"}];
 	  [clearButtonItems addObject:hideTabButton];
 	  AWESettingItemModel *hideSpeedButton = [DYYYSettingsHelper
