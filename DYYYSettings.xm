@@ -2323,7 +2323,7 @@ extern "C"
 		  @{@"identifier" : @"DYYYDisableHomeRefresh",
 		    @"title" : @"禁用點擊首頁重新整理",
 		    @"detail" : @"",
-		    @"cellType" : @20,
+		    @"cellType" : @6,
 		    @"imageName" : @"ic_arrowcircle_outlined_20"}
 	  ];
 
