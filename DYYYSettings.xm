@@ -1972,9 +1972,9 @@ extern "C"
 			  item.detail = isPatchMode ? @"覆寫模式" : @"替換模式";
 
 			  item.cellTappedBlock = ^{
-			    NSString *currentMode = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYABTestModeString"] ?: @"替換模式：清除原設定，寫入新數據";
+			    NSString *currentMode = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYABTestModeString"] ?: @"替換模式：忽略原設定，寫入新資料";
 
-			    NSArray *modeOptions = @[ @"覆寫模式：保留原設定，覆蓋同名項", @"替換模式：清除原設定，寫入新數據" ];
+			    NSArray *modeOptions = @[ @"覆寫模式：保留原設定，覆蓋同名項", @"替換模式：忽略原設定，寫入新資料" ];
 
 			    [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYABTestModeString"
 							       optionsArray:modeOptions
