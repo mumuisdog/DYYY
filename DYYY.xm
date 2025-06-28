@@ -4498,9 +4498,9 @@ static AWEIMReusableCommonCell *currentCell;
 			}
 
 			if (awemeModel.albumImages.count > 1) {
-				downloadTitle = (currentImageModel.clipVideo != nil) ? @"儲存目前原況" : @"儲存目前圖片";
+				downloadTitle = (currentImageModel.clipVideo != nil || awemeModel.isLivePhoto) ? @"儲存目前原況" : @"儲存目前圖片";
 			} else {
-				downloadTitle = (currentImageModel.clipVideo != nil) ? @"儲存原況" : @"儲存圖片";
+				downloadTitle = (currentImageModel.clipVideo != nil || awemeModel.isLivePhoto) ? @"儲存原況" : @"儲存圖片";
 			}
 		} else if (isNewLivePhoto) {
 			downloadTitle = @"儲存原況";			
