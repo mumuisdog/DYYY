@@ -241,7 +241,7 @@
 		}
 
 		AWEImageAlbumImageModel *currimge = self.awemeModel.albumImages[self.awemeModel.currentImageIndex - 1];
-		if (currimge.clipVideo != nil) {
+		if (currimge.clipVideo != nil || self.awemeModel.isLivePhoto) {
 			if (self.awemeModel.albumImages.count == 1) {
 				imageViewModel.describeString = @"儲存原況";
 			} else {
@@ -1049,7 +1049,7 @@
 		}
 
 		AWEImageAlbumImageModel *currimge = self.awemeModel.albumImages[self.awemeModel.currentImageIndex - 1];
-		if (currimge.clipVideo != nil) {
+		if (currimge.clipVideo != nil || self.awemeModel.isLivePhoto) {
 			if (self.awemeModel.albumImages.count == 1) {
 				imageViewModel.describeString = @"儲存原況";
 			} else {
