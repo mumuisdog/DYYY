@@ -2703,7 +2703,7 @@ extern "C"
 		  @"cellType" : @37,
 		  @"imageName" : @"ic_eyeslash_outlined_16"
 	  }];
-	  [clearButtonItems addObject:hideChapterButton];Add commentMore actions
+	  [clearButtonItems addObject:hideChapterButton];
 	  AWESettingItemModel *hideTabButton = [DYYYSettingsHelper
 	      createSettingItem:
 		  @{@"identifier" : @"DYYYHideTabBar",
@@ -2790,7 +2790,7 @@ extern "C"
 		  dyyySettings[@"DYYYIconsBase64"] = iconBase64Dict;
 	  }
 
-	  // 转换为JSON数据Add commentMore actions
+	  // 转换为JSON数据
 	  NSError *error;
 	  id jsonObject = DYYYJSONSafeObject(dyyySettings);
 	  NSData *sortedJsonData = [NSJSONSerialization dataWithJSONObject:jsonObject options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys error:&error];
