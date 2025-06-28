@@ -239,12 +239,14 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_playertime_outlined_20"},
-		  @{@"identifier" : @"DYYYisEnableAutoPlay",
-		    @"title" : @"啟用自動播放",
-			@"subTitle" : @"暫時僅支援推薦、搜尋和個人主頁的自動連播",			
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_play_outlined_12"},
+		  @{
+			  @"identifier" : @"DYYYisEnableAutoPlay",
+			  @"title" : @"啟用自動播放",
+			  @"subTitle" : @"暫時僅支援推薦、搜尋和個人主頁的自動連播",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_play_outlined_12"
+		  },
 		  @{@"identifier" : @"DYYYDefaultSpeed",
 		    @"title" : @"設定預設倍速",
 		    @"detail" : @"",
@@ -273,12 +275,14 @@ extern "C"
 		    @"detail" : @"十六進位",
 		    @"cellType" : @26,
 		    @"imageName" : @"ic_location_outlined_20"},
-		  @{@"identifier" : @"DYYYEnabsuijiyanse",
-		    @"title" : @"屬地隨機漸變",
-			@"subTitle" : @"啟用後將覆蓋上面的屬地標籤顏色",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_location_outlined_20"}
+		  @{
+			  @"identifier" : @"DYYYEnabsuijiyanse",
+			  @"title" : @"屬地隨機漸變",
+			  @"subTitle" : @"啟用後將覆蓋上面的屬地標籤顏色",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_location_outlined_20"
+		  }
 	  ];
 
 	  for (NSDictionary *dict in videoSettings) {
@@ -324,7 +328,7 @@ extern "C"
 			  NSString *savedStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
 			  item.detail = savedStyle ?: @"預設";
 			  item.cellTappedBlock = ^{
-                            NSArray *styleOptions = @[ @"進度條兩側上下", @"進度條左側剩餘", @"進度條左側完整", @"進度條右側剩餘", @"進度條右側完整" ];
+			    NSArray *styleOptions = @[ @"進度條兩側上下", @"進度條左側剩餘", @"進度條左側完整", @"進度條右側剩餘", @"進度條右側完整" ];
 
 			    [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYScheduleStyle"
 							       optionsArray:styleOptions
@@ -406,12 +410,14 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @26,
 		    @"imageName" : @"ic_playertime_outlined_20"},
-		  @{@"identifier" : @"DYYYfilterFeedHDR",
-		    @"title" : @"推薦過濾HDR",
-			@"subTitle" : @"開啟後推薦頁面會屏蔽 HDR 影片",			
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_sun_outlined"},
+		  @{
+			  @"identifier" : @"DYYYfilterFeedHDR",
+			  @"title" : @"推薦過濾HDR",
+			  @"subTitle" : @"開啟後推薦頁面會屏蔽 HDR 影片",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_sun_outlined"
+		  },
 		  @{@"identifier" : @"DYYYfilterProp",
 		    @"title" : @"推薦過濾拍同款",
 		    @"detail" : @"",
@@ -427,12 +433,14 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_personcircleclean_outlined_20"},
-		  @{@"identifier" : @"DYYYNoUpdates",
-		    @"title" : @"屏蔽抖音檢測更新",
-			@"subTitle" : @"屏蔽抖音應用的版本更新",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_circletop_outlined"},
+		  @{
+			  @"identifier" : @"DYYYNoUpdates",
+			  @"title" : @"屏蔽抖音檢測更新",
+			  @"subTitle" : @"屏蔽抖音應用的版本更新",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_circletop_outlined"
+		  },
 		  @{@"identifier" : @"DYYYDisableLivePCDN",
 		    @"title" : @"屏蔽直播PCDN功能",
 		    @"detail" : @"",
@@ -664,11 +672,11 @@ extern "C"
 		    @"cellType" : @26,
 		    @"imageName" : @"ic_pensketch_outlined_20"},
 		  @{@"identifier" : @"DYYYTabBarHeight",
-		    @"title" : @"底欄高度",
+		    @"title" : @"首頁底欄高度",
 		    @"detail" : @"預設83",
 		    @"cellType" : @26,
 		    @"imageName" : @"ic_pensketch_outlined_20"},
-          ];
+	  ];
 
 	  for (NSDictionary *dict in scaleSettings) {
 		  AWESettingItemModel *item = [DYYYSettingsHelper createSettingItem:dict cellTapHandlers:cellTapHandlers];
@@ -705,29 +713,29 @@ extern "C"
 		    @"imageName" : @"ic_user_outlined_20"},
 	  ];
 
-          for (NSDictionary *dict in titleSettings) {
-                  AWESettingItemModel *item = [DYYYSettingsHelper createSettingItem:dict cellTapHandlers:cellTapHandlers];
-                  if ([item.identifier isEqualToString:@"DYYYModifyTopTabText"]) {
-                          NSString *savedValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYModifyTopTabText"];
-                          item.detail = savedValue ?: @"";
-                          item.cellTappedBlock = ^{
-                            NSString *savedPairs = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYModifyTopTabText"] ?: @"";
-                            NSArray *pairArray = savedPairs.length > 0 ? [savedPairs componentsSeparatedByString:@"#"] : @[];
-                            DYYYKeywordListView *keywordListView = [[DYYYKeywordListView alloc] initWithTitle:@"設定頂欄標題" keywords:pairArray];
-                            keywordListView.addItemTitle = @"新增標題修改";
-                            keywordListView.editItemTitle = @"編輯標題修改";
-                            keywordListView.inputPlaceholder = @"原標題=新標題";
-                            keywordListView.onConfirm = ^(NSArray *keywords) {
-                              NSString *keywordString = [keywords componentsJoinedByString:@"#"];
-                              [DYYYSettingsHelper setUserDefaults:keywordString forKey:@"DYYYModifyTopTabText"];
-                              item.detail = keywordString;
-                              [item refreshCell];
-                            };
-                            [keywordListView show];
-                          };
-                  }
-                  [titleItems addObject:item];
-          }
+	  for (NSDictionary *dict in titleSettings) {
+		  AWESettingItemModel *item = [DYYYSettingsHelper createSettingItem:dict cellTapHandlers:cellTapHandlers];
+		  if ([item.identifier isEqualToString:@"DYYYModifyTopTabText"]) {
+			  NSString *savedValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYModifyTopTabText"];
+			  item.detail = savedValue ?: @"";
+			  item.cellTappedBlock = ^{
+			    NSString *savedPairs = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYModifyTopTabText"] ?: @"";
+			    NSArray *pairArray = savedPairs.length > 0 ? [savedPairs componentsSeparatedByString:@"#"] : @[];
+			    DYYYKeywordListView *keywordListView = [[DYYYKeywordListView alloc] initWithTitle:@"設定頂欄標題" keywords:pairArray];
+			    keywordListView.addItemTitle = @"新增標題修改";
+			    keywordListView.editItemTitle = @"編輯標題修改";
+			    keywordListView.inputPlaceholder = @"原標題=新標題";
+			    keywordListView.onConfirm = ^(NSArray *keywords) {
+			      NSString *keywordString = [keywords componentsJoinedByString:@"#"];
+			      [DYYYSettingsHelper setUserDefaults:keywordString forKey:@"DYYYModifyTopTabText"];
+			      item.detail = keywordString;
+			      [item refreshCell];
+			    };
+			    [keywordListView show];
+			  };
+		  }
+		  [titleItems addObject:item];
+	  }
 
 	  // 【图标自定义】分类
 	  NSMutableArray<AWESettingItemModel *> *iconItems = [NSMutableArray array];
@@ -839,18 +847,22 @@ extern "C"
 	  // 【影片播放介面】分类
 	  NSMutableArray<AWESettingItemModel *> *videoUiItems = [NSMutableArray array];
 	  NSArray *videoUiSettings = @[
-		  @{@"identifier" : @"DYYYHideLOTAnimationView",
-		    @"title" : @"隱藏頭像加號",
-			@"subTitle" : @"原始位置可點擊",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},
-		  @{@"identifier" : @"DYYYHideFollowPromptView",
-		    @"title" : @"移除頭像加號",
-			@"subTitle" : @"完全移除不可點擊",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{
+			  @"identifier" : @"DYYYHideLOTAnimationView",
+			  @"title" : @"隱藏頭像加號",
+			  @"subTitle" : @"原始位置可點擊",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_eyeslash_outlined_16"
+		  },
+		  @{
+			  @"identifier" : @"DYYYHideFollowPromptView",
+			  @"title" : @"移除頭像加號",
+			  @"subTitle" : @"完全移除不可點擊",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_eyeslash_outlined_16"
+		  },
 		  @{@"identifier" : @"DYYYHideLikeLabel",
 		    @"title" : @"隱藏按讚數值",
 		    @"detail" : @"",
@@ -936,12 +948,14 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
-		  @{@"identifier" : @"DYYYHideBack",
-		    @"title" : @"隱藏返回按鈕",
-			@"subTitle" : @"主頁影片左上角的返回按鈕",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{
+			  @"identifier" : @"DYYYHideBack",
+			  @"title" : @"隱藏返回按鈕",
+			  @"subTitle" : @"主頁影片左上角的返回按鈕",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_eyeslash_outlined_16"
+		  },
 		  @{@"identifier" : @"DYYYHideSettingsAbout",
 		    @"title" : @"隱藏設定關於",
 		    @"detail" : @"",
@@ -1011,12 +1025,6 @@ extern "C"
 	  // 【提示与位置信息】分类
 	  NSMutableArray<AWESettingItemModel *> *infoItems = [NSMutableArray array];
 	  NSArray *infoSettings = @[
-		  @{@"identifier" : @"DYYYHidekeyboardai",
-		    @"title" : @"隱藏鍵盤AI",
-			@"subTitle" : @"隱藏搜尋下方的 AI 和語音搜尋按鈕",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHidenLiveView",
 		    @"title" : @"隱藏關注頂端",
 		    @"detail" : @"",
@@ -1047,12 +1055,14 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
-		  @{@"identifier" : @"DYYYHideSearchBubble",
-		    @"title" : @"隱藏彈出熱搜",
-			@"subTitle" : @"從右上搜尋位置彈出的熱搜白框",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{
+			  @"identifier" : @"DYYYHideSearchBubble",
+			  @"title" : @"隱藏彈出熱搜",
+			  @"subTitle" : @"從右上搜尋位置彈出的熱搜白框",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_eyeslash_outlined_16"
+		  },
 		  @{@"identifier" : @"DYYYHideSearchSame",
 		    @"title" : @"隱藏搜尋同款",
 		    @"detail" : @"",
@@ -1188,12 +1198,14 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
-		  @{@"identifier" : @"DYYYHideLiveCapsuleView",
-		    @"title" : @"隱藏直播紅點",
-			@"subTitle" : @"隱藏頂欄的直播中提示",		  
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{
+			  @"identifier" : @"DYYYHideLiveCapsuleView",
+			  @"title" : @"隱藏直播紅點",
+			  @"subTitle" : @"隱藏頂欄的直播中提示",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_eyeslash_outlined_16"
+		  },
 		  @{@"identifier" : @"DYYYHideStoryProgressSlide",
 		    @"title" : @"隱藏影片滑條",
 		    @"detail" : @"",
@@ -1224,18 +1236,22 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
-		  @{@"identifier" : @"DYYYHidePendantGroup",
-		    @"title" : @"隱藏紅包懸浮",
-			@"subTitle" : @"隱藏抖音極速版的紅包懸浮按鈕，可能失效，不修復。",			
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},
-		  @{@"identifier" : @"DYYYHideScancode",
-		    @"title" : @"隱藏輸入掃碼",
-			@"subTitle" : @"隱藏點擊搜尋後輸入框右部的掃碼按鈕",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{
+			  @"identifier" : @"DYYYHidePendantGroup",
+			  @"title" : @"隱藏紅包懸浮",
+			  @"subTitle" : @"隱藏抖音極速版的紅包懸浮按鈕，可能失效，不修復。",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_eyeslash_outlined_16"
+		  },
+		  @{
+			  @"identifier" : @"DYYYHideScancode",
+			  @"title" : @"隱藏輸入掃碼",
+			  @"subTitle" : @"隱藏點擊搜尋後輸入框右部的掃碼按鈕",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_eyeslash_outlined_16"
+		  },
 		  @{@"identifier" : @"DYYYHideReply",
 		    @"title" : @"隱藏私信回復",
 		    @"detail" : @"",
@@ -1245,7 +1261,15 @@ extern "C"
 		    @"title" : @"隱藏暫停相關",
 		    @"detail" : @"",
 		    @"cellType" : @6,
-		    @"imageName" : @"ic_eyeslash_outlined_16"}
+		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{
+			  @"identifier" : @"DYYYHidekeyboardai",
+			  @"title" : @"隱藏鍵盤 AI",
+			  @"subTitle" : @"隱藏搜尋下方的 AI 和語音搜尋按鈕",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_eyeslash_outlined_16"
+		  }
 	  ];
 
 	  for (NSDictionary *dict in infoSettings) {
@@ -1296,18 +1320,22 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
-		  @{@"identifier" : @"DYYYHideLiveDetail",
-		    @"title" : @"隱藏直播熱榜",
-			@"subTitle" : @"隱藏使用者下方的小時榜、人氣榜、熱度等資訊",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},
-		  @{@"identifier" : @"DYYYHideTouchView",
-		    @"title" : @"隱藏紅包懸浮",
-			@"subTitle" : @"隱藏使用者下方的紅包、積分等懸浮按鈕",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{
+			  @"identifier" : @"DYYYHideLiveDetail",
+			  @"title" : @"隱藏直播熱榜",
+			  @"subTitle" : @"隱藏使用者下方的小時榜、人氣榜、熱度等資訊",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_eyeslash_outlined_16"
+		  },
+		  @{
+			  @"identifier" : @"DYYYHideTouchView",
+			  @"title" : @"隱藏紅包懸浮",
+			  @"subTitle" : @"隱藏使用者下方的紅包、積分等懸浮按鈕",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_eyeslash_outlined_16"
+		  },
 		  @{@"identifier" : @"DYYYHideLiveGoodsMsg",
 		    @"title" : @"隱藏商品資訊",
 		    @"detail" : @"",
@@ -1861,50 +1889,50 @@ extern "C"
 
 	    	    // 在后台队列执行文件状态检查和大小获取20
 	    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-		    __weak AWESettingItemModel *weakSaveItem = saveABTestConfigFileItemRef;
-		    __strong AWESettingItemModel *strongSaveItem = weakSaveItem;
-		    if (!strongSaveItem) {
-			    return;
-		    }
+	      __weak AWESettingItemModel *weakSaveItem = saveABTestConfigFileItemRef;
+	      __strong AWESettingItemModel *strongSaveItem = weakSaveItem;
+	      if (!strongSaveItem) {
+		      return;
+	      }
 
-		    NSFileManager *fileManager = [NSFileManager defaultManager];
-		    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-		    NSString *documentsDirectory = [paths firstObject];
-		    NSString *dyyyFolderPath = [documentsDirectory stringByAppendingPathComponent:@"DYYY"];
-		    NSString *jsonFilePath = [dyyyFolderPath stringByAppendingPathComponent:@"abtest_data_fixed.json"];
+	      NSFileManager *fileManager = [NSFileManager defaultManager];
+	      NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	      NSString *documentsDirectory = [paths firstObject];
+	      NSString *dyyyFolderPath = [documentsDirectory stringByAppendingPathComponent:@"DYYY"];
+	      NSString *jsonFilePath = [dyyyFolderPath stringByAppendingPathComponent:@"abtest_data_fixed.json"];
 
-		    NSString *loadingStatus = [DYYYABTestHook isLocalConfigLoaded] ? @"已載入：" : @"未載入：";
+	      NSString *loadingStatus = [DYYYABTestHook isLocalConfigLoaded] ? @"已載入：" : @"未載入：";
 
-		    NSString *detailText = nil;
-		    BOOL isItemEnable = NO;
+	      NSString *detailText = nil;
+	      BOOL isItemEnable = NO;
 
-		    if (![fileManager fileExistsAtPath:jsonFilePath]) {
-			    detailText = [NSString stringWithFormat:@"%@ (檔案不存在)", loadingStatus];
-			    isItemEnable = NO;
-		    } else {
-			    unsigned long long jsonFileSize = 0;
-			    NSError *attributesError = nil;
-			    NSDictionary *attributes = [fileManager attributesOfItemAtPath:jsonFilePath error:&attributesError];
-			    if (!attributesError && attributes) {
-				    jsonFileSize = [attributes fileSize];
-				    detailText = [NSString stringWithFormat:@"%@ %@", loadingStatus, [DYYYUtils formattedSize:jsonFileSize]];
-				    isItemEnable = YES;
-			    } else {
-				    detailText = [NSString stringWithFormat:@"%@ (讀取失敗: %@)", loadingStatus, attributesError.localizedDescription ?: @"未知错误"];
-				    isItemEnable = NO;
-			    }
-		    }
+	      if (![fileManager fileExistsAtPath:jsonFilePath]) {
+		      detailText = [NSString stringWithFormat:@"%@ (檔案不存在)", loadingStatus];
+		      isItemEnable = NO;
+	      } else {
+		      unsigned long long jsonFileSize = 0;
+		      NSError *attributesError = nil;
+		      NSDictionary *attributes = [fileManager attributesOfItemAtPath:jsonFilePath error:&attributesError];
+		      if (!attributesError && attributes) {
+			      jsonFileSize = [attributes fileSize];
+			      detailText = [NSString stringWithFormat:@"%@ %@", loadingStatus, [DYYYUtils formattedSize:jsonFileSize]];
+			      isItemEnable = YES;
+		      } else {
+			      detailText = [NSString stringWithFormat:@"%@ (讀取失敗: %@)", loadingStatus, attributesError.localizedDescription ?: @"未知错误"];
+			      isItemEnable = NO;
+		      }
+	      }
 
-		    // 回到主线程更新 UI
-		    dispatch_async(dispatch_get_main_queue(), ^{
-			    // 在主线程更新 UI 前检查 item 是否仍然存在
-			    __strong AWESettingItemModel *strongSaveItemAgain = weakSaveItem;
-			    if (strongSaveItemAgain) {
-				    strongSaveItemAgain.detail = detailText;
-				    strongSaveItemAgain.isEnable = isItemEnable;
-				    [strongSaveItemAgain refreshCell];
-			    }
-		    });
+	      // 回到主线程更新 UI
+	      dispatch_async(dispatch_get_main_queue(), ^{
+		// 在主线程更新 UI 前检查 item 是否仍然存在
+		__strong AWESettingItemModel *strongSaveItemAgain = weakSaveItem;
+		if (strongSaveItemAgain) {
+			strongSaveItemAgain.detail = detailText;
+			strongSaveItemAgain.isEnable = isItemEnable;
+			[strongSaveItemAgain refreshCell];
+		}
+	      });
 	    });
 	  };
 
@@ -1968,42 +1996,42 @@ extern "C"
 
 			  // 在后台队列获取数据并更新 UI
 			  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-				  __weak AWESettingItemModel *weakItem = item;
-				  __strong AWESettingItemModel *strongItem = weakItem;
-				  if (!strongItem) {
-					  return;
-				  }
+			    __weak AWESettingItemModel *weakItem = item;
+			    __strong AWESettingItemModel *strongItem = weakItem;
+			    if (!strongItem) {
+				    return;
+			    }
 
-				  NSDictionary *currentData = [DYYYABTestHook getCurrentABTestData];
+			    NSDictionary *currentData = [DYYYABTestHook getCurrentABTestData];
 
-				  NSString *detailText = nil;
-				  BOOL isItemEnable = NO;
-				  NSData *jsonDataForSize = nil;
+			    NSString *detailText = nil;
+			    BOOL isItemEnable = NO;
+			    NSData *jsonDataForSize = nil;
 
-				  if (!currentData) {
-					  detailText = @"(獲取失敗)";
-					  isItemEnable = NO;
-				  } else {
-					  NSError *serializationError = nil;
-					  jsonDataForSize = [NSJSONSerialization dataWithJSONObject:currentData options:NSJSONWritingPrettyPrinted error:&serializationError];
-					  if (!serializationError && jsonDataForSize) {
-						  detailText = [DYYYUtils formattedSize:jsonDataForSize.length];
-						  isItemEnable = YES;
-					  } else {
-						  detailText = [NSString stringWithFormat:@"(序列化失敗: %@)", serializationError.localizedDescription ?: @"未知錯誤"];
-						  isItemEnable = NO;
-					  }
-				  }
+			    if (!currentData) {
+				    detailText = @"(獲取失敗)";
+				    isItemEnable = NO;
+			    } else {
+				    NSError *serializationError = nil;
+				    jsonDataForSize = [NSJSONSerialization dataWithJSONObject:currentData options:NSJSONWritingPrettyPrinted error:&serializationError];
+				    if (!serializationError && jsonDataForSize) {
+					    detailText = [DYYYUtils formattedSize:jsonDataForSize.length];
+					    isItemEnable = YES;
+				    } else {
+					    detailText = [NSString stringWithFormat:@"(序列化失敗: %@)", serializationError.localizedDescription ?: @"未知错误"];
+					    isItemEnable = NO;
+				    }
+			    }
 
-				  // 回到主线程更新 UI
-				  dispatch_async(dispatch_get_main_queue(), ^{
-					  __strong AWESettingItemModel *strongItemAgain = weakItem;
-					  if (strongItemAgain) {
-						  strongItemAgain.detail = detailText;
-						  strongItemAgain.isEnable = isItemEnable;
-						  [strongItemAgain refreshCell];
-					  }
-				  });
+			    // 回到主线程更新 UI
+			    dispatch_async(dispatch_get_main_queue(), ^{
+			      __strong AWESettingItemModel *strongItemAgain = weakItem;
+			      if (strongItemAgain) {
+				      strongItemAgain.detail = detailText;
+				      strongItemAgain.isEnable = isItemEnable;
+				      [strongItemAgain refreshCell];
+			      }
+			    });
 			  });
 
 			  item.cellTappedBlock = ^{
@@ -2129,63 +2157,63 @@ extern "C"
 
 			      DYYYBackupPickerDelegate *pickerDelegate = [[DYYYBackupPickerDelegate alloc] init];
 			      pickerDelegate.completionBlock = ^(NSURL *url) {
-				    // Delegate 回调通常在主线程，但文件操作和 Hook 调用应在后台20
-				    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-					    __weak AWESettingItemModel *weakSaveItem = saveABTestConfigFileItemRef;
+				// Delegate 回调通常在主线程，但文件操作和 Hook 调用应在后台
+				dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+				  __weak AWESettingItemModel *weakSaveItem = saveABTestConfigFileItemRef;
 
-					    NSURL *sourceURL = url; // 用户选择的源文件 URL
+				  NSURL *sourceURL = url; // 用户选择的源文件 URL
 
-					    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-					    NSString *documentsDirectory = [paths firstObject];
-					    NSString *dyyyFolderPath = [documentsDirectory stringByAppendingPathComponent:@"DYYY"];
-					    NSURL *destinationURL = [NSURL fileURLWithPath:[dyyyFolderPath stringByAppendingPathComponent:@"abtest_data_fixed.json"]];
+				  NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+				  NSString *documentsDirectory = [paths firstObject];
+				  NSString *dyyyFolderPath = [documentsDirectory stringByAppendingPathComponent:@"DYYY"];
+				  NSURL *destinationURL = [NSURL fileURLWithPath:[dyyyFolderPath stringByAppendingPathComponent:@"abtest_data_fixed.json"]];
 
-					    NSFileManager *fileManager = [NSFileManager defaultManager];
-					    NSError *error = nil;
-					    BOOL success = NO;
-					    NSString *message = nil;
+				  NSFileManager *fileManager = [NSFileManager defaultManager];
+				  NSError *error = nil;
+				  BOOL success = NO;
+				  NSString *message = nil;
 
-					    if (![fileManager fileExistsAtPath:dyyyFolderPath]) {
-						    [fileManager createDirectoryAtPath:dyyyFolderPath withIntermediateDirectories:YES attributes:nil error:&error];
-						    if (error) {
-							    message = [NSString stringWithFormat:@"建立目錄失敗: %@", error.localizedDescription];
-						    }
-					    }
+				  if (![fileManager fileExistsAtPath:dyyyFolderPath]) {
+					  [fileManager createDirectoryAtPath:dyyyFolderPath withIntermediateDirectories:YES attributes:nil error:&error];
+					  if (error) {
+						  message = [NSString stringWithFormat:@"建立目錄失敗: %@", error.localizedDescription];
+					  }
+				  }
 
-					    if (!message) {
-						    // 在同一个目录下创建一个临时文件 URL 以确保原子性
-						    NSString *tempFileName = [NSUUID UUID].UUIDString;
-						    NSURL *temporaryURL = [NSURL fileURLWithPath:[dyyyFolderPath stringByAppendingPathComponent:tempFileName]];
+				  if (!message) {
+					  // 在同一个目录下创建一个临时文件 URL 以确保原子性
+					  NSString *tempFileName = [NSUUID UUID].UUIDString;
+					  NSURL *temporaryURL = [NSURL fileURLWithPath:[dyyyFolderPath stringByAppendingPathComponent:tempFileName]];
 
-						    if ([fileManager copyItemAtURL:sourceURL toURL:temporaryURL error:&error]) {
-							    if ([fileManager replaceItemAtURL:destinationURL withItemAtURL:temporaryURL backupItemName:nil options:0 resultingItemURL:nil error:&error]) {
-								    [DYYYABTestHook cleanLocalABTestData];
-								    [DYYYABTestHook loadLocalABTestConfig];
-								    [DYYYABTestHook applyFixedABTestData];
-								    success = YES;
-								    message = @"配置已導入，部分設定需重新啟動應用後生效";
-							    } else {
-								    [fileManager removeItemAtURL:temporaryURL error:nil];
-								    message = [NSString stringWithFormat:@"導入失敗 (取代檔案失敗): %@", error.localizedDescription];
-							    }
-						    } else {
-							    message = [NSString stringWithFormat:@"導入失敗 (複製到暫存檔案失敗): %@", error.localizedDescription];
-						    }
-					    }
-					    // 回到主线程显示 Toast 和更新 UI
-					    dispatch_async(dispatch_get_main_queue(), ^{
-						    __strong AWESettingItemModel *strongSaveItemAgain = weakSaveItem;
+					  if ([fileManager copyItemAtURL:sourceURL toURL:temporaryURL error:&error]) {
+						  if ([fileManager replaceItemAtURL:destinationURL withItemAtURL:temporaryURL backupItemName:nil options:0 resultingItemURL:nil error:&error]) {
+							  [DYYYABTestHook cleanLocalABTestData];
+							  [DYYYABTestHook loadLocalABTestConfig];
+							  [DYYYABTestHook applyFixedABTestData];
+							  success = YES;
+							  message = @"配置已導入，部分設定需重新啟動應用後生效";
+						  } else {
+							  [fileManager removeItemAtURL:temporaryURL error:nil];
+							  message = [NSString stringWithFormat:@"導入失敗 (替換檔案失敗): %@", error.localizedDescription];
+						  }
+					  } else {
+						  message = [NSString stringWithFormat:@"導入失敗 (複製到臨時檔案失敗): %@", error.localizedDescription];
+					  }
+				  }
+				  // 回到主线程显示 Toast 和更新 UI
+				  dispatch_async(dispatch_get_main_queue(), ^{
+				    __strong AWESettingItemModel *strongSaveItemAgain = weakSaveItem;
 
-						    // 无论成功与否，都显示 Toast 告知用户结果
-						    NSString *message = success ? @"配置已導入，部分設定需重新啟動應用後生效" : [NSString stringWithFormat:@"導入失敗: %@", error.localizedDescription];
-						    [DYYYUtils showToast:message];
+				    // 无论成功与否，都显示 Toast 告知用户结果
+				    NSString *message = success ? @"配置已導入，部分設定需重新啟動應用後生效" : [NSString stringWithFormat:@"導入失敗: %@", error.localizedDescription];
+				    [DYYYUtils showToast:message];
 
-						    // 仅在导入成功且 item 仍然存在时更新 UI
-						    if (success && strongSaveItemAgain) {
-							    refreshSaveABTestConfigFileItem();
-						    }
-					    });
-				    });
+				    // 仅在导入成功且 item 仍然存在时更新 UI
+				    if (success && strongSaveItemAgain) {
+					    refreshSaveABTestConfigFileItem();
+				    }
+				  });
+				});
 			      };
 
 			      static char kPickerDelegateKey;
@@ -2230,30 +2258,38 @@ extern "C"
 	  // 【交互增强】分类
 	  NSMutableArray<AWESettingItemModel *> *interactionItems = [NSMutableArray array];
 	  NSArray *interactionSettings = @[
-		  @{@"identifier" : @"DYYYentrance",
-		    @"title" : @"左側邊欄快捷入口",
-			@"subTitle" : @"將側邊欄替換為 DYYY 快速入口",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_circlearrowin_outlined_20"},
-		  @{@"identifier" : @"DYYYDisableSidebarGesture",
-		    @"title" : @"禁止側滑進入邊欄",
-			@"subTitle" : @"禁止在首頁最左邊的頁面時右滑進入側邊欄",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_circlearrowin_outlined_20"},
-		  @{@"identifier" : @"DYYYVideoGesture",
-		    @"title" : @"橫向影片交互增強",
-			@"subTitle" : @"啟用橫向螢幕影片的手勢功能",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_phonearrowdown_outlined_20"},
-		  @{@"identifier" : @"DYYYDisableAutoEnterLive",
-		    @"title" : @"禁用自動進入直播",
-			@"subTitle" : @"禁止頂欄直播下自動進入直播間",			
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_video_outlined_20"},
+		  @{
+			  @"identifier" : @"DYYYentrance",
+			  @"title" : @"左側邊欄快捷入口",
+			  @"subTitle" : @"將側邊欄替換為 DYYY 快速入口",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_circlearrowin_outlined_20"
+		  },
+		  @{
+			  @"identifier" : @"DYYYDisableSidebarGesture",
+			  @"title" : @"禁止側滑進入邊欄",
+			  @"subTitle" : @"禁止在首頁最左邊的頁面時右滑進入側邊欄",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_circlearrowin_outlined_20"
+		  },
+		  @{
+			  @"identifier" : @"DYYYVideoGesture",
+			  @"title" : @"橫向影片交互增強",
+			  @"subTitle" : @"啟用橫向螢幕影片的手勢功能",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_phonearrowdown_outlined_20"
+		  },
+		  @{
+			  @"identifier" : @"DYYYDisableAutoEnterLive",
+			  @"title" : @"禁用自動進入直播",
+			  @"subTitle" : @"禁止頂欄直播下自動進入直播間",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_video_outlined_20"
+		  },
 		  @{@"identifier" : @"DYYYEnableSaveAvatar",
 		    @"title" : @"啟用儲存他人頭像",
 		    @"detail" : @"",
@@ -2264,35 +2300,43 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_at_outlined_20"},
-		  @{@"identifier" : @"DYYYBioCopyText",
-		    @"title" : @"長按簡介複製簡介",
-			@"subTitle" : @"長按個人主頁的簡介複製",			
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_rectangleonrectangleup_outlined_20"},
-		  @{@"identifier" : @"DYYYLongPressCopyTextEnabled",
-		    @"title" : @"長按文案複製文案",
-			@"subTitle" : @"長按影片左下角的文案複製",			
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_rectangleonrectangleup_outlined_20"},
-		  @{@"identifier" : @"DYYYMusicCopyText",
-		    @"title" : @"評論音樂點擊複製",
-			@"subTitle" : @"含有音樂的影片開啟留言區頂部時，移除去汽水聽，點擊複製歌曲名稱",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_quaver_outlined_20"},
+		  @{
+			  @"identifier" : @"DYYYBioCopyText",
+			  @"title" : @"長按簡介複製簡介",
+			  @"subTitle" : @"長按個人主頁的簡介複製",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_rectangleonrectangleup_outlined_20"
+		  },
+		  @{
+			  @"identifier" : @"DYYYLongPressCopyTextEnabled",
+			  @"title" : @"長按文案複製文案",
+			  @"subTitle" : @"長按影片左下角的文案複製",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_rectangleonrectangleup_outlined_20"
+		  },
+		  @{
+			  @"identifier" : @"DYYYMusicCopyText",
+			  @"title" : @"評論音樂點擊複製",
+			  @"subTitle" : @"含有音樂的影片開啟留言區頂部時，移除去汽水聽，點擊複製歌曲名稱",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_quaver_outlined_20"
+		  },
 		  @{@"identifier" : @"DYYYisAutoSelectOriginalPhoto",
 		    @"title" : @"啟用自動勾選原圖",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_image_outlined_20"},
-		  @{@"identifier" : @"DYYYisEnableModern",
-		    @"title" : @"啟用新版玻璃面板",
-			@"subTitle" : @"啟用抖音灰階測試的長按毛玻璃面板功能",			
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_moon_outlined"},
+		  @{
+			  @"identifier" : @"DYYYisEnableModern",
+			  @"title" : @"啟用新版玻璃面板",
+			  @"subTitle" : @"啟用抖音灰階測試的長按毛玻璃面板功能",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_moon_outlined"
+		  },
 		  @{@"identifier" : @"DYYYisEnableModernLight",
 		    @"title" : @"啟用新版淺色面板",
 		    @"detail" : @"",
@@ -2313,18 +2357,22 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_comment_outlined_20"},
-		  @{@"identifier" : @"DYYYEnableDoubleOpenAlertController",
-		    @"title" : @"啟用雙擊開啟選單",
-			@"subTitle" : @"無法與雙擊開啟評論同時啟用",
-		    @"detail" : @"",
-		    @"cellType" : @20,
-		    @"imageName" : @"ic_xiaoxihuazhonghua_outlined_20"},
-		  @{@"identifier" : @"DYYYDefaultEnterWorks",
-		    @"title" : @"資料預設進入作品",
-			@"subTitle" : @"禁止個人資料頁自動進入櫥窗等頁面",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_playsquarestack_outlined_20"},
+		  @{
+			  @"identifier" : @"DYYYDefaultEnterWorks",
+			  @"title" : @"資料預設進入作品",
+			  @"subTitle" : @"禁止個人資料頁自動進入櫥窗等頁面",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_playsquarestack_outlined_20"
+		  },
+		  @{
+			  @"identifier" : @"DYYYEnableDoubleOpenAlertController",
+			  @"title" : @"啟用雙擊開啟選單",
+			  @"subTitle" : @"無法與雙擊開啟評論同時啟用",
+			  @"detail" : @"",
+			  @"cellType" : @20,
+			  @"imageName" : @"ic_xiaoxihuazhonghua_outlined_20"
+		  },
 		  @{@"identifier" : @"DYYYDisableHomeRefresh",
 		    @"title" : @"禁用點擊首頁重新整理",
 		    @"detail" : @"",
@@ -2619,59 +2667,59 @@ extern "C"
 		    @"imageName" : @"ic_eyeslash_outlined_16"}];
 	  [clearButtonItems addObject:hideDanmakuButton];
 
-	  AWESettingItemModel *enableqingButton = [DYYYSettingsHelper
-	      createSettingItem:
-		  @{@"identifier" : @"DYYYEnabshijianjindu",
-		    @"title" : @"清除螢幕移除進度",
-			@"subTitle" : @"清除螢幕狀態下完全移除時間進度條",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"}];
+	  AWESettingItemModel *enableqingButton = [DYYYSettingsHelper createSettingItem:@{
+		  @"identifier" : @"DYYYEnabshijianjindu",
+		  @"title" : @"清除螢幕移除進度",
+		  @"subTitle" : @"清除螢幕狀態下完全移除時間進度條",
+		  @"detail" : @"",
+		  @"cellType" : @37,
+		  @"imageName" : @"ic_eyeslash_outlined_16"
+	  }];
 	  [clearButtonItems addObject:enableqingButton];
 	  // 清屏隐藏时间进度
-	  AWESettingItemModel *enableqingButton1 = [DYYYSettingsHelper
-	      createSettingItem:
-		  @{@"identifier" : @"DYYYHideTimeProgress",
-		    @"title" : @"清除螢幕隱藏進度",
-			@"subTitle" : @"原始位置可拖曳時間進度條",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"}];
+	  AWESettingItemModel *enableqingButton1 = [DYYYSettingsHelper createSettingItem:@{
+		  @"identifier" : @"DYYYHideTimeProgress",
+		  @"title" : @"清除螢幕隱藏進度",
+		  @"subTitle" : @"原始位置可拖曳時間進度條",
+		  @"detail" : @"",
+		  @"cellType" : @37,
+		  @"imageName" : @"ic_eyeslash_outlined_16"
+	  }];
 	  [clearButtonItems addObject:enableqingButton1];
-	  AWESettingItemModel *hideSliderButton = [DYYYSettingsHelper
-	      createSettingItem:
-		  @{@"identifier" : @"DYYYHideSlider",
-		    @"title" : @"清除螢幕隱藏滑條",
-			@"subTitle" : @"清除螢幕狀態下隱藏多圖片下方的滑條",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"}];
+	  AWESettingItemModel *hideSliderButton = [DYYYSettingsHelper createSettingItem:@{
+		  @"identifier" : @"DYYYHideSlider",
+		  @"title" : @"清除螢幕隱藏滑條",
+		  @"subTitle" : @"清除螢幕狀態下隱藏多圖片下方的滑條",
+		  @"detail" : @"",
+		  @"cellType" : @37,
+		  @"imageName" : @"ic_eyeslash_outlined_16"
+	  }];
 	  [clearButtonItems addObject:hideSliderButton];
-	  AWESettingItemModel *hideChapterButton = [DYYYSettingsHelper
-	      createSettingItem:
-		  @{@"identifier" : @"DYYYHideChapter",
-		    @"title" : @"清除螢幕隱藏章節",
-			@"subTitle" : @"清除螢幕狀態下隱藏部分影片出現的章節進度顯示",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"}];
-	  [clearButtonItems addObject:hideChapterButton];
+	  AWESettingItemModel *hideChapterButton = [DYYYSettingsHelper createSettingItem:@{
+		  @"identifier" : @"DYYYHideChapter",
+		  @"title" : @"清除螢幕隱藏章節",
+		  @"subTitle" : @"清除螢幕狀態下隱藏部分影片出現的章節進度顯示",
+		  @"detail" : @"",
+		  @"cellType" : @37,
+		  @"imageName" : @"ic_eyeslash_outlined_16"
+	  }];
+	  [clearButtonItems addObject:hideChapterButton];Add commentMore actions
 	  AWESettingItemModel *hideTabButton = [DYYYSettingsHelper
 	      createSettingItem:
 		  @{@"identifier" : @"DYYYHideTabBar",
 		    @"title" : @"清除螢幕隱藏底欄",
-			@"subTitle" : @"清除螢幕狀態下隱藏DYYY的倍速按鈕",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"}];
-	  [clearButtonItems addObject:hideTabButton];
-	  AWESettingItemModel *hideSpeedButton = [DYYYSettingsHelper
-	      createSettingItem:
-		  @{@"identifier" : @"DYYYHideSpeed",
-		    @"title" : @"清除螢幕隱藏倍速",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"}];
+	  [clearButtonItems addObject:hideTabButton];
+	  AWESettingItemModel *hideSpeedButton = [DYYYSettingsHelper createSettingItem:@{
+		  @"identifier" : @"DYYYHideSpeed",
+		  @"title" : @"清除螢幕隱藏倍速",
+		  @"subTitle" : @"清除螢幕狀態下隱藏DYYY的倍速按鈕",
+		  @"detail" : @"",
+		  @"cellType" : @37,
+		  @"imageName" : @"ic_eyeslash_outlined_16"
+	  }];
 	  [clearButtonItems addObject:hideSpeedButton];
 	  // 获取清屏按钮的当前开关状态
 	  BOOL isEnabled = [DYYYSettingsHelper getUserDefaults:@"DYYYEnableFloatClearButton"];
@@ -2742,10 +2790,10 @@ extern "C"
 		  dyyySettings[@"DYYYIconsBase64"] = iconBase64Dict;
 	  }
 
-          // 转换为JSON数据
-          NSError *error;
-          id jsonObject = DYYYJSONSafeObject(dyyySettings);
-          NSData *sortedJsonData = [NSJSONSerialization dataWithJSONObject:jsonObject options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys error:&error];
+	  // 转换为JSON数据Add commentMore actions
+	  NSError *error;
+	  id jsonObject = DYYYJSONSafeObject(dyyySettings);
+	  NSData *sortedJsonData = [NSJSONSerialization dataWithJSONObject:jsonObject options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys error:&error];
 
 	  if (error) {
 		  [DYYYUtils showToast:@"備份失敗：無法序列化設定資料"];
