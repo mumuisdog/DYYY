@@ -184,22 +184,26 @@ extern "C"
 	  NSMutableArray<AWESettingItemModel *> *appearanceItems = [NSMutableArray array];
 	  NSArray *appearanceSettings = @[
 		  @{@"identifier" : @"DYYYEnableDanmuColor",
-			@"title" : @"啟用彈幕改色",
-			@"detail" : @"",
-			@"cellType" : @6,
-			@"imageName" : @"ic_dansquare_outlined_20"},
-		  @{@"identifier" : @"DYYYdanmuColor",
-			@"title" : @"自訂彈幕顏色",
-			@"subTitle" : @"填入 Random 使用隨機色彩彈幕",
-			@"detail" : @"十六进制",
-			@"cellType" : @20,
-			@"imageName" : @"ic_dansquarenut_outlined_20"},
-		  @{@"identifier" : @"DYYYDanmuRainbowRotating",
-			@"title" : @"旋轉彩虹彈幕",
-			@"subTitle" : @"啟用後將覆蓋上面的自訂彈幕顏色",
-			@"detail" : @"",
-			@"cellType" : @37,
-			@"imageName" : @"ic_dansquarenut_outlined_20"}
+		    @"title" : @"啟用彈幕改色",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_dansquare_outlined_20"},
+		  @{
+			  @"identifier" : @"DYYYdanmuColor",
+			  @"title" : @"自訂彈幕顏色",
+			  @"subTitle" : @"填入 Random 使用隨機色彩彈幕",
+			  @"detail" : @"十六进制",
+			  @"cellType" : @20,
+			  @"imageName" : @"ic_dansquarenut_outlined_20"
+		  },
+		  @{
+			  @"identifier" : @"DYYYDanmuRainbowRotating",
+			  @"title" : @"旋轉彩虹彈幕",
+			  @"subTitle" : @"啟用後將覆蓋上面的自訂彈幕顏色",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_dansquarenut_outlined_20"
+		  }
 	  ];
 
 	  for (NSDictionary *dict in appearanceSettings) {
@@ -675,11 +679,11 @@ extern "C"
 		    @"detail" : @"預設為 3",
 		    @"cellType" : @26,
 		    @"imageName" : @"ic_pensketch_outlined_20"},
-                  @{@"identifier" : @"DYYYTabBarHeight",
-                    @"title" : @"修改底欄高度",
-                    @"detail" : @"預設為空",
-                    @"cellType" : @26,
-                    @"imageName" : @"ic_pensketch_outlined_20"},
+		  @{@"identifier" : @"DYYYTabBarHeight",
+		    @"title" : @"修改底欄高度",
+		    @"detail" : @"預設為空",
+		    @"cellType" : @26,
+		    @"imageName" : @"ic_pensketch_outlined_20"},
 	  ];
 
 	  for (NSDictionary *dict in scaleSettings) {
@@ -1299,12 +1303,14 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
-		  @{@"identifier" : @"DYYYHideLiveRoomFullscreen",
-		    @"title" : @"隱藏橫向按鈕",
-			@"subTitle" : @"原始位置可點擊",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{
+			  @"identifier" : @"DYYYHideLiveRoomFullscreen",
+			  @"title" : @"隱藏橫向螢幕按鈕",
+			  @"subTitle" : @"原始位置可點擊",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_eyeslash_outlined_16"
+		  },
 		  @{@"identifier" : @"DYYYHideGiftPavilion",
 		    @"title" : @"隱藏禮物展館",
 		    @"detail" : @"",
@@ -1341,12 +1347,14 @@ extern "C"
 			  @"cellType" : @37,
 			  @"imageName" : @"ic_eyeslash_outlined_16"
 		  },
-		  @{@"identifier" : @"DYYYHideLiveGoodsMsg",
-		    @"title" : @"隱藏商品資訊",
-			@"subTitle" : @"隱藏直播間右下角相關的商品和遊戲推薦",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{
+			  @"identifier" : @"DYYYHideLiveGoodsMsg",
+			  @"title" : @"隱藏商品資訊",
+			  @"subTitle" : @"隱藏直播間右下角相關的商品和遊戲推薦",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_eyeslash_outlined_16"
+		  },
 		  @{@"identifier" : @"DYYYHideLiveLikeAnimation",
 		    @"title" : @"隱藏按讚動畫",
 		    @"detail" : @"",
@@ -1357,18 +1365,22 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
-		  @{@"identifier" : @"DYYYHideLivePopup",
-		    @"title" : @"隱藏進場特效",
-			@"subTitle" : @"隱藏會員用戶進入直播間時出現在彈幕頂部的動畫特效",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},
-		  @{@"identifier" : @"DYYYHideStickerView",
-		    @"title" : @"隱藏文字貼紙",
-			@"subTitle" : @"隱藏主播設定的預約直播和文字貼紙",
-		    @"detail" : @"",
-		    @"cellType" : @37,
-		    @"imageName" : @"ic_eyeslash_outlined_16"},
+		  @{
+			  @"identifier" : @"DYYYHideLivePopup",
+			  @"title" : @"隱藏進場特效",
+			  @"subTitle" : @"隱藏會員用戶進入直播間時出現在彈幕頂部的動畫特效",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_eyeslash_outlined_16"
+		  },
+		  @{
+			  @"identifier" : @"DYYYHideStickerView",
+			  @"title" : @"隱藏文字貼紙",
+			  @"subTitle" : @"隱藏主播設定的預約直播和文字貼紙",
+			  @"detail" : @"",
+			  @"cellType" : @37,
+			  @"imageName" : @"ic_eyeslash_outlined_16"
+		  },
 		  @{@"identifier" : @"DYYYHideLiveRoomClear",
 		    @"title" : @"隱藏退出清除螢幕",
 		    @"detail" : @"",
@@ -1555,6 +1567,11 @@ extern "C"
 	  NSArray *removeSettings = @[
 		  @{@"identifier" : @"DYYYHideHotContainer",
 		    @"title" : @"移除推薦",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_xmark_outlined_20"},
+		  @{@"identifier" : @"DYYYHideFriend",
+		    @"title" : @"移除朋友",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_xmark_outlined_20"},
