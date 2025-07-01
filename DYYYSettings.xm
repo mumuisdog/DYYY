@@ -1082,7 +1082,7 @@ extern "C"
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
 		  @{@"identifier" : @"DYYYHideSearchEntranceIndicator",
-		    @"title" : @"隱藏搜尋指示條",
+		    @"title" : @"隱藏搜尋框背景",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_eyeslash_outlined_16"},
