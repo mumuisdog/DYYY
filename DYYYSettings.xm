@@ -2354,24 +2354,22 @@ extern "C"
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_image_outlined_20"},
-		  @{
-			  @"identifier" : @"DYYYisEnableModern",
-			  @"title" : @"啟用新版玻璃面板",
-			  @"subTitle" : @"啟用抖音灰階測試的長按毛玻璃面板功能",
-			  @"detail" : @"",
-			  @"cellType" : @37,
-			  @"imageName" : @"ic_moon_outlined"
-		  },
-		  @{@"identifier" : @"DYYYisEnableModernLight",
-		    @"title" : @"啟用新版淺色面板",
-		    @"detail" : @"",
-		    @"cellType" : @6,
-		    @"imageName" : @"ic_sun_outlined"},
-		  @{@"identifier" : @"DYYYModernPanelFollowSystem",
-		    @"title" : @"新版面板跟隨系統",
+		  @{@"identifier" : @"DYYYisEnableModernPanel",
+			@"title" : @"啟用新版長按面板",
+			@"subTitle" : @"啟用抖音灰階測試的新版長按面板",
+			@"detail" : @"",
+			@"cellType" : @37,
+		    @"imageName" : @"ic_squaresplit_outlined_20"},
+		  @{@"identifier" : @"DYYYisLongPressPanelBlur",
+		    @"title" : @"長按面板玻璃效果",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_squaresplit_outlined_20"},
+		  @{@"identifier" : @"DYYYisLongPressPanelDark",
+		    @"title" : @"長按面板深色模式",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+			@"imageName" : @"ic_sun_outlined"},
 		  @{@"identifier" : @"DYYYDouble",
 		    @"title" : @"禁用雙擊影片按讚",
 		    @"detail" : @"",
@@ -2482,6 +2480,30 @@ extern "C"
 			    [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"雙擊選單設定" items:doubleTapItems]];
 			    AWESettingBaseViewController *subVC = [DYYYSettingsHelper createSubSettingsViewController:@"雙擊選單設定" sections:sections];
 			    [rootVC.navigationController pushViewController:(UIViewController *)subVC animated:YES];
+			  };
+		  }
+
+		  if ([item.identifier isEqualToString:@"DYYYisLongPressPanelDark"]) {
+			  BOOL isDarkPanelEnabled = [DYYYSettingsHelper getUserDefaults:item.identifier];
+			  item.svgIconImageName = isDarkPanelEnabled ? @"ic_moon_outlined" : @"ic_sun_outlined";
+
+			  void (^originalSwitchChangedBlock)(void) = item.switchChangedBlock;
+
+			  __weak AWESettingItemModel *weakItem = item;
+			  item.switchChangedBlock = ^{
+				  __strong AWESettingItemModel *strongItem = weakItem;
+				  if (!strongItem) return;
+
+				  if (originalSwitchChangedBlock) {
+					  originalSwitchChangedBlock();
+				  }
+
+				  if (strongItem.isSwitchOn) {
+					  strongItem.svgIconImageName = @"ic_moon_outlined";
+				  } else {
+					  strongItem.svgIconImageName = @"ic_sun_outlined";
+				  }
+				  [strongItem refreshCell];
 			  };
 		  }
 
@@ -3021,14 +3043,17 @@ extern "C"
 	[cleanupItems addObject:cleanSettingsItem];
 
 	NSArray<NSString *> *customDirs = @[ @"Application Support/gurd_cache", @"Caches", @"BDByteCast", @"kitelog" ];
+	NSMutableSet<NSString *> *uniquePaths = [NSMutableSet set];
+	[uniquePaths addObject:NSTemporaryDirectory()];
+	[uniquePaths addObject:NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES).firstObject];
 	NSString *libraryDir = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES).firstObject;
-    NSMutableArray<NSString *> *allPaths = [NSMutableArray arrayWithObject:[DYYYUtils cacheDirectory]];
 	for (NSString *sub in customDirs) {
 		NSString *fullPath = [libraryDir stringByAppendingPathComponent:sub];
 		if ([[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
-			[allPaths addObject:fullPath];
+			[uniquePaths addObject:fullPath];
 		}
 	}
+	NSArray<NSString *> *allPaths = [uniquePaths allObjects];
 
 	AWESettingItemModel *cleanCacheItem = [[%c(AWESettingItemModel) alloc] init];
 	__weak AWESettingItemModel *weakCleanCacheItem = cleanCacheItem;	
@@ -3065,9 +3090,15 @@ extern "C"
 	  [strongCleanCacheItem refreshCell];
 
 	  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-	    [DYYYUtils clearCacheDirectory];
 	    for (NSString *basePath in allPaths) {
 		    [DYYYUtils removeAllContentsAtPath:basePath];
+	    }
+
+	    // 修复搜索界面的猜你想搜和猜你想看
+		NSFileManager *fileManager = [NSFileManager defaultManager];
+	    NSString *activeMetadataFilePath = [libraryDir stringByAppendingPathComponent:@"Application Support/gurd_cache/.active_metadata"];
+	    if ([fileManager fileExistsAtPath:activeMetadataFilePath]) {
+		    [fileManager removeItemAtPath:activeMetadataFilePath error:nil];
 	    }
 
 	    unsigned long long afterSize = 0;
