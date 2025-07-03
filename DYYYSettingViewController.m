@@ -330,9 +330,9 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
             [DYYYSettingItem itemWithTitle:@"隐藏评论识别图片" key:@"DYYYHideCommentLongPressPictureSearch" type:DYYYSettingItemTypeSwitch]
          ],
         @[
-            [DYYYSettingItem itemWithTitle:@"啟用新版玻璃面板" key:@"DYYYisEnableModern" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"啟用新版淺色面板" key:@"DYYYisEnableModernLight" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"新版面板跟隨系統" key:@"DYYYModernPanelFollowSystem" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"啟用新版長按面板" key:@"DYYYisEnableModernPanel" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"長按面板玻璃效果" key:@"DYYYisLongPressPanelBlur" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"長按面板深色模式" key:@"DYYYisLongPressPanelDark" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"儲存面板玻璃效果" key:@"DYYYisEnableSheetBlur" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"面板毛玻璃透明度" key:@"DYYYSheetBlurTransparent" type:DYYYSettingItemTypeTextField placeholder:@"0-1小數"],
             [DYYYSettingItem itemWithTitle:@"長按面板儲存影片" key:@"DYYYLongPressSaveVideo" type:DYYYSettingItemTypeSwitch],
