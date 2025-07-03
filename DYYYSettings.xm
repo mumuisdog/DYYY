@@ -1997,9 +1997,9 @@ extern "C"
 			  item.detail = isPatchMode ? @"覆寫模式" : @"替換模式";
 
 			  item.cellTappedBlock = ^{
-			    NSString *currentMode = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYABTestModeString"] ?: @"替換模式：忽略原設定，寫入新資料";
+			    NSString *currentMode = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYABTestModeString"] ?: @"替換模式：忽略原設定，使用新資料";
 
-			    NSArray *modeOptions = @[ @"覆寫模式：保留原設定，覆蓋同名項", @"替換模式：忽略原設定，寫入新資料" ];
+			    NSArray *modeOptions = @[ @"覆寫模式：保留原設定，覆蓋同名項", @"替換模式：忽略原設定，使用新資料" ];
 
 			    [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYABTestModeString"
 							       optionsArray:modeOptions
@@ -2174,7 +2174,7 @@ extern "C"
 				    confirmMessage = @"\n匯入後將保留原始設定並覆寫同名項，\n\n點選確定後繼續操作。\n";
 			    } else {
 				    confirmTitle = @"替換模式";
-				    confirmMessage = @"\n匯入後將忽略原設定並寫入新數據，\n\n點選確定後繼續操作。\n";
+				    confirmMessage = @"\n匯入後將忽略原設定並使用新資料，\n\n點選確定後繼續操作。\n";
 			    }
 			    DYYYAboutDialogView *confirmDialog = [[DYYYAboutDialogView alloc] initWithTitle:confirmTitle message:confirmMessage];
 			    confirmDialog.onConfirm = ^{
