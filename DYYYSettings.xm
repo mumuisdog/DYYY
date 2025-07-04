@@ -922,7 +922,7 @@ extern "C"
 			@"subTitle" : @"優化影片文案展開時出現的黑色背景遮罩效果，但可能對部分影片的文案可讀性產生一定影響。",
 			@"detail" : @"",
 			@"cellType" : @37,
-			@"imageName" : @"ic_eyeslash_outlined_16"
+			@"imageName" : @"ic_eyeslash_outlined_16",
 		  }
 		  @{@"identifier" : @"DYYYisHiddenEntry",
 		    @"title" : @"隱藏全螢幕觀看",
