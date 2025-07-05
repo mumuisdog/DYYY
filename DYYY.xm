@@ -4202,15 +4202,6 @@ static AWEIMReusableCommonCell *currentCell;
 }
 %end
 
-%hook PlatformCanvasView
-- (void)layoutSubviews {
-	%orig;
-	if (DYYYGetBool(@"DYYYHideLivePopup")) {
-		[self removeFromSuperview];
-	}
-}
-%end
-
 // 屏蔽青少年模式弹窗
 %hook AWETeenModeAlertView
 - (BOOL)show {
@@ -4256,7 +4247,7 @@ static AWEIMReusableCommonCell *currentCell;
 
 	BOOL shouldFilterAds = noAds && (self.hotSpotLynxCardModel || self.isAds);
 	BOOL shouldFilterHotSpot = skipHotSpot && self.hotSpotLynxCardModel;
-	BOOL shouldFilterRecLive = skipLive && (self.liveReason != nil);
+	BOOL shouldFilterRecLive = skipLive && (self.cellRoom != nil);
 	BOOL shouldFilterHDR = NO;
 	BOOL shouldFilterLowLikes = NO;
 	BOOL shouldFilterKeywords = NO;
