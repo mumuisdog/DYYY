@@ -1,5 +1,7 @@
 #import "DYYYABTestHook.h"
 #import <objc/runtime.h>
+#import "DYYYUtils.h"
+#import "DYYYConstants.h"
 
 @interface AWEABTestManager : NSObject
 @property(retain, nonatomic) NSMutableDictionary *consistentABTestDic;
@@ -23,6 +25,10 @@
 static BOOL s_abTestBlockEnabled = NO;
 static BOOL s_isApplyingFixedData = NO;
 static NSDictionary *s_localABTestData = nil;
+static NSString *s_fileMode = nil;
+
+// 默认远程配置地址常量
+static NSString *const kDefaultRemoteConfigURL = DYYY_DEFAULT_ABTEST_URL;
 
 static dispatch_once_t s_loadOnceToken;
 static dispatch_queue_t s_abTestHookQueue;
@@ -58,7 +64,22 @@ static void DYYYQueueSync(dispatch_block_t block) {
  */
 + (BOOL)isPatchMode {
     NSString *savedMode = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYABTestModeString"];
-    return ![savedMode isEqualToString:@"替換模式：忽略原設定，使用新資料"];
+    if (savedMode) {
+        if ([savedMode isEqualToString:DYYY_REMOTE_MODE_STRING] || [[savedMode lowercaseString] isEqualToString:@"remote"]) {
+            if (s_fileMode) {
+                return ![[s_fileMode lowercaseString] isEqualToString:@"DYYY_MODE_REPLACE"];
+            }
+            return YES;
+        }
+        if ([savedMode isEqualToString:@"替換模式：忽略原配置，使用新資料"] || [[savedMode lowercaseString] isEqualToString:@"DYYY_MODE_REPLACE"]) {
+            return NO;
+        }
+        return YES;
+    }
+    if (s_fileMode) {
+        return ![[s_fileMode lowercaseString] isEqualToString:@"DYYY_MODE_REPLACE"];
+    }
+    return YES;
 }
 
 /**
@@ -71,6 +92,17 @@ static void DYYYQueueSync(dispatch_block_t block) {
         loaded = (s_localABTestData != nil);
     });
     return loaded;
+}
+
+/**
+ * 当前是否处于远程模式
+ */
++ (BOOL)isRemoteMode {
+    NSString *savedMode = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYABTestModeString"];
+    if (savedMode) {
+        return [savedMode isEqualToString:DYYY_REMOTE_MODE_STRING] || [[savedMode lowercaseString] isEqualToString:@"remote"];
+    }
+    return NO;
 }
 
 /**
@@ -103,7 +135,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
     dispatch_async(DYYYABTestQueue(), ^{
         s_localABTestData = nil;
         s_loadOnceToken = 0;
-        NSLog(@"[DYYY] 本機ABTest設定已清除");
+        NSLog(@"[DYYY] 本機ABTest配置已清除");
     });
 }
 
@@ -139,14 +171,25 @@ static void DYYYQueueSync(dispatch_block_t block) {
             if (jsonData) {
                 NSDictionary *loadedData = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&error];
                 if (loadedData && !error) {
-                    s_localABTestData = [loadedData copy];
-                    NSLog(@"[DYYY] ABTest本機設定已從檔案載入成功");
+                    id modeValue = loadedData[@"mode"];
+                    s_fileMode = nil;
+                    if ([modeValue isKindOfClass:[NSString class]]) {
+                        s_fileMode = [modeValue lowercaseString];
+                    }
+                    NSDictionary *actualData = loadedData[@"data"];
+                    if (!actualData) {
+                        NSMutableDictionary *tmp = [loadedData mutableCopy];
+                        [tmp removeObjectForKey:@"mode"];
+                        actualData = [tmp copy];
+                    }
+                    s_localABTestData = [actualData copy];
+                    NSLog(@"[DYYY] ABTest本機配置已從檔案載入成功");
                     return;
                 } else {
-                    NSLog(@"[DYYY] ABTest本機設定解析失敗: %@", error.localizedDescription);
+                    NSLog(@"[DYYY] ABTest本機配置解析失敗: %@", error.localizedDescription);
                 }
             } else {
-                NSLog(@"[DYYY] ABTest本機設定檔案不存在或無法讀取");
+                NSLog(@"[DYYY] ABTest本機配置檔案不存在或無法讀取");
             }
 
             // 加载失败时的处理
@@ -163,7 +206,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
 + (void)applyFixedABTestData {
     dispatch_async(DYYYABTestQueue(), ^{
         if (!s_abTestBlockEnabled || !s_localABTestData) {
-            NSLog(@"[DYYY] 不符合應用本機設定的條件 (禁止下發=%@, 資料是否為空=%@)",
+            NSLog(@"[DYYY] 不符合應用本機配置的條件 (禁止下發=%@, 資料是否為空=%@)",
                 s_abTestBlockEnabled ? @"開啟" : @"關閉",
                 s_localABTestData ? @"否" : @"是");
             s_isApplyingFixedData = NO; // 确保标志关闭
@@ -172,7 +215,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
 
         AWEABTestManager *manager = [%c(AWEABTestManager) sharedManager];
         if (!manager) {
-            NSLog(@"[DYYY] 無法套用本機設定：AWEABTestManager 實例不可用");
+            NSLog(@"[DYYY] 無法套用本機配置：AWEABTestManager 實例不可用");
             s_isApplyingFixedData = NO; // 确保标志关闭
             return;
         }
@@ -200,7 +243,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
         // 重置状态标志
         s_isApplyingFixedData = NO;
 
-        NSLog(@"[DYYY] ABTest本機設定已套用");
+        NSLog(@"[DYYY] ABTest本機配置已套用");
     });
 }
 
@@ -210,6 +253,66 @@ static void DYYYQueueSync(dispatch_block_t block) {
 + (NSDictionary *)getCurrentABTestData {
     AWEABTestManager *manager = [%c(AWEABTestManager) sharedManager];
     return manager ? [manager abTestData] : nil;
+}
+
+/**
+ * 从网络检查并下载最新配置
+ */
++ (void)checkForRemoteConfigUpdate:(BOOL)notify {
+    dispatch_async(DYYYABTestQueue(), ^{
+        NSString *urlString = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYRemoteConfigURL"];
+        if (urlString.length == 0) {
+            urlString = kDefaultRemoteConfigURL;
+        }
+        NSURL *url = [NSURL URLWithString:urlString];
+        if (!url) {
+            if (notify) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [DYYYUtils showToast:@"配置更新失敗"];
+                });
+            }
+            return;
+        }
+        NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithURL:url completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+            BOOL updated = NO;
+            if (data && !error) {
+                NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+                NSString *documentsDirectory = [paths firstObject];
+                NSString *dyyyFolderPath = [documentsDirectory stringByAppendingPathComponent:@"DYYY"];
+                NSString *jsonFilePath = [dyyyFolderPath stringByAppendingPathComponent:@"abtest_data_fixed.json"];
+                [[NSFileManager defaultManager] createDirectoryAtPath:dyyyFolderPath withIntermediateDirectories:YES attributes:nil error:nil];
+                NSData *existingData = [NSData dataWithContentsOfFile:jsonFilePath];
+                if (!existingData || ![existingData isEqualToData:data]) {
+                    [data writeToFile:jsonFilePath atomically:YES];
+                    updated = YES;
+                }
+                if ([DYYYABTestHook isRemoteMode]) {
+                    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:DYYY_REMOTE_CONFIG_FLAG_KEY];
+                    [[NSUserDefaults standardUserDefaults] synchronize];
+                    [[NSNotificationCenter defaultCenter] postNotificationName:DYYY_REMOTE_CONFIG_CHANGED_NOTIFICATION object:nil];
+                }
+            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (error || !data) {
+                    if (notify) {
+                        [DYYYUtils showToast:@"配置更新失敗"];
+                    }
+                } else if (updated) {
+                    if (notify) {
+                        [DYYYUtils showToast:@"配置已更新"];
+                    }
+                    [DYYYABTestHook cleanLocalABTestData];
+                    [DYYYABTestHook loadLocalABTestConfig];
+                    [DYYYABTestHook applyFixedABTestData];
+                } else {
+                    if (notify) {
+                        [DYYYUtils showToast:@"已是最新配置"];
+                    }
+                }
+            });
+        }];
+        [task resume];
+    });
 }
 
 @end
@@ -232,7 +335,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
     });
 
     if (shouldBlock) {
-        NSLog(@"[DYYY] 阻止ABTest資料更新 (啟用了禁止下發設定且非本機應用)");
+        NSLog(@"[DYYY] 阻止ABTest資料更新 (啟用了禁止下發配置且非本機應用)");
         return;
     }
     %orig;
@@ -250,7 +353,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
     });
 
     if (shouldBlock) {
-        NSLog(@"[DYYY] 阻止增量更新ABTest資料 (啟用了禁止下發設定)");
+        NSLog(@"[DYYY] 阻止增量更新ABTest資料 (啟用了禁止下發配置)");
         return;
     }
     %orig;
@@ -268,7 +371,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
     });
 
     if (shouldBlock) {
-        NSLog(@"[DYYY] 阻止從網路取得ABTest設定 (啟用了禁止下發設定)");
+        NSLog(@"[DYYY] 阻止從網路取得ABTest配置 (啟用了禁止下發配置)");
         if (completion && [completion isKindOfClass:%c(NSBlock)]) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 ((void (^)(id))completion)(nil);
@@ -291,7 +394,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
     });
 
     if (shouldBlock) {
-        NSLog(@"[DYYY] 阻止從網路取得ABTest設定 (啟用了禁止下發設定)");
+        NSLog(@"[DYYY] 阻止從網路取得ABTest配置 (啟用了禁止下發配置)");
         return;
     }
     %orig;
@@ -309,7 +412,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
     });
 
     if (shouldBlock) {
-        NSLog(@"[DYYY] 阻止重寫ABTest資料 (啟用了禁止下發設定)");
+        NSLog(@"[DYYY] 阻止重寫ABTest資料 (啟用了禁止下發配置)");
         return;
     }
     %orig;
@@ -345,7 +448,12 @@ static void DYYYQueueSync(dispatch_block_t block) {
     dispatch_async(DYYYABTestQueue(), ^{
         s_abTestBlockEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYABTestBlockEnabled"];
 
-        NSString *currentMode = [DYYYABTestHook isPatchMode] ? @"覆寫模式" : @"替換模式";
+        NSString *currentMode = nil;
+        if ([DYYYABTestHook isRemoteMode]) {
+            currentMode = [DYYYABTestHook isPatchMode] ? @"遠端模式(覆寫)" : @"遠端模式(替換)";
+        } else {
+            currentMode = [DYYYABTestHook isPatchMode] ? @"覆寫模式" : @"替換模式";
+        }
 
         NSLog(@"[DYYY] ABTest Hook已啟動: 禁止下發=%@, 目前模式=%@",
               s_abTestBlockEnabled ? @"開啟" : @"關閉",
@@ -353,5 +461,8 @@ static void DYYYQueueSync(dispatch_block_t block) {
 
         [DYYYABTestHook loadLocalABTestConfig];
         [DYYYABTestHook applyFixedABTestData];
+        if ([DYYYABTestHook isRemoteMode]) {
+            [DYYYABTestHook checkForRemoteConfigUpdate:NO];
+        }
     });
 }
