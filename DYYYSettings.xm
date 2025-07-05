@@ -2677,7 +2677,7 @@ extern "C"
 	  [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"長按面板設定" items:longPressItems]];
 	  [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"媒體儲存" items:downloadItems]];
 	  [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"互動增強" items:interactionItems]];
-	  [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"熱更新" footerTitle:@"允許使用者匯出或匯入抖音的ABTest配置。遠端配置由 Nathalie 維護，在應用啟動時自動更新遠端配置。 "items:hotUpdateItems]];
+	  [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"熱更新" footerTitle:@"允許使用者匯出或匯入抖音的ABTest配置。遠端配置由 Nathalie 維護，在應用啟動時自動更新遠端配置。" items:hotUpdateItems]];
 	  // 创建并推入二级设置页面
 	  AWESettingBaseViewController *subVC = [DYYYSettingsHelper createSubSettingsViewController:@"增強設定" sections:sections];
 	  [rootVC.navigationController pushViewController:(UIViewController *)subVC animated:YES];
