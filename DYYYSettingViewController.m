@@ -148,10 +148,8 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
             [DYYYSettingItem itemWithTitle:@"推薦過濾直播" key:@"DYYYisSkipLive" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"推薦過濾熱點" key:@"DYYYisSkipHotSpot" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"推薦過濾低讚" key:@"DYYYfilterLowLikes" type:DYYYSettingItemTypeTextField placeholder:@"填0關閉"],
-            [DYYYSettingItem itemWithTitle:@"推薦過濾文案" key:@"DYYYfilterKeywords" type:DYYYSettingItemTypeTextField placeholder:@"不填關閉"],
-            [DYYYSettingItem itemWithTitle:@"推薦過濾用戶" key:@"DYYYfilterUsers" type:DYYYSettingItemTypeTextField placeholder:@"不填關閉"],
-            [DYYYSettingItem itemWithTitle:@"推薦過濾HDR" key:@"DYYYfilterFeedHDR" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"推薦影片時限" key:@"DYYYfiltertimelimit" type:DYYYSettingItemTypeTextField placeholder:@"填0關閉，單位為天"],
+            [DYYYSettingItem itemWithTitle:@"推薦過濾HDR" key:@"DYYYfilterFeedHDR" type:DYYYSettingItemTypeSwitch],			
             [DYYYSettingItem itemWithTitle:@"啟用首頁淨化" key:@"DYYYisEnablePure" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"啟用首頁全螢幕" key:@"DYYYisEnableFullScreen" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"啟用屏蔽廣告" key:@"DYYYNoAds" type:DYYYSettingItemTypeSwitch],
@@ -185,8 +183,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
             [DYYYSettingItem itemWithTitle:@"設定首頁標題" key:@"DYYYIndexTitle" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
             [DYYYSettingItem itemWithTitle:@"設定朋友標題" key:@"DYYYFriendsTitle" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
             [DYYYSettingItem itemWithTitle:@"設定訊息標題" key:@"DYYYMsgTitle" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
-            [DYYYSettingItem itemWithTitle:@"設定我的標題" key:@"DYYYSelfTitle" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
-            [DYYYSettingItem itemWithTitle:@"設定頂欄標題" key:@"DYYYModifyTopTabText" type:DYYYSettingItemTypeTextField placeholder:@"標題=修改#標題=修改"]
+            [DYYYSettingItem itemWithTitle:@"設定我的標題" key:@"DYYYSelfTitle" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"]
         ],
         @[
             [DYYYSettingItem itemWithTitle:@"隱藏全螢幕觀看" key:@"DYYYisHiddenEntry" type:DYYYSettingItemTypeSwitch],
