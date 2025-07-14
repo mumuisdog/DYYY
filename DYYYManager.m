@@ -2697,7 +2697,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width, in
                                   [progressView dismiss];
 
                                   if (success) {
-                                      DYYYLogVideo(@"@"影片已成功儲存到照片App"");
+                                      DYYYLogVideo(@"影片已成功儲存到照片App");
                                       if (completion) {
                                           completion(YES, @"影片已成功儲存到照片App");
                                       }
