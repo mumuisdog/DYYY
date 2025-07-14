@@ -3403,7 +3403,7 @@ extern "C"
         if ([section.sectionHeaderTitle isEqualToString:DYYY_NAME]) {
             sectionExists = YES;
         }
-        if ([section.sectionHeaderTitle isEqualToString:@"帳號"]) {
+        if ([section.sectionHeaderTitle isEqualToString:@"账号"]) {
             isMainSettingsPage = YES;
         }
     }
