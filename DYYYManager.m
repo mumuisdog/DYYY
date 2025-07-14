@@ -1328,7 +1328,7 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width, in
     }
 
     // 檢查是否屬於批量下載
-    QString *batchID = self.downloadToBatchMap[downloadIDForTask];
+    NSString *batchID = self.downloadToBatchMap[downloadIDForTask];
     BOOL isBatchDownload = (batchID != nil);
 
     // 獲取該下載任務的mediaType
