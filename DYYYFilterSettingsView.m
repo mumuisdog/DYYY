@@ -472,7 +472,7 @@ static const int kDYYYButtonsPerRow = 10;
         [DYYYUtils showToast:@"已從過濾列表中移除此拍同款"];
     } else {
         [array addObject:self.propName];
-        [DYYYUtils showToast:@"已添加此拍同款到過濾列表"];
+        [DYYYUtils showToast:@"已新增此拍同款到過濾列表"];
     }
 
     NSString *newString = [array componentsJoinedByString:@","];
