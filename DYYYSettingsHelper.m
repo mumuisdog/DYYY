@@ -428,7 +428,7 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
     NSString *imagePath = [dyyyFolderPath stringByAppendingPathComponent:saveFilename];
 
     BOOL fileExists = [[NSFileManager defaultManager] fileExistsAtPath:imagePath];
-    item.detail = fileExists ? @"已设置" : @"默认";
+    item.detail = fileExists ? @"已設定" : @"預設";
 
     item.type = 0;
     item.svgIconImageName = svgIconName;
@@ -456,7 +456,7 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
                 NSError *error = nil;
                 [[NSFileManager defaultManager] removeItemAtPath:imagePath error:&error];
                 if (!error) {
-                    weakItem.detail = @"默认";
+                    weakItem.detail = @"預設";
                     [weakItem refreshCell];
                 }
             }
@@ -490,7 +490,7 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
                   }
 
                   dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    weakItem.detail = @"已设置";
+                    weakItem.detail = @"已設定";
                     [weakItem refreshCell];
                   });
               }
@@ -576,19 +576,19 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
 }
 
 + (void)showUserAgreementAlert {
-    [self showTextInputAlert:@"用户协议"
+    [self showTextInputAlert:@"使用者協議"
         defaultText:@""
         placeholder:@""
         onConfirm:^(NSString *text) {
-          if ([text isEqualToString:@"我已阅读并同意继续使用"]) {
+          if ([text isEqualToString:@"我已閱讀並同意繼續使用"]) {
               [self setUserDefaults:@"YES" forKey:@"DYYYUserAgreementAccepted"];
           } else {
-              [DYYYUtils showToast:@"请正确输入内容"];
+              [DYYYUtils showToast:@"請正確輸入內容"];
               [self showUserAgreementAlert];
           }
         }
         onCancel:^{
-          [DYYYUtils showToast:@"请立即卸载本插件"];
+          [DYYYUtils showToast:@"請立即移除本插件"];
           dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             exit(0);
           });
