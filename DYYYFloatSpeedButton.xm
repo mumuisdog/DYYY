@@ -269,7 +269,7 @@ void updateSpeedButtonVisibility() {
     self.isLocked = !self.isLocked;
     self.justToggledLock = YES;
 
-    NSString *toastMessage = self.isLocked ? @"按钮已锁定" : @"按钮已解锁";
+    NSString *toastMessage = self.isLocked ? @"按鈕已鎖定" : @"按鈕已解鎖";
     [DYYYUtils showToast:toastMessage];
 
     if (self.isLocked) {
@@ -690,7 +690,7 @@ void updateSpeedButtonVisibility() {
     }
 
     if (!speedApplied) {
-        [DYYYUtils showToast:@"无法找到视频控制器"];
+        [DYYYUtils showToast:@"無法找到影片控制器"];
     }
 }
 
