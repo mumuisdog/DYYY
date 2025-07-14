@@ -234,6 +234,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
             [DYYYSettingItem itemWithTitle:@"隱藏底部相關" key:@"DYYYHideBottomRelated" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏影片錨點" key:@"DYYYHideFeedAnchorContainer" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏挑戰貼紙" key:@"DYYYHideChallengeStickers" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"隱藏圖文標籤" key:@"DYYYHideEditTags" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏校園提示" key:@"DYYYHideTemplateTags" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏作者店鋪" key:@"DYYYHideHisShop" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏頂欄橫線" key:@"DYYYHideTopBarLine" type:DYYYSettingItemTypeSwitch],
