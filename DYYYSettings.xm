@@ -526,7 +526,7 @@ extern "C"
                 NSArray *keywordArray = [savedKeywords length] > 0 ? [savedKeywords componentsSeparatedByString:@","] : @[];
                 DYYYKeywordListView *keywordListView = [[DYYYKeywordListView alloc] initWithTitle:@"設定過濾關鍵詞" keywords:keywordArray];
                 keywordListView.onConfirm = ^(NSArray *keywords) {
-                  QString *keywordString = [keywords componentsJoinedByString:@","];
+                  NSString *keywordString = [keywords componentsJoinedByString:@","];
 
                   [DYYYSettingsHelper setUserDefaults:keywordString forKey:@"DYYYFilterKeywords"];
                   item.detail = keywordString;
@@ -760,7 +760,7 @@ extern "C"
 
       [iconItems addObject:[DYYYSettingsHelper createIconCustomizationItemWithIdentifier:@"DYYYIconLikeBefore" title:@"未點讚圖示" svgIcon:@"ic_heart_outlined_20" saveFile:@"like_before.png"]];
       [iconItems addObject:[DYYYSettingsHelper createIconCustomizationItemWithIdentifier:@"DYYYIconLikeAfter" title:@"已點讚圖示" svgIcon:@"ic_heart_filled_20" saveFile:@"like_after.png"]];
-      [iconItems addObject:[DYYYSettingsHelper createIconCustomizationItemWithIdentifier:@"DYYYIconComment" title:"評論的圖示" svgIcon:@"ic_comment_outlined_20" saveFile:@"comment.png"]];
+      [iconItems addObject:[DYYYSettingsHelper createIconCustomizationItemWithIdentifier:@"DYYYIconComment" title:@"評論的圖示" svgIcon:@"ic_comment_outlined_20" saveFile:@"comment.png"]];
       [iconItems addObject:[DYYYSettingsHelper createIconCustomizationItemWithIdentifier:@"DYYYIconUnfavorite" title:@"未收藏圖示" svgIcon:@"ic_star_outlined_20" saveFile:@"unfavorite.png"]];
       [iconItems addObject:[DYYYSettingsHelper createIconCustomizationItemWithIdentifier:@"DYYYIconFavorite" title:@"已收藏圖示" svgIcon:@"ic_star_filled_20" saveFile:@"favorite.png"]];
       [iconItems addObject:[DYYYSettingsHelper createIconCustomizationItemWithIdentifier:@"DYYYIconShare" title:@"分享的圖示" svgIcon:@"ic_share_outlined" saveFile:@"share.png"]];
