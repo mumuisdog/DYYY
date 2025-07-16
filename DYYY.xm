@@ -14,11 +14,11 @@
 #import "DYYYManager.h"
 
 #import "DYYYConstants.h"
+#import "DYYYFloatClearButton.h"
+#import "DYYYFloatSpeedButton.h"
 #import "DYYYSettingViewController.h"
 #import "DYYYToast.h"
 #import "DYYYUtils.h"
-#import "DYYYFloatSpeedButton.h"
-#import "DYYYFloatClearButton.h"
 
 @interface AWEAwemePlayVideoViewController (SpeedControl)
 - (void)adjustPlaybackSpeed:(float)speed;
@@ -5287,6 +5287,22 @@ static CGFloat originalTabHeight = 0;
     dyyyCommentViewVisible = YES;
     updateSpeedButtonVisibility();
     updateClearButtonVisibility();
+    NSString *transparentValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYTopBarTransparent"];
+    if (transparentValue && transparentValue.length > 0) {
+        CGFloat alphaValue = [transparentValue floatValue];
+        if (alphaValue >= 0.0 && alphaValue <= 1.0) {
+
+            UIView *parentView = self.view.superview;
+            if (parentView) {
+                for (UIView *subview in parentView.subviews) {
+                    if ([subview.accessibilityLabel isEqualToString:@"搜索"]) {
+                        CGFloat finalAlpha = (alphaValue < 0.011) ? 0.011 : alphaValue;
+                        subview.alpha = finalAlpha;
+                    }
+                }
+            }
+        }
+    }
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
@@ -5525,9 +5541,8 @@ static CGFloat originalTabHeight = 0;
         BOOL hasRightStack = NO;
         Class stackClass = NSClassFromString(@"AWEElementStackView");
         for (UIView *sub in self.view.subviews) {
-            if ([sub isKindOfClass:stackClass] && ([sub.accessibilityLabel isEqualToString:@"right"] ||
-                                                  [DYYYUtils containsSubviewOfClass:NSClassFromString(@"AWEPlayInteractionUserAvatarView")
-                                                                          inView:self.view])) {
+            if ([sub isKindOfClass:stackClass] && ([sub.accessibilityLabel isEqualToString:@"right"] || [DYYYUtils containsSubviewOfClass:NSClassFromString(@"AWEPlayInteractionUserAvatarView")
+                                                                                                                                   inView:self.view])) {
                 hasRightStack = YES;
                 break;
             }
@@ -5536,9 +5551,7 @@ static CGFloat originalTabHeight = 0;
             if (speedButton == nil) {
                 speedButtonSize = [[NSUserDefaults standardUserDefaults] floatForKey:@"DYYYSpeedButtonSize"] ?: 32.0;
                 CGRect screenBounds = [UIScreen mainScreen].bounds;
-                CGRect initialFrame = CGRectMake((screenBounds.size.width - speedButtonSize) / 2,
-                                                 (screenBounds.size.height - speedButtonSize) / 2,
-                                                 speedButtonSize, speedButtonSize);
+                CGRect initialFrame = CGRectMake((screenBounds.size.width - speedButtonSize) / 2, (screenBounds.size.height - speedButtonSize) / 2, speedButtonSize, speedButtonSize);
                 speedButton = [[FloatingSpeedButton alloc] initWithFrame:initialFrame];
                 speedButton.interactionController = self;
                 showSpeedX = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYSpeedButtonShowX"];
@@ -5616,9 +5629,8 @@ static CGFloat originalTabHeight = 0;
     BOOL hasRightStack = NO;
     Class stackClass = NSClassFromString(@"AWEElementStackView");
     for (UIView *sub in self.view.subviews) {
-        if ([sub isKindOfClass:stackClass] && ([sub.accessibilityLabel isEqualToString:@"right"] ||
-                                              [DYYYUtils containsSubviewOfClass:NSClassFromString(@"AWEPlayInteractionUserAvatarView")
-                                                                      inView:self.view])) {
+        if ([sub isKindOfClass:stackClass] && ([sub.accessibilityLabel isEqualToString:@"right"] || [DYYYUtils containsSubviewOfClass:NSClassFromString(@"AWEPlayInteractionUserAvatarView")
+                                                                                                                               inView:self.view])) {
             hasRightStack = YES;
             break;
         }
