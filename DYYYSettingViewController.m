@@ -173,7 +173,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
             [DYYYSettingItem itemWithTitle:@"設定全局透明" key:@"DYYYGlobalTransparency" type:DYYYSettingItemTypeTextField placeholder:@"0-1小數"],
             [DYYYSettingItem itemWithTitle:@"首頁頭像透明" key:@"DYYYAvatarViewTransparency" type:DYYYSettingItemTypeTextField placeholder:@"0-1小數"],
             [DYYYSettingItem itemWithTitle:@"右側欄縮放度" key:@"DYYYElementScale" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
-            [DYYYSettingItem itemWithTitle:@"暱稱文案縮放" key:@"DYYYNicknameScale" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
+            [DYYYSettingItem itemWithTitle:@"暱稱文案縮放" key:@"DYYYLabelsScale" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
             [DYYYSettingItem itemWithTitle:@"暱稱下移距離" key:@"DYYYNicknameVerticalOffset" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
             [DYYYSettingItem itemWithTitle:@"文案下移距離" key:@"DYYYDescriptionVerticalOffset" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
             [DYYYSettingItem itemWithTitle:@"屬地下移距離" key:@"DYYYIPLabelVerticalOffset" type:DYYYSettingItemTypeTextField placeholder:@"不填預設"],
