@@ -669,7 +669,7 @@ extern "C"
             @"detail" : @"不填預設",
             @"cellType" : @26,
             @"imageName" : @"ic_zoomin_outlined_20"},
-          @{@"identifier" : @"DYYYNicknameScale",
+          @{@"identifier" : @"DYYYLabelsScale",
             @"title" : @"暱稱文案縮放",
             @"detail" : @"不填預設",
             @"cellType" : @26,
