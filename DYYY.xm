@@ -1258,7 +1258,6 @@ static CGFloat rightLabelRightMargin = -1;
         return;
         }
     }
-}
 %end
 
 %hook AWEPlayInteractionTimestampElement
