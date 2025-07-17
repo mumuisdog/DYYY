@@ -273,7 +273,6 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
             [DYYYSettingItem itemWithTitle:@"隱藏關閉按鈕" key:@"DYYYHideLiveRoomClose" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏橫屏按鈕" key:@"DYYYHideLiveRoomFullscreen" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏返回按鈕" key:@"DYYYHideBack" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"隱藏設定關於" key:@"DYYYHideSettingsAbout" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏商品資訊" key:@"DYYYHideLiveGoodsMsg" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏點讚動畫" key:@"DYYYHideLiveLikeAnimation" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"隱藏輸入掃碼" key:@"DYYYHideScancode" type:DYYYSettingItemTypeSwitch],
