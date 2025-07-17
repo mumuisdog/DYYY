@@ -679,21 +679,20 @@
 %hook AWEMarkView
 
 - (void)layoutSubviews {
-    %orig;
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-      UIViewController *vc = [DYYYUtils firstAvailableViewControllerFromView:self];
+	%orig;
 
-      if ([vc isKindOfClass:%c(AWEPlayInteractionViewController)]) {
-          if (self.markLabel) {
-              self.markLabel.textColor = [UIColor whiteColor];
-          }
-      }
+	UIViewController *vc = [DYYYUtils firstAvailableViewControllerFromView:self];
 
-      if (DYYYGetBool(@"DYYYHideLocation")) {
-          [self removeFromSuperview];
-          return;
-      }
-    });
+	if ([vc isKindOfClass:%c(AWEPlayInteractionViewController)]) {
+		if (self.markLabel) {
+			self.markLabel.textColor = [UIColor whiteColor];
+		}
+	}
+
+	if (DYYYGetBool(@"DYYYHideLocation")) {
+		self.hidden = YES;
+		return;
+	}
 }
 
 %end
@@ -5453,49 +5452,11 @@ static CGFloat originalTabHeight = 0;
     }
     return view;
 }
-
-- (void)didAddSubview:(UIView *)subview {
-    %orig;
-    if (hideButton && hideButton.isElementsHidden) {
-        for (NSString *className in targetClassNames) {
-            if ([subview isKindOfClass:NSClassFromString(className)]) {
-                if ([subview isKindOfClass:NSClassFromString(@"AWELeftSideBarEntranceView")]) {
-                    UIViewController *controller = [hideButton findViewController:subview];
-                    if ([controller isKindOfClass:NSClassFromString(@"AWEFeedContainerViewController")]) {
-                        subview.alpha = 0.0;
-                    }
-                    break;
-                }
-                subview.alpha = 0.0;
-                break;
-            }
-        }
-    }
-}
-
-- (void)willMoveToSuperview:(UIView *)newSuperview {
-    %orig;
-    if (hideButton && hideButton.isElementsHidden) {
-        for (NSString *className in targetClassNames) {
-            if ([self isKindOfClass:NSClassFromString(className)]) {
-                if ([self isKindOfClass:NSClassFromString(@"AWELeftSideBarEntranceView")]) {
-                    UIViewController *controller = [hideButton findViewController:self];
-                    if ([controller isKindOfClass:NSClassFromString(@"AWEFeedContainerViewController")]) {
-                        self.alpha = 0.0;
-                    }
-                    break;
-                }
-                self.alpha = 0.0;
-                break;
-            }
-        }
-    }
-}
 - (void)layoutSubviews {
     %orig;
 
     if (DYYYGetBool(@"DYYYEnableFullScreen")) {
-        if (self.frame.size.height == tabHeight && tabHeight > 0) {
+        if (self.frame.size.height == originalTabHeight && originalTabHeight > 0) {
             UIViewController *vc = [DYYYUtils firstAvailableViewControllerFromView:self];
             if ([vc isKindOfClass:NSClassFromString(@"AWEMixVideoPanelDetailTableViewController")] || [vc isKindOfClass:NSClassFromString(@"AWECommentInputViewController")] ||
                 [vc isKindOfClass:NSClassFromString(@"AWEAwemeDetailTableViewController")]) {
@@ -5828,27 +5789,18 @@ static CGFloat originalTabHeight = 0;
 
 - (void)viewDidLayoutSubviews {
     %orig;
-    if (DYYYGetBool(@"DYYYEnableFullScreen")) {
+    if (DYYYGetBool(@"DYYYisEnableFullScreen")) {
         UIView *contentView = self.contentView;
         if (contentView && contentView.superview) {
             CGRect frame = contentView.frame;
             CGFloat parentHeight = contentView.superview.frame.size.height;
-            if (tabHeight > 0) {
-                if (frame.size.height == parentHeight - tabHeight) {
-                    frame.size.height = parentHeight;
-                    contentView.frame = frame;
-                } else if (frame.size.height == parentHeight - (tabHeight * 2)) {
-                    frame.size.height = parentHeight - tabHeight;
-                    contentView.frame = frame;
-                }
-            } else {
-                if (frame.size.height == parentHeight - tabHeight) {
-                    frame.size.height = parentHeight;
-                    contentView.frame = frame;
-                } else if (frame.size.height == parentHeight - (tabHeight * 2)) {
-                    frame.size.height = parentHeight - tabHeight;
-                    contentView.frame = frame;
-                }
+
+            if (frame.size.height == parentHeight - tabHeight) {
+                frame.size.height = parentHeight;
+                contentView.frame = frame;
+            } else if (frame.size.height == parentHeight - (tabHeight * 2)) {
+                frame.size.height = parentHeight - tabHeight;
+                contentView.frame = frame;
             }
         }
     }
