@@ -974,12 +974,7 @@ extern "C"
             @"subTitle" : @"主頁影片左上角的返回按鈕",
             @"detail" : @"",
             @"cellType" : @37,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHideSettingsAbout",
-            @"title" : @"隱藏設定關於",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
+            @"imageName" : @"ic_eyeslash_outlined_16"}
       ];
 
       for (NSDictionary *dict in sidebarSettings) {
