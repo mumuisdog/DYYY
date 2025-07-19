@@ -294,7 +294,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
             [DYYYSettingItem itemWithTitle:@"移除看劇" key:@"DYYYHideCinema" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"移除少兒" key:@"DYYYHideKidsV2" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"移除遊戲" key:@"DYYYHideGame" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"移除頂欄其他" key:@"DYYYHideOtherChannel" type:DYYYSettingItemTypeTextField placeholder:@"逗號分隔"]
+            [DYYYSettingItem itemWithTitle:@"移除長影片" key:@"DYYYHideMediumVideo" type:DYYYSettingItemTypeSwitch]
         ],
         @[
             [DYYYSettingItem itemWithTitle:@"隱藏面板日常" key:@"DYYYHidePanelDaily" type:DYYYSettingItemTypeSwitch],
