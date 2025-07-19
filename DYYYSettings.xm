@@ -1682,10 +1682,10 @@ extern "C"
             @"detail" : @"",
             @"cellType" : @6,
             @"imageName" : @"ic_xmark_outlined_20"},
-          @{@"identifier" : @"DYYYHideOtherChannel",
-            @"title" : @"移除頂欄其他",
+          @{@"identifier" : @"DYYYHideMediumVideo",
+            @"title" : @"移除長影片",
             @"detail" : @"",
-            @"cellType" : @26,
+            @"cellType" : @6,
             @"imageName" : @"ic_xmark_outlined_20"}
       ];
 
@@ -1711,37 +1711,11 @@ extern "C"
             }
           };
           [removeSettingsItems addObject:item];
-
-          if ([item.identifier isEqualToString:@"DYYYHideOtherChannel"]) {
-              NSString *savedValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYHideOtherChannel"];
-              item.detail = savedValue ?: @"";
-              item.cellTappedBlock = ^{
-                // 将保存的逗号分隔字符串转换为数组
-                NSString *savedKeywords = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYHideOtherChannel"] ?: @"";
-                NSArray *keywordArray = [savedKeywords length] > 0 ? [savedKeywords componentsSeparatedByString:@","] : @[];
-
-                // 創建並顯示關鍵詞列表視圖
-                DYYYKeywordListView *keywordListView = [[DYYYKeywordListView alloc] initWithTitle:@"設定過濾其他頂欄" keywords:keywordArray];
-
-                // 設置確認回調
-                keywordListView.onConfirm = ^(NSArray *keywords) {
-                  // 將關鍵詞陣列轉換為逗號分隔的字串
-                  NSString *keywordString = [keywords componentsJoinedByString:@","];
-                  [DYYYSettingsHelper setUserDefaults:keywordString forKey:@"DYYYHideOtherChannel"];
-                  item.detail = keywordString;
-                  [item refreshCell];
-                };
-
-                // 顯示關鍵詞列表視圖
-                [keywordListView show];
-              };
-          }
       }
 
       NSMutableArray *sections = [NSMutableArray array];
       [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"頂欄選項" items:removeSettingsItems]];
 
-      // 創建並推入二級設定頁面，使用sections陣列而不是直接使用removeSettingsItems
       AWESettingBaseViewController *subVC = [DYYYSettingsHelper createSubSettingsViewController:@"頂欄移除" sections:sections];
       [rootVC.navigationController pushViewController:(UIViewController *)subVC animated:YES];
     };
