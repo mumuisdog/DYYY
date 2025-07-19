@@ -1210,8 +1210,9 @@ extern "C"
             @"imageName" : @"ic_eyeslash_outlined_16"},
           @{@"identifier" : @"DYYYHideTemplateGroup",
             @"title" : @"隱藏底部話題",
+            @"subTitle" : @"隱藏文案底部出現的話題",
             @"detail" : @"",
-            @"cellType" : @6,
+            @"cellType" : @37,
             @"imageName" : @"ic_eyeslash_outlined_16"},
           @{@"identifier" : @"DYYYHideCameraLocation",
             @"title" : @"隱藏相機定位",
@@ -1231,7 +1232,7 @@ extern "C"
           @{
               @"identifier" : @"DYYYHideLiveCapsuleView",
               @"title" : @"隱藏直播提示",
-              @"subTitle" : @"隱藏關注頂欄的直播中提示",
+              @"subTitle" : @"隱藏所有的直播中提示",
               @"detail" : @"",
               @"cellType" : @37,
               @"imageName" : @"ic_eyeslash_outlined_16"
