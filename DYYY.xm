@@ -3748,7 +3748,10 @@ static AWEIMReusableCommonCell *currentCell;
 %hook AWEPlayInteractionTemplateButtonGroup
 - (void)layoutSubviews {
     if (DYYYGetBool(@"DYYYHideTemplateGroup")) {
-        self.hidden = YES;
+        UIView *parentView = self.superview;
+        if (parentView) {
+            [parentView removeFromSuperview];
+        }
         return;
     }
     %orig;
@@ -6252,9 +6255,7 @@ static char kDyCachedGuideStackViewKey;
 static char kDyCachedYYLabelStackViewKey;
 static char kDyFirstLayoutCompleteKey;
 
-static NSArray<Class> *kTargetViewClasses = @[
-    NSClassFromString(@"AWEElementStackView"),
-    NSClassFromString(@"IESLiveStackView")];
+static NSArray<Class> *kTargetViewClasses = @[ NSClassFromString(@"AWEElementStackView"), NSClassFromString(@"IESLiveStackView") ];
 
 - (void)layoutSubviews {
     %orig;
@@ -6285,7 +6286,8 @@ static NSArray<Class> *kTargetViewClasses = @[
         }
         objc_setAssociatedObject(self, &kDyCachedAllStackViewsKey, allStackViews, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
-    if (allStackViews.count == 0) return;
+    if (allStackViews.count == 0)
+        return;
 
     // 第一次布局时重新查找guideStackView，之后使用缓存
     UIView *guideStackView = nil;
@@ -6349,7 +6351,8 @@ static NSArray<Class> *kTargetViewClasses = @[
     }
 
     for (UIView *stackView in allStackViews) {
-        if (!stackView.window) continue;
+        if (!stackView.window)
+            continue;
 
         if (fabs(stackView.alpha - targetAlpha) > 0.01) {
             stackView.alpha = targetAlpha;
@@ -6384,9 +6387,7 @@ static NSArray<Class> *kTargetViewClasses = @[
         CGAffineTransform targetTransform = CGAffineTransformIdentity;
         if (fabs(currentScale - 1.0) >= 0.01) {
             CGFloat ty = midY * (1 - currentScale); // 下对齐
-            targetTransform = CGAffineTransformConcat(
-                CGAffineTransformMakeScale(currentScale, currentScale), CGAffineTransformMakeTranslation(tx, ty)
-            );
+            targetTransform = CGAffineTransformConcat(CGAffineTransformMakeScale(currentScale, currentScale), CGAffineTransformMakeTranslation(tx, ty));
         }
 
         if (shouldShiftUp) {
