@@ -429,7 +429,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
     });
 
     if (shouldBlock) {
-        NSLog(@"[DYYY] 阻止保存ABTest數據 (啟用了禁止下發配置)");
+        NSLog(@"[DYYY] 阻止儲存ABTest數據 (啟用了禁止下發配置)");
         return;
     }
     %orig;
@@ -449,7 +449,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
 
       NSString *currentMode = nil;
       if ([DYYYABTestHook isRemoteMode]) {
-          currentMode = [DYYYABTestHook isPatchMode] ? @"遠程模式(覆寫)" : @"遠程模式(替換)";
+          currentMode = [DYYYABTestHook isPatchMode] ? @"遠端模式(覆寫)" : @"遠端模式(替換)";
       } else {
           currentMode = [DYYYABTestHook isPatchMode] ? @"覆寫模式" : @"替換模式";
       }
