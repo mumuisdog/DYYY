@@ -67,11 +67,8 @@ void *kViewModelKey = &kViewModelKey;
         font = [self.font fontWithSize:16.0];
     }
     
-    NSDictionary *attributes = @{
-        NSFontAttributeName : font,
-        NSForegroundColorAttributeName : self.textColor ?: [UIColor blackColor]
-    };
-    
+    NSDictionary *attributes = @{NSFontAttributeName : font, NSForegroundColorAttributeName : self.textColor ?: [UIColor blackColor]};
+	
     NSString *displayText = @"DYYY";
     CGSize textSize = [displayText sizeWithAttributes:attributes];
     CGFloat centerY = (rect.size.height - textSize.height) / 2.0;
@@ -454,11 +451,14 @@ extern "C"
             @"detail" : @"",
             @"cellType" : @26,
             @"imageName" : @"ic_tag_outlined_20"},
-          @{@"identifier" : @"DYYYFilterTimeLimit",
-            @"title" : @"推薦影片時限",
-            @"detail" : @"",
-            @"cellType" : @26,
-            @"imageName" : @"ic_playertime_outlined_20"},
+          @{
+              @"identifier" : @"DYYYFilterTimeLimit",
+              @"subTitle" : @"開啟後只會推薦最近N天內發佈的影片\n謹慎開啟，最低建議為10天",
+              @"title" : @"推薦影片時限",
+              @"detail" : @"",
+              @"cellType" : @20,
+              @"imageName" : @"ic_playertime_outlined_20"
+          },
           @{@"identifier" : @"DYYYFilterFeedHDR",
             @"title" : @"推薦過濾HDR",
             @"subTitle" : @"開啟後推薦流會屏蔽 HDR 影片",
@@ -1226,12 +1226,14 @@ extern "C"
             @"detail" : @"",
             @"cellType" : @6,
             @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHideTemplateGroup",
-            @"title" : @"隱藏底部話題",
-            @"subTitle" : @"隱藏文案底部出現的話題",
-            @"detail" : @"",
-            @"cellType" : @37,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
+          @{
+              @"identifier" : @"DYYYHideTemplateGroup",
+              @"title" : @"隱藏底部話題",
+              @"subTitle" : @"隱藏文案底部出現的話題",
+              @"detail" : @"",
+              @"cellType" : @37,
+              @"imageName" : @"ic_eyeslash_outlined_16"
+          },
           @{@"identifier" : @"DYYYHideCameraLocation",
             @"title" : @"隱藏相機定位",
             @"detail" : @"",
