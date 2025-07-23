@@ -969,8 +969,9 @@ extern "C"
       NSArray *sidebarSettings = @[
           @{@"identifier" : @"DYYYHideSidebarElements",
             @"title" : @"隱藏側欄元素",
+            @"subTitle" : @"隱藏側邊欄的常用小程式和常訪問的人",
             @"detail" : @"",
-            @"cellType" : @6,
+            @"cellType" : @37,
             @"imageName" : @"ic_eyeslash_outlined_16"},
           @{@"identifier" : @"DYYYHideSidebarDot",
             @"title" : @"隱藏側欄紅點",
