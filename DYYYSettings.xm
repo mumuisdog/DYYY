@@ -269,6 +269,14 @@ extern "C"
               @"cellType" : @37,
               @"imageName" : @"ic_play_outlined_12"
           },
+          @{
+              @"identifier" : @"DYYYEnableBackgroundListen",
+              @"title" : @"啟用背景播放",
+              @"subTitle" : @"使受到背景播放限制的影片可以在背景繼續播放",
+              @"detail" : @"",
+              @"cellType" : @37,
+              @"imageName" : @"ic_play_outlined_12"
+          },
           @{@"identifier" : @"DYYYDefaultSpeed",
             @"title" : @"設定預設倍速",
             @"detail" : @"",
@@ -2534,6 +2542,14 @@ extern "C"
               @"identifier" : @"DYYYDisableAutoEnterLive",
               @"title" : @"禁用自動進入直播",
               @"subTitle" : @"禁止頂欄直播下自動進入直播間",
+              @"detail" : @"",
+              @"cellType" : @37,
+              @"imageName" : @"ic_video_outlined_20"
+          },
+          @{
+              @"identifier" : @"DYYYDisableAutoHideLive",
+              @"title" : @"禁止直播標籤收縮",
+              @"subTitle" : @"禁止直播類型選擇標籤自動收縮成直播發現標籤",
               @"detail" : @"",
               @"cellType" : @37,
               @"imageName" : @"ic_video_outlined_20"
