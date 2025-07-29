@@ -995,7 +995,7 @@ extern "C"
           @{
               @"identifier" : @"DYYYHideGradient",
               @"title" : @"隱藏遮罩效果",
-              @"subTitle" : @"最佳化影片文案展開時出現的黑色背景遮罩效果，但可能對部分影片的文案可讀性產生一定影響。",
+              @"subTitle" : @"移除影片文案或圖片滑條可能出現的黑色背景遮罩效果，但可能對部分影片的文案可讀性產生一定影響。",
               @"detail" : @"",
               @"cellType" : @37,
               @"imageName" : @"ic_eyeslash_outlined_16"
