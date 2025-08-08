@@ -464,12 +464,14 @@ extern "C"
               @"cellType" : @37,
               @"imageName" : @"ic_video_outlined_20"
           },
-          @{@"identifier" : @"DYYYSkipHotSpot",
-            @"title" : @"推薦過濾熱點",
-            @"subTitle" : @"開啟後會過濾推薦中的商品、團購、熱點等",
-            @"detail" : @"",
-            @"cellType" : @37,
-            @"imageName" : @"ic_squaretriangletwo_outlined_20"},
+          @{
+              @"identifier" : @"DYYYSkipHotSpot",
+              @"title" : @"推薦過濾熱點",
+              @"subTitle" : @"開啟後會過濾推薦中的商品、團購、熱點等",
+              @"detail" : @"",
+              @"cellType" : @37,
+              @"imageName" : @"ic_squaretriangletwo_outlined_20"
+          },
           @{@"identifier" : @"DYYYFilterLowLikes",
             @"title" : @"推薦過濾低讚",
             @"detail" : @"0",
@@ -1186,11 +1188,6 @@ extern "C"
             @"detail" : @"",
             @"cellType" : @6,
             @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHideLocation",
-            @"title" : @"隱藏影片定位",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
           @{@"identifier" : @"DYYYHideQuqishuiting",
             @"title" : @"隱藏去汽水聽",
             @"detail" : @"",
@@ -1229,11 +1226,16 @@ extern "C"
           @{
               @"identifier" : @"DYYYHideFeedAnchorContainer",
               @"title" : @"隱藏影片錨點",
-              @"subTitle" : @"包括拍攝同款、抖音精選、遊戲、輕顏等供稿連結",
+              @"subTitle" : @"包括暱稱上方的拍攝同款、抖音精選、遊戲、輕顏等供稿鏈接，不包括影片定位",
               @"detail" : @"",
               @"cellType" : @37,
               @"imageName" : @"ic_eyeslash_outlined_16"
           },
+          @{@"identifier" : @"DYYYHideLocation",
+            @"title" : @"隱藏影片定位",
+            @"detail" : @"",
+            @"cellType" : @6,
+            @"imageName" : @"ic_eyeslash_outlined_16"},
           @{@"identifier" : @"DYYYHideChallengeStickers",
             @"title" : @"隱藏挑戰貼紙",
             @"detail" : @"",
@@ -1880,12 +1882,14 @@ extern "C"
       // 【媒體儲存】分類
       NSMutableArray<AWESettingItemModel *> *downloadItems = [NSMutableArray array];
       NSArray *downloadSettings = @[
-          @{@"identifier" : @"DYYYInterfaceDownload",
-            @"title" : @"接口解析儲存媒體",
-            @"subTitle" : @"填入自訂義的解析接口，標準格式請查閱\nGithub 倉庫內的 README 文件",
-            @"detail" : @"",
-            @"cellType" : @20,
-            @"imageName" : @"ic_cloudarrowdown_outlined_20"},
+          @{
+              @"identifier" : @"DYYYInterfaceDownload",
+              @"title" : @"接口解析儲存媒體",
+              @"subTitle" : @"填入自訂義的解析接口，標準格式請查閱\nGithub 倉庫內的 README 文件",
+              @"detail" : @"",
+              @"cellType" : @20,
+              @"imageName" : @"ic_cloudarrowdown_outlined_20"
+          },
           @{@"identifier" : @"DYYYShowAllVideoQuality",
             @"title" : @"接口顯示清晰選項",
             @"detail" : @"",
