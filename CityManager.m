@@ -1,6 +1,6 @@
 #import "CityManager.h"
 #import <Foundation/Foundation.h>
-
+#import "DYYYConstants.h"
 @implementation CityManager
 
 + (instancetype)sharedInstance {
@@ -499,6 +499,19 @@
                                                                if (jsonError) {
                                                                    completionHandler(nil, jsonError);
                                                                    return;
+                                                               }
+
+                                                               NSDictionary *status = jsonResult[@"status"];
+                                                               if (status && [status isKindOfClass:[NSDictionary class]]) {
+                                                                   NSNumber *value = status[@"value"];
+                                                                   // 检查 geonameId 是否存在的特定错误码 (value: 11)
+                                                                   if (value && [value isEqualToNumber:@11]) {
+                                                                       NSString *message = status[@"message"] ?: @"the geoname feature does not exist.";
+                                                                       NSDictionary *userInfo = @{NSLocalizedDescriptionKey : message};
+                                                                       NSError *apiError = [NSError errorWithDomain:DYYYGeonamesErrorDomain code:11 userInfo:userInfo];
+                                                                       completionHandler(nil, apiError);
+                                                                       return;
+                                                                   }
                                                                }
 
                                                                completionHandler(jsonResult, nil);
