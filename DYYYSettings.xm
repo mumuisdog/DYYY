@@ -418,7 +418,7 @@ extern "C"
             @"title" : @"啟用首頁淨化",
             @"detail" : @"",
             @"cellType" : @6,
-            @"imageName" : @"ic_broom_outlined"},
+            @"imageName" : @"ic_rectangleportraittriangle_outlined_20"},
           @{@"identifier" : @"DYYYEnableFullScreen",
             @"title" : @"啟用首頁全螢幕",
             @"detail" : @"",
@@ -1918,7 +1918,7 @@ extern "C"
           @{
               @"identifier" : @"DYYYForceDownloadEmotion",
               @"title" : @"儲存評論區表情包",
-              @"subTitle" : @"iOS 17+的使用者請長按表情本身儲存",
+              @"subTitle" : @"長按評論區表情本身儲存",
               @"detail" : @"",
               @"cellType" : @37,
               @"imageName" : @"ic_emoji_outlined"
