@@ -605,10 +605,10 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width, in
     }
 }
 
-// 將HEIC轉換為GIF的方法
+// 将HEIC转换为GIF的方法
 + (void)convertHeicToGif:(NSURL *)heicURL completion:(void (^)(NSURL *gifURL, BOOL success))completion {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-      // 1. 創建ImageSource
+      // 1. 创建ImageSource
       NSDictionary *options = @{(__bridge NSString *)kCGImageSourceTypeIdentifierHint : (__bridge NSString *)kUTTypeHEIC, (__bridge NSString *)kCGImageSourceShouldCache : @NO};
       CGImageSourceRef src = CGImageSourceCreateWithURL((__bridge CFURLRef)heicURL, (__bridge CFDictionaryRef)options);
       if (!src) {
@@ -619,17 +619,17 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width, in
           return;
       }
 
-      // 2. 獲取幀數
+      // 2. 获取帧数
       size_t count = CGImageSourceGetCount(src);
 
-      // 3. 生成GIF路徑
+      // 3. 生成GIF路径
       NSString *gifFileName = [[heicURL.lastPathComponent stringByDeletingPathExtension] stringByAppendingPathExtension:@"gif"];
       NSURL *gifURL = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:gifFileName]];
 
-      // 4. GIF屬性
+      // 4. GIF属性
       NSDictionary *gifProperties = @{(__bridge NSString *)kCGImagePropertyGIFDictionary : @{(__bridge NSString *)kCGImagePropertyGIFLoopCount : @0}};
 
-      // 5. 創建GIF目標
+      // 5. 创建GIF目标
       CGImageDestinationRef dest = CGImageDestinationCreateWithURL((__bridge CFURLRef)gifURL, kUTTypeGIF, count, NULL);
       if (!dest) {
           CFRelease(src);
@@ -641,11 +641,11 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width, in
       }
       CGImageDestinationSetProperties(dest, (__bridge CFDictionaryRef)gifProperties);
 
-      // 6. 遍歷幀並寫入GIF
+      // 6. 遍历帧并写入GIF
       for (size_t i = 0; i < count; i++) {
           CGImageRef imgRef = CGImageSourceCreateImageAtIndex(src, i, NULL);
 
-          // 獲取幀延遲
+          // 获取帧延迟
           CFDictionaryRef properties = CGImageSourceCopyPropertiesAtIndex(src, i, NULL);
           CGFloat delayTime = DYYYFrameDelayForProperties(properties);
           if (properties)
