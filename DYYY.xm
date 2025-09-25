@@ -712,8 +712,6 @@
 
         // 应用毛玻璃效果
         [DYYYUtils applyBlurEffectToView:self.view transparency:userTransparency blurViewTag:999];
-
-        [DYYYUtils clearBackgroundRecursivelyInView:self.view];
     }
 }
 %end
@@ -1424,7 +1422,6 @@ static NSString *const kDYYYLongPressCopyEnabledKey = @"DYYYLongPressCopyTextEna
             continue;
         }
         subview.backgroundColor = [UIColor clearColor];
-        subview.opaque = NO;
         [self clearBackgroundRecursivelyInView:subview];
     }
 }
@@ -1455,7 +1452,6 @@ static NSString *const kDYYYLongPressCopyEnabledKey = @"DYYYLongPressCopyTextEna
 
         [DYYYUtils applyBlurEffectToView:self.containerView transparency:userTransparency blurViewTag:9999];
         [DYYYUtils clearBackgroundRecursivelyInView:self.containerView];
-
         // 调用新的通用方法设置文本颜色，这里没有排除需求，所以传入 nil Block
         [DYYYUtils applyTextColorRecursively:[UIColor whiteColor] inView:self.containerView shouldExcludeViewBlock:nil];
     }
@@ -2363,12 +2359,10 @@ static AWEIMReusableCommonCell *currentCell;
 // 隐藏消息页顶栏头像气泡
 %hook AFDSkylightCellBubble
 - (void)layoutSubviews {
-    %orig;
-
     if (DYYYGetBool(@"DYYYHideAvatarBubble")) {
-        self.hidden = YES;
-        return;
+        [self removeFromSuperview];
     }
+    %orig;
 }
 %end
 
@@ -3205,6 +3199,17 @@ static AWEIMReusableCommonCell *currentCell;
 
 // 隐藏昵称右侧
 %hook UILabel
+
+static NSHashTable *processedParentViews = nil;
+
++ (void)load {
+    %orig;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        processedParentViews = [NSHashTable weakObjectsHashTable];
+    });
+}
+
 - (void)layoutSubviews {
     %orig;
 
@@ -3216,31 +3221,56 @@ static AWEIMReusableCommonCell *currentCell;
     if (!accessibilityLabel || accessibilityLabel.length == 0)
         return;
 
-    NSString *trimmedLabel = [accessibilityLabel stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-    BOOL shouldHide = NO;
+    // 避免重复处理同一个父视图
+    UIView *parentView = self.superview;
+    if (!parentView) return;
+    
+    @synchronized(processedParentViews) {
+        if ([processedParentViews containsObject:parentView]) {
+            return;
+        }
+    }
 
-    if ([trimmedLabel hasSuffix:@"人共創"]) {
+    NSString *trimmedLabel = [accessibilityLabel stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    BOOL shouldRemove = NO;
+
+    if ([trimmedLabel hasSuffix:@"人共创"] && trimmedLabel.length > 3) {
         NSString *prefix = [trimmedLabel substringToIndex:trimmedLabel.length - 3];
         NSCharacterSet *nonDigits = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
-        shouldHide = ([prefix rangeOfCharacterFromSet:nonDigits].location == NSNotFound);
+        shouldRemove = ([prefix rangeOfCharacterFromSet:nonDigits].location == NSNotFound);
     }
 
-    if (!shouldHide) {
-        shouldHide = [trimmedLabel isEqualToString:@"章节要点"] || [trimmedLabel isEqualToString:@"图集"];
+    if (!shouldRemove) {
+        shouldRemove = [trimmedLabel isEqualToString:@"章节要点"] || 
+                      [trimmedLabel isEqualToString:@"图集"] ||
+                      [trimmedLabel isEqualToString:@"下一章"];
     }
 
-    if (shouldHide) {
-        self.hidden = YES;
+    if (shouldRemove) {
+        @synchronized(processedParentViews) {
+            [processedParentViews addObject:parentView];
+        }
+        
+        UIView *grandparentView = parentView.superview;  // 爷爷视图
+        
+        if (grandparentView) {
 
-        // 找到父视图是否为 UIStackView
-        UIView *superview = self.superview;
-        if ([superview isKindOfClass:[UIStackView class]]) {
-            UIStackView *stackView = (UIStackView *)superview;
-            // 刷新 UIStackView 的布局
-            [stackView layoutIfNeeded];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if ([grandparentView isKindOfClass:[UIStackView class]]) {
+                    UIStackView *stackView = (UIStackView *)grandparentView;
+                    [stackView removeArrangedSubview:parentView];
+                }
+                
+                [parentView removeFromSuperview];
+                
+                // 强制刷新爷爷视图布局
+                [grandparentView setNeedsLayout];
+                [grandparentView layoutIfNeeded];
+            });
         }
     }
 }
+
 %end
 
 // 隐藏顶栏关注下的提示线
@@ -5379,14 +5409,6 @@ static CGFloat originalTabHeight = 0;
 
     BOOL enableBlur = DYYYGetBool(@"DYYYEnableCommentBlur");
     BOOL enableFS = DYYYGetBool(@"DYYYEnableFullScreen");
-    BOOL hideAvatar = DYYYGetBool(@"DYYYHideAvatarList");
-
-    Class SkylightListViewClass = NSClassFromString(@"AWEIMSkylightListView");
-    if (hideAvatar && SkylightListViewClass && [self isKindOfClass:SkylightListViewClass]) {
-        frame = CGRectZero;
-        %orig(frame);
-        return;
-    }
 
     UIViewController *vc = [DYYYUtils firstAvailableViewControllerFromView:self];
     Class DetailVCClass = NSClassFromString(@"AWEMixVideoPanelDetailTableViewController");
@@ -5421,6 +5443,17 @@ static CGFloat originalTabHeight = 0;
     %orig(frame);
 }
 
+%end
+
+%hook AWEIMSkylightListView
+- (void)setFrame:(CGRect)frame {
+    if (DYYYGetBool(@"DYYYHideAvatarList")) {
+        CGFloat scale = [UIScreen mainScreen].scale ?: 2.0;
+        CGFloat minH = MAX(1.0/scale, 0.5);
+        frame.size.height = minH;
+    }
+    %orig(frame);
+}
 %end
 
 static NSArray<Class> *kStackViewClasses = @[ NSClassFromString(@"AWEElementStackView"), NSClassFromString(@"IESLiveStackView") ];
@@ -5651,12 +5684,13 @@ void applyGlobalTransparency(id targetObject) {
 
     BOOL speedApplied = NO;
 
-    UIViewController *rootVC = [UIApplication sharedApplication].keyWindow.rootViewController;
-    while (rootVC.presentedViewController) {
+    UIWindow *win = [DYYYUtils getActiveWindow];
+    UIViewController *rootVC = win.rootViewController;
+    while (rootVC && rootVC.presentedViewController) {
         rootVC = rootVC.presentedViewController;
     }
 
-    NSArray *viewControllers = findViewControllersInHierarchy(rootVC);
+    NSArray *viewControllers = rootVC ? findViewControllersInHierarchy(rootVC) : @[];
 
     for (UIViewController *vc in viewControllers) {
         if ([vc isKindOfClass:%c(AWEAwemePlayVideoViewController)]) {
