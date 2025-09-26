@@ -1009,7 +1009,13 @@ extern "C"
               @"detail" : @"",
               @"cellType" : @37,
               @"imageName" : @"ic_eyeslash_outlined_16"
-          }
+          },
+          @{@"identifier" : @"DYYYHideBack",
+            @"title" : @"隱藏返回按鈕",
+            @"subTitle" : @"主頁影片左上角的返回按鈕",
+            @"detail" : @"",
+            @"cellType" : @37,
+            @"imageName" : @"ic_eyeslash_outlined_16"}
       ];
 
       for (NSDictionary *dict in videoUiSettings) {
@@ -1020,14 +1026,16 @@ extern "C"
       // 【侧边栏】分类
       NSMutableArray<AWESettingItemModel *> *sidebarItems = [NSMutableArray array];
       NSArray *sidebarSettings = @[
-          @{
-              @"identifier" : @"DYYYHideSidebarElements",
-              @"title" : @"隱藏側欄元素",
-              @"subTitle" : @"隱藏側邊欄的常用小程式和常訪問的人",
-              @"detail" : @"",
-              @"cellType" : @37,
-              @"imageName" : @"ic_eyeslash_outlined_16"
-          },
+          @{@"identifier" : @"DYYYHideSidebarRecentApps",
+            @"title" : @"隱藏常用小程序",
+            @"detail" : @"",
+            @"cellType" : @6,
+            @"imageName" : @"ic_eyeslash_outlined_16"},
+          @{@"identifier" : @"DYYYHideSidebarRecentUsers",
+            @"title" : @"隱藏常訪問的人",
+            @"detail" : @"",
+            @"cellType" : @6,
+            @"imageName" : @"ic_eyeslash_outlined_16"},
           @{@"identifier" : @"DYYYHideSidebarDot",
             @"title" : @"隱藏側欄紅點",
             @"detail" : @"",
@@ -1037,12 +1045,6 @@ extern "C"
             @"title" : @"隱藏左側邊欄",
             @"detail" : @"",
             @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHideBack",
-            @"title" : @"隱藏返回按鈕",
-            @"subTitle" : @"主頁影片左上角的返回按鈕",
-            @"detail" : @"",
-            @"cellType" : @37,
             @"imageName" : @"ic_eyeslash_outlined_16"}
       ];
 
