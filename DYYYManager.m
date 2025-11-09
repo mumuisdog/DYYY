@@ -22,6 +22,7 @@
 
 #import "DYYYToast.h"
 #import "DYYYUtils.h"
+#import "DYYYLifecycleSafety.h"
 
 static const NSTimeInterval kDYYYDefaultFrameDelay = 0.1f;
 static const CGFloat kDYYYMillisecondsPerSecond = 1000.0f;
@@ -771,23 +772,33 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width, in
       NSString *videoDownloadID = [NSString stringWithFormat:@"video_%@", uniqueID];
 
       // 更新合併進度的計時器
+      __weak DYYYToast *weakProgressView = progressView;
       __block NSTimer *progressTimer = [NSTimer scheduledTimerWithTimeInterval:0.1
                                                                        repeats:YES
                                                                          block:^(NSTimer *_Nonnull timer) {
+                                                                           DYYYToast *strongProgressView = weakProgressView;
+                                                                           if (!strongProgressView) {
+                                                                               DYYYDebugLog("Progress view released before timer fire");
+                                                                               [timer invalidate];
+                                                                               progressTimer = nil;
+                                                                               return;
+                                                                           }
+
                                                                            float totalProgress = (imageProgress + videoProgress) / 2.0;
-                                                                           [progressView setProgress:totalProgress];
+                                                                           [strongProgressView setProgress:totalProgress];
 
                                                                            // 更新進度文字
-                                                                           NSString *statusText = @"正在下載原況照片...";
                                                                            if (imageDownloaded && !videoDownloaded) {
-                                                                               statusText = @"圖片下載完成，等待影片...";
+                                                                               DYYYDebugLog("Image download done, waiting for video");
                                                                            } else if (!imageDownloaded && videoDownloaded) {
-                                                                               statusText = @"影片下載完成，等待圖片...";
+                                                                               DYYYDebugLog("Video download done, waiting for image");
                                                                            } else if (imageDownloaded && videoDownloaded) {
-                                                                               statusText = @"下載完成，準備儲存...";
+                                                                               DYYYDebugLog("Downloads completed, preparing to save");
                                                                                [timer invalidate];  // 全部完成時停止計時器
+                                                                               progressTimer = nil;
                                                                            }
-                                                                         }];
+                                                                        }];
+      DYYYDebugLog("Progress timer scheduled owner=%p", progressView);
 
       // 下載圖片
       dispatch_group_enter(group);
@@ -846,6 +857,11 @@ static void CGContextCopyBytes(CGContextRef dst, CGContextRef src, int width, in
       // 當兩個下載都完成後，儲存原況照片
       dispatch_group_notify(group, dispatch_get_main_queue(), ^{
         // 停止進度計時器
+        if (progressTimer) {
+            [progressTimer invalidate];
+            progressTimer = nil;
+            DYYYDebugLog("Progress timer invalidated after group completion");
+        }
         [progressTimer invalidate];
 
         // 移除進度觀察
