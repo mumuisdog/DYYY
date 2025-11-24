@@ -4499,7 +4499,7 @@ static BOOL DYYYIsLandscapeVideoBounds(CGSize size) {
         return;
     }
 
-    CGFloat tabHeight = DYYYCurrentTabHeight();
+    CGFloat tabHeight = gCurrentTabBarHeight;
     if (tabHeight <= 0.0f) {
         return;
     }
