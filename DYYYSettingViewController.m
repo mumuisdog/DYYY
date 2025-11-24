@@ -152,7 +152,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
             [DYYYSettingItem itemWithTitle:@"啟用首頁全螢幕" key:@"DYYYEnableFullScreen" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"啟用屏蔽廣告" key:@"DYYYNoAds" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"屏蔽檢測更新" key:@"DYYYNoUpdates" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"去除青少年彈窗" key:@"DYYYHideteenmode" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"去除青少年彈窗" key:@"DYYYHideTeenMode" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"評論區毛玻璃" key:@"DYYYEnableCommentBlur" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"通知玻璃效果" key:@"DYYYEnableNotificationTransparency" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"毛玻璃透明度" key:@"DYYYCommentBlurTransparent" type:DYYYSettingItemTypeTextField placeholder:@"0-1小數"],
