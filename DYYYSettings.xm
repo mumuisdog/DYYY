@@ -2550,6 +2550,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
               @"cellType" : @37,
               @"imageName" : @"ic_gearsimplify_outlined_20"
           },
+          @{
               @"identifier" : @"DYYYEntrance",
               @"title" : @"左側邊欄快捷入口",
               @"subTitle" : @"將側邊欄替換為 DYYY 快捷入口",
