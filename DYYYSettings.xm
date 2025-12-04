@@ -3052,8 +3052,12 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
       [clearButtonItems addObject:hideSpeedButton];
       // 獲取清屏按鈕的當前開關狀態
       BOOL isEnabled = [DYYYSettingsHelper getUserDefaults:@"DYYYEnableFloatClearButton"];
-      clearButtonSizeItem.isEnable = isEnabled;
-      clearButtonIcon.isEnable = isEnabled;
+      for (AWESettingItemModel *item in clearButtonItems) {
+          if (item == enableClearButton) {
+              continue;
+          }
+          item.isEnable = isEnabled;
+      }
 
       // 創建並組織所有section
       NSMutableArray *sections = [NSMutableArray array];
