@@ -19,5 +19,6 @@
 #define DYYY_REMOTE_MODE_STRING @"遠端模式：啟動時自動檢查更新"
 
 #define DYYYGeonamesErrorDomain @"com.dyyy.geonames.api.error"
+#define DYYYGeonamesStatusUserInfoKey @"com.dyyy.geonames.api.status"
 
 #endif
