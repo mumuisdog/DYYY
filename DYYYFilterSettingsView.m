@@ -81,7 +81,7 @@ static const int kDYYYButtonsPerRow = 10;
 
         // 主标题 - 根据模式设置文本颜色
         self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 20, 260, 24)];
-        self.titleLabel.text = title ?: @"推荐过滤设置";
+        self.titleLabel.text = title ?: @"推薦過濾設置";
         self.titleLabel.textColor =
             DYYYColor([UIColor colorWithRed:230 / 255.0 green:230 / 255.0 blue:235 / 255.0 alpha:1.0], [UIColor colorWithRed:45 / 255.0 green:47 / 255.0 blue:56 / 255.0 alpha:1.0], self.darkMode);
         self.titleLabel.textAlignment = NSTextAlignmentCenter;
@@ -98,7 +98,7 @@ static const int kDYYYButtonsPerRow = 10;
 
         // 选中预览区域 - 根据模式设置背景色
         self.selectionPreviewLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 54, 260, 50)];
-        self.selectionPreviewLabel.text = @"请滑动选择文字";
+        self.selectionPreviewLabel.text = @"請滑動選擇文字";
         self.selectionPreviewLabel.textColor = DYYYAccentColor();
         self.selectionPreviewLabel.textAlignment = NSTextAlignmentCenter;
         self.selectionPreviewLabel.numberOfLines = 2;
@@ -167,7 +167,7 @@ static const int kDYYYButtonsPerRow = 10;
         self.confirmButton = [UIButton buttonWithType:UIButtonTypeSystem];
         self.confirmButton.frame = CGRectMake(150, 0, 150, 55.5);
         self.confirmButton.backgroundColor = [UIColor clearColor];
-        [self.confirmButton setTitle:@"确定" forState:UIControlStateNormal];
+        [self.confirmButton setTitle:@"確定" forState:UIControlStateNormal];
         [self.confirmButton setTitleColor:DYYYColor([UIColor colorWithRed:230 / 255.0 green:230 / 255.0 blue:235 / 255.0 alpha:1.0],
                                                     [UIColor colorWithRed:45 / 255.0 green:47 / 255.0 blue:56 / 255.0 alpha:1.0], self.darkMode)
                                  forState:UIControlStateNormal];
@@ -358,7 +358,7 @@ static const int kDYYYButtonsPerRow = 10;
         button.backgroundColor = buttonBackgroundColor;
     }
 
-    self.selectionPreviewLabel.text = @"请滑动选择文字";
+    self.selectionPreviewLabel.text = @"請滑動選擇文字";
 }
 
 - (void)updateSelectionWithStartIndex:(NSInteger)startIdx endIndex:(NSInteger)endIdx {
@@ -392,7 +392,7 @@ static const int kDYYYButtonsPerRow = 10;
 
     self.selectedRange = newRange;
     self.selectedText = selection;
-    self.selectionPreviewLabel.text = selection.length > 0 ? selection : @"请滑动选择文字";
+    self.selectionPreviewLabel.text = selection.length > 0 ? selection : @"請滑動選擇文字";
 }
 
 #pragma mark - Show/Dismiss Methods
@@ -460,7 +460,7 @@ static const int kDYYYButtonsPerRow = 10;
     NSArray *array = saved.length > 0 ? [saved componentsSeparatedByString:@","] : @[];
     BOOL exists = [array containsObject:self.propName];
 
-    NSString *title = exists ? @"取消过滤此拍同款" : @"过滤此拍同款";
+    NSString *title = exists ? @"取消過濾此拍同款" : @"過濾此拍同款";
     UIColor *titleColor = exists ? DYYYRedColor() : DYYYAccentColor();
     [self.propFilterButton setTitle:title forState:UIControlStateNormal];
     [self.propFilterButton setTitleColor:titleColor forState:UIControlStateNormal];
@@ -475,10 +475,10 @@ static const int kDYYYButtonsPerRow = 10;
 
     if (exists) {
         [array removeObject:self.propName];
-        [DYYYUtils showToast:@"已从过滤列表中移除此拍同款"];
+        [DYYYUtils showToast:@"已從過濾列表中移除此拍同款"];
     } else {
         [array addObject:self.propName];
-        [DYYYUtils showToast:@"已添加此拍同款到过滤列表"];
+        [DYYYUtils showToast:@"已新增此拍同款到過濾列表"];
     }
 
     NSString *newString = [array componentsJoinedByString:@","];
