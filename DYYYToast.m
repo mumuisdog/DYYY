@@ -87,7 +87,7 @@
         _percentLabel.textAlignment = NSTextAlignmentCenter;
         _percentLabel.textColor = isDarkMode ? [UIColor colorWithWhite:0.9 alpha:1.0] : [UIColor colorWithWhite:0.2 alpha:1.0];
         _percentLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightMedium];
-        _percentLabel.text = @"下载中... 0%";
+        _percentLabel.text = @"下載中... 0%";
         CGFloat progressViewRightEdge = _progressView.frame.origin.x + _progressView.frame.size.width;
         CGFloat labelWidth = containerWidth - progressViewRightEdge;
         _percentLabel.frame = CGRectMake(progressViewRightEdge - 3, 0, labelWidth, containerHeight);
@@ -120,7 +120,7 @@
 
     // 更新进度百分比
     int percentage = (int)(progress * 100);
-    _percentLabel.text = [NSString stringWithFormat:@"下载中... %d%%", percentage];
+    _percentLabel.text = [NSString stringWithFormat:@"下載中... %d%%", percentage];
 }
 
 - (void)show {
@@ -238,7 +238,7 @@
                                   duration:0.2
                                    options:UIViewAnimationOptionTransitionCrossDissolve
                                 animations:^{
-                                  self.percentLabel.text = @"下载完成";
+                                  self.percentLabel.text = @"下載完成";
                                 }
                                 completion:nil];
               }
@@ -349,7 +349,7 @@
                             duration:0.2
                              options:UIViewAnimationOptionTransitionCrossDissolve
                           animations:^{
-                            self.percentLabel.text = @"已取消下载";
+                            self.percentLabel.text = @"已取消下載";
                           }
                           completion:nil];
         }
