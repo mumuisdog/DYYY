@@ -52,7 +52,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
             }
             return YES;
         }
-        if ([savedMode isEqualToString:@"替换模式：忽略原配置，使用新数据"] || [[savedMode lowercaseString] isEqualToString:@"DYYY_MODE_REPLACE"]) {
+        if ([savedMode isEqualToString:@"替換模式：忽略原配置，使用新數據"] || [[savedMode lowercaseString] isEqualToString:@"DYYY_MODE_REPLACE"]) {
             return NO;
         }
         return YES;
@@ -116,7 +116,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
     dispatch_async(DYYYABTestQueue(), ^{
       s_localABTestData = nil;
       s_loadOnceToken = 0;
-      NSLog(@"[DYYY] 本地ABTest配置已清除");
+      NSLog(@"[DYYY] 本機ABTest配置已清除");
     });
 }
 
@@ -141,7 +141,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
             NSError *error = nil;
             [fileManager createDirectoryAtPath:dyyyFolderPath withIntermediateDirectories:YES attributes:nil error:&error];
             if (error) {
-                NSLog(@"[DYYY] 创建DYYY目录失败: %@", error.localizedDescription);
+                NSLog(@"[DYYY] 新建DYYY目錄失敗: %@", error.localizedDescription);
             }
         }
 
@@ -164,13 +164,13 @@ static void DYYYQueueSync(dispatch_block_t block) {
                     actualData = [tmp copy];
                 }
                 s_localABTestData = [actualData copy];
-                NSLog(@"[DYYY] ABTest本地配置已从文件加载成功");
+                NSLog(@"[DYYY] ABTest本機配置已從檔案加載");
                 return;
             } else {
-                NSLog(@"[DYYY] ABTest本地配置解析失败: %@", error.localizedDescription);
+                NSLog(@"[DYYY] ABTest本機配置解析失敗: %@", error.localizedDescription);
             }
         } else {
-            NSLog(@"[DYYY] ABTest本地配置文件不存在或无法读取");
+            NSLog(@"[DYYY] ABTest本機配置檔案不存在或無法讀取");
         }
 
         // 加载失败时的处理
@@ -187,7 +187,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
 + (void)applyFixedABTestData {
     dispatch_async(DYYYABTestQueue(), ^{
       if (!s_abTestBlockEnabled || !s_localABTestData) {
-          NSLog(@"[DYYY] 不满足应用本地配置的条件 (禁止下发=%@, 数据是否为空=%@)", s_abTestBlockEnabled ? @"开启" : @"关闭", s_localABTestData ? @"否" : @"是");
+          NSLog(@"[DYYY] 不滿足應用本機配置的條件 (禁止下發=%@, 數據是否為空=%@)", s_abTestBlockEnabled ? @"開啟" : @"關閉", s_localABTestData ? @"否" : @"是");
           s_isApplyingFixedData = NO; // 确保标志关闭
           return;
       }
@@ -222,7 +222,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
       // 重置状态标志
       s_isApplyingFixedData = NO;
 
-      NSLog(@"[DYYY] ABTest本地配置已应用");
+      NSLog(@"[DYYY] ABTest本機配置已應用");
     });
 }
 
@@ -253,7 +253,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
       if (invalidURL || !url) {
           if (notify) {
               dispatch_async(dispatch_get_main_queue(), ^{
-                [DYYYUtils showToast:@"配置地址无效"];
+                [DYYYUtils showToast:@"配置更新失敗"];
               });
           }
           return;
@@ -288,11 +288,11 @@ static void DYYYQueueSync(dispatch_block_t block) {
                                                                  dispatch_async(dispatch_get_main_queue(), ^{
                                                                    if (error || !data) {
                                                                        if (notify) {
-                                                                           [DYYYUtils showToast:@"配置更新失败"];
+                                                                           [DYYYUtils showToast:@"配置更新失敗"];
                                                                        }
                                                                    } else if (validationError) {
                                                                        if (notify) {
-                                                                           [DYYYUtils showToast:@"配置解析失败"];
+                                                                           [DYYYUtils showToast:@"配置解析失敗"];
                                                                        }
                                                                    } else if (updated) {
                                                                        if (notify) {
@@ -332,7 +332,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
     });
 
     if (shouldBlock) {
-        NSLog(@"[DYYY] 阻止ABTest数据更新 (启用了禁止下发配置且非本地应用)");
+        NSLog(@"[DYYY] 阻止ABTest數據更新 (啟用了禁止下發配置且非本機應用)");
         return;
     }
     %orig;
@@ -350,7 +350,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
     });
 
     if (shouldBlock) {
-        NSLog(@"[DYYY] 阻止增量更新ABTest数据 (启用了禁止下发配置)");
+        NSLog(@"[DYYY] 阻止增量更新ABTest數據 (啟用了禁止下發配置)");
         return;
     }
     %orig;
@@ -368,7 +368,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
     });
 
     if (shouldBlock) {
-        NSLog(@"[DYYY] 阻止从网络获取ABTest配置 (启用了禁止下发配置)");
+        NSLog(@"[DYYY] 阻止從網絡獲取ABTest配置 (啟用了禁止下發配置)");
         if (completion && [completion isKindOfClass:%c(NSBlock)]) {
             dispatch_async(dispatch_get_main_queue(), ^{
               ((void (^)(id))completion)(nil);
@@ -391,7 +391,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
     });
 
     if (shouldBlock) {
-        NSLog(@"[DYYY] 阻止从网络获取ABTest配置 (启用了禁止下发配置)");
+        NSLog(@"[DYYY] 阻止從網絡獲取ABTest配置 (啟用了禁止下發配置)");
         return;
     }
     %orig;
@@ -409,7 +409,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
     });
 
     if (shouldBlock) {
-        NSLog(@"[DYYY] 阻止重写ABTest数据 (启用了禁止下发配置)");
+        NSLog(@"[DYYY] 阻止重寫ABTest數據 (啟用了禁止下發配置)");
         return;
     }
     %orig;
@@ -427,7 +427,7 @@ static void DYYYQueueSync(dispatch_block_t block) {
     });
 
     if (shouldBlock) {
-        NSLog(@"[DYYY] 阻止保存ABTest数据 (启用了禁止下发配置)");
+        NSLog(@"[DYYY] 阻止儲存ABTest數據 (啟用了禁止下發配置)");
         return;
     }
     %orig;
@@ -447,12 +447,12 @@ static void DYYYQueueSync(dispatch_block_t block) {
 
       NSString *currentMode = nil;
       if ([DYYYABTestHook isRemoteMode]) {
-          currentMode = [DYYYABTestHook isPatchMode] ? @"远程模式(覆写)" : @"远程模式(替换)";
+          currentMode = [DYYYABTestHook isPatchMode] ? @"遠端模式(覆寫)" : @"遠端模式(替換)";
       } else {
-          currentMode = [DYYYABTestHook isPatchMode] ? @"覆写模式" : @"替换模式";
+          currentMode = [DYYYABTestHook isPatchMode] ? @"覆寫模式" : @"替換模式";
       }
 
-      NSLog(@"[DYYY] ABTest Hook已启动: 禁止下发=%@, 当前模式=%@", s_abTestBlockEnabled ? @"开启" : @"关闭", currentMode);
+      NSLog(@"[DYYY] ABTest Hook已啟動: 禁止下發=%@, 目前模式=%@", s_abTestBlockEnabled ? @"開啟" : @"關閉", currentMode);
 
       [DYYYABTestHook loadLocalABTestConfig];
       [DYYYABTestHook applyFixedABTestData];
