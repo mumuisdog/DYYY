@@ -45,7 +45,7 @@
             isDarkMode ? [UIColor colorWithRed:230 / 255.0 green:230 / 255.0 blue:235 / 255.0 alpha:1.0] : [UIColor colorWithRed:45 / 255.0 green:47 / 255.0 blue:56 / 255.0 alpha:1.0];
 
         // 使用自定义占位符文本，根据模式设置占位符颜色
-        NSString *placeholderString = placeholder.length > 0 ? placeholder : @"请输入内容";
+        NSString *placeholderString = placeholder.length > 0 ? placeholder : @"請輸入內容";
         UIColor *placeholderColor =
             isDarkMode ? [UIColor colorWithRed:160 / 255.0 green:160 / 255.0 blue:165 / 255.0 alpha:1.0] : [UIColor colorWithRed:124 / 255.0 green:124 / 255.0 blue:130 / 255.0 alpha:1.0];
         self.inputTextField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:placeholderString attributes:@{NSForegroundColorAttributeName : placeholderColor}];
@@ -96,7 +96,7 @@
         self.confirmButton = [UIButton buttonWithType:UIButtonTypeSystem];
         self.confirmButton.frame = CGRectMake(150, 0, 150, 55.5);
         self.confirmButton.backgroundColor = [UIColor clearColor];
-        [self.confirmButton setTitle:@"确定" forState:UIControlStateNormal];
+        [self.confirmButton setTitle:@"確定" forState:UIControlStateNormal];
         UIColor *confirmColor =
             isDarkMode ? [UIColor colorWithRed:230 / 255.0 green:230 / 255.0 blue:235 / 255.0 alpha:1.0] : [UIColor colorWithRed:45 / 255.0 green:47 / 255.0 blue:56 / 255.0 alpha:1.0];
         [self.confirmButton setTitleColor:confirmColor forState:UIControlStateNormal];
