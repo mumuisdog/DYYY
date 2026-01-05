@@ -80,12 +80,12 @@
             [attributedString addAttribute:NSLinkAttributeName value:@"https://t.me/vita_app" range:telegramRange];
         }
 
-        NSRange githubRange = [message rangeOfString:@"仓库地址 Wtrwx/DYYY"];
+        NSRange githubRange = [message rangeOfString:@"倉庫地址 Wtrwx/DYYY"];
         if (githubRange.location != NSNotFound) {
             [attributedString addAttribute:NSLinkAttributeName value:@"https://github.com/Wtrwx/DYYY" range:githubRange];
         }
 
-        NSRange huamiGithubRange = [message rangeOfString:@"开源地址 huami1314/DYYY"];
+        NSRange huamiGithubRange = [message rangeOfString:@"開源地址 huami1314/DYYY"];
         if (huamiGithubRange.location != NSNotFound) {
             [attributedString addAttribute:NSLinkAttributeName value:@"https://github.com/huami1314/DYYY" range:huamiGithubRange];
         }
@@ -113,7 +113,7 @@
         self.confirmButton = [UIButton buttonWithType:UIButtonTypeSystem];
         self.confirmButton.frame = CGRectMake(0, contentHeight - buttonHeight + 0.5, 300, 53);
         self.confirmButton.backgroundColor = [UIColor clearColor];
-        [self.confirmButton setTitle:@"确定" forState:UIControlStateNormal];
+        [self.confirmButton setTitle:@"確定" forState:UIControlStateNormal];
         UIColor *confirmButtonColor =
             isDarkMode ? [UIColor colorWithRed:230 / 255.0 green:230 / 255.0 blue:235 / 255.0 alpha:1.0] : [UIColor colorWithRed:45 / 255.0 green:47 / 255.0 blue:56 / 255.0 alpha:1.0];
         [self.confirmButton setTitleColor:confirmButtonColor forState:UIControlStateNormal];
