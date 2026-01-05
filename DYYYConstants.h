@@ -2,7 +2,7 @@
 #define DYYYConstants_h
 
 #define DYYY_NAME @"DYYY"
-#define DYYY_SETTINGS_NAME @"DYYY设置"
+#define DYYY_SETTINGS_NAME @"DYYY設定"
 
 #define DYYY_VERSION @"2.2-8"
 
@@ -16,7 +16,7 @@
 #define DYYY_REMOTE_CONFIG_CHANGED_NOTIFICATION @"DYYYRemoteConfigStateChanged"
 
 // 配置应用方式中的远程模式名称
-#define DYYY_REMOTE_MODE_STRING @"远程模式：启动时自动检查更新"
+#define DYYY_REMOTE_MODE_STRING @"遠端模式：啟動時自動檢查更新"
 
 #define DYYYGeonamesErrorDomain @"com.dyyy.geonames.api.error"
 #define DYYYGeonamesStatusUserInfoKey @"com.dyyy.geonames.api.status"
