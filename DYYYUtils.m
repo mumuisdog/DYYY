@@ -88,15 +88,15 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
 
     NSString *currentLabelText = label.text ?: @"";
     NSString *newText = nil;
-    NSRange ipRange = [currentLabelText rangeOfString:@"IP属地："];
+    NSRange ipRange = [currentLabelText rangeOfString:@"IP位置："];
     if (ipRange.location != NSNotFound) {
         NSString *baseText = [currentLabelText substringToIndex:ipRange.location];
-        newText = [NSString stringWithFormat:@"%@IP属地：%@", baseText, resolvedLocation];
+        newText = [NSString stringWithFormat:@"%@IP位置：%@", baseText, resolvedLocation];
     } else {
         if (currentLabelText.length > 0) {
-            newText = [NSString stringWithFormat:@"%@  IP属地：%@", currentLabelText, resolvedLocation];
+            newText = [NSString stringWithFormat:@"%@  IP位置：%@", currentLabelText, resolvedLocation];
         } else {
-            newText = [NSString stringWithFormat:@"IP属地：%@", resolvedLocation];
+            newText = [NSString stringWithFormat:@"IP位置：%@", resolvedLocation];
         }
     }
 
@@ -252,9 +252,9 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
         BOOL isDirectCity = [provinceName isEqualToString:cityName] || ([cityCode hasPrefix:@"11"] || [cityCode hasPrefix:@"12"] || [cityCode hasPrefix:@"31"] || [cityCode hasPrefix:@"50"]);
         if (!model.ipAttribution) {
             if (isDirectCity) {
-                label.text = [NSString stringWithFormat:@"%@  IP属地：%@", originalText, cityName];
+                label.text = [NSString stringWithFormat:@"%@  IP位置：%@", originalText, cityName];
             } else {
-                label.text = [NSString stringWithFormat:@"%@  IP属地：%@ %@", originalText, provinceName, cityName];
+                label.text = [NSString stringWithFormat:@"%@  IP位置：%@ %@", originalText, provinceName, cityName];
             }
         } else {
             BOOL containsProvince = [originalText containsString:provinceName];
@@ -262,7 +262,7 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
             if (containsProvince && !isDirectCity && !containsCity) {
                 label.text = [NSString stringWithFormat:@"%@ %@", originalText, cityName];
             } else if (isDirectCity && !containsCity) {
-                label.text = [NSString stringWithFormat:@"%@  IP属地：%@", originalText, cityName];
+                label.text = [NSString stringWithFormat:@"%@  IP位置：%@", originalText, cityName];
             }
         }
         [DYYYUtils applyColorSettingsToLabel:label colorHexString:colorHexString];
@@ -290,7 +290,7 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
         return nil;
     }
 
-    NSArray<NSString *> *prefixes = @[ @"IP属地：", @"IP属地:", @"IP 属地：", @"IP 属地:" ];
+    NSArray<NSString *> *prefixes = @[ @"IP位置：", @"IP位置:", @"IP 位置：", @"IP 位置:" ];
     for (NSString *prefix in prefixes) {
         if ([trimmedValue hasPrefix:prefix]) {
             trimmedValue = [trimmedValue substringFromIndex:prefix.length];
