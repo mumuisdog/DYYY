@@ -474,7 +474,7 @@ void initTargetClassNames(void) {
         [self resetFadeTimer];
         self.isLocked = !self.isLocked;
         [self saveLockState];
-        NSString *toastMessage = self.isLocked ? @"按钮已锁定" : @"按钮已解锁";
+        NSString *toastMessage = self.isLocked ? @"按鈕已鎖定" : @"按鈕已解鎖";
         [DYYYUtils showToast:toastMessage];
         if (@available(iOS 10.0, *)) {
             UIImpactFeedbackGenerator *generator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
