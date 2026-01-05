@@ -473,7 +473,7 @@
 + (void)fetchLocationWithGeonameId:(NSString *)geonameId completionHandler:(void (^)(NSDictionary *locationInfo, NSError *error))completionHandler {
     if (geonameId.length == 0) {
         if (completionHandler) {
-            NSError *parameterError = [NSError errorWithDomain:DYYYGeonamesErrorDomain code:-2 userInfo:@{NSLocalizedDescriptionKey : @"GeoNames 参数无效"}];
+            NSError *parameterError = [NSError errorWithDomain:DYYYGeonamesErrorDomain code:-2 userInfo:@{NSLocalizedDescriptionKey : @"GeoNames 參數無效"}];
             completionHandler(nil, parameterError);
         }
         return;
@@ -489,7 +489,7 @@
     NSString *encodedUsername = [username stringByAddingPercentEncodingWithAllowedCharacters:allowedSet];
     if (!encodedGeonameId || !encodedUsername) {
         if (completionHandler) {
-            NSError *encodingError = [NSError errorWithDomain:DYYYGeonamesErrorDomain code:-3 userInfo:@{NSLocalizedDescriptionKey : @"GeoNames 参数编码失败"}];
+            NSError *encodingError = [NSError errorWithDomain:DYYYGeonamesErrorDomain code:-3 userInfo:@{NSLocalizedDescriptionKey : @"GeoNames 參數編碼失敗"}];
             completionHandler(nil, encodingError);
         }
         return;
