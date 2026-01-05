@@ -68,7 +68,7 @@
         self.countdownLabel.textColor = [UIColor colorWithRed:11 / 255.0 green:223 / 255.0 blue:154 / 255.0 alpha:1.0];  // #0BDF9A
         self.countdownLabel.font = [UIFont boldSystemFontOfSize:16];
         self.countdown = 5;
-        self.countdownLabel.text = [NSString stringWithFormat:@"%ld 秒后自动关闭", (long)self.countdown];
+        self.countdownLabel.text = [NSString stringWithFormat:@"%ld 秒後自動關閉", (long)self.countdown];
         [self.contentView addSubview:self.countdownLabel];
 
         // 添加内容和按钮之间的分割线 - 根据模式设置颜色
@@ -85,7 +85,7 @@
         self.cancelButton = [UIButton buttonWithType:UIButtonTypeSystem];
         self.cancelButton.frame = CGRectMake(0, 0, contentWidth / 2 - 0.5, 55.5);
         self.cancelButton.backgroundColor = [UIColor clearColor];
-        [self.cancelButton setTitle:@"取消关闭" forState:UIControlStateNormal];
+        [self.cancelButton setTitle:@"取消關閉" forState:UIControlStateNormal];
         [self.cancelButton
             setTitleColor:isDarkMode ? [UIColor colorWithRed:160 / 255.0 green:160 / 255.0 blue:165 / 255.0 alpha:1.0] : [UIColor colorWithRed:124 / 255.0 green:124 / 255.0 blue:130 / 255.0 alpha:1.0]
                  forState:UIControlStateNormal];
@@ -102,7 +102,7 @@
         self.confirmButton = [UIButton buttonWithType:UIButtonTypeSystem];
         self.confirmButton.frame = CGRectMake(contentWidth / 2, 0, contentWidth / 2, 55.5);
         self.confirmButton.backgroundColor = [UIColor clearColor];
-        [self.confirmButton setTitle:@"关闭抖音" forState:UIControlStateNormal];
+        [self.confirmButton setTitle:@"關閉抖音" forState:UIControlStateNormal];
         [self.confirmButton
             setTitleColor:isDarkMode ? [UIColor colorWithRed:230 / 255.0 green:230 / 255.0 blue:235 / 255.0 alpha:1.0] : [UIColor colorWithRed:45 / 255.0 green:47 / 255.0 blue:56 / 255.0 alpha:1.0]
                  forState:UIControlStateNormal];
@@ -150,7 +150,7 @@
 
 - (void)updateCountdown {
     self.countdown--;
-    self.countdownLabel.text = [NSString stringWithFormat:@"%ld 秒后自动关闭", (long)self.countdown];
+    self.countdownLabel.text = [NSString stringWithFormat:@"%ld 秒後自動關閉", (long)self.countdown];
 
     if (self.countdown <= 0) {
         [self stopCountdownTimer];
