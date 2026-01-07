@@ -143,6 +143,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
             [DYYYSettingItem itemWithTitle:@"進度標籤顏色" key:@"DYYYProgressLabelColor" type:DYYYSettingItemTypeTextField placeholder:@"十六進位"],
             [DYYYSettingItem itemWithTitle:@"隱藏影片進度" key:@"DYYYHideVideoProgress" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"啟用自動播放" key:@"DYYYEnableAutoPlay" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"忽略投屏 VPN 偵測" key:@"DYYYDisableCastVPNCheck" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"推薦過濾直播" key:@"DYYYSkipLive" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"推薦過濾熱點" key:@"DYYYSkipHotSpot" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"推薦過濾低讚" key:@"DYYYFilterLowLikes" type:DYYYSettingItemTypeTextField placeholder:@"填0關閉"],
