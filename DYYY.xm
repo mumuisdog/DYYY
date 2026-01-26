@@ -6021,6 +6021,26 @@ static void *DYYYTabBarHeightContext = &DYYYTabBarHeightContext;
     return view;
 }
 
+- (void)setBackgroundColor:(UIColor *)backgroundColor {
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+          [self setBackgroundColor:backgroundColor];
+        });
+        return;
+    }
+
+    if (DYYYGetBool(@"DYYYEnableFullScreen")) {
+        UIViewController *vc = [DYYYUtils firstAvailableViewControllerFromView:self];
+        if ([vc isKindOfClass:%c(AWEAwemeDetailTableViewController)] ||
+            [vc isKindOfClass:%c(AWEAwemeDetailCellViewController)]) {
+            %orig([UIColor clearColor]);
+            return;
+        }
+    }
+
+    %orig(backgroundColor);
+}
+
 - (void)layoutSubviews {
     %orig;
 
@@ -6263,19 +6283,26 @@ static void *DYYYTabBarHeightContext = &DYYYTabBarHeightContext;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             BOOL includeChat = NO;
-            Class managerClass = %c(AWEVersionUpdateManager);
-            if (managerClass && [managerClass respondsToSelector:@selector(sharedInstance)]) {
-                AWEVersionUpdateManager *manager = [managerClass sharedInstance];
-                if ([manager respondsToSelector:@selector(currentVersion)]) {
-                    NSString *currentVersion = manager.currentVersion;
-                    if (currentVersion.length > 0) {
-                        // 若版本小于35.5.0或大于等于37.2.0，均应 restore
-                        NSComparisonResult cmp1 = [DYYYUtils compareVersion:currentVersion toVersion:@"35.5.0"];
-                        NSComparisonResult cmp2 = [DYYYUtils compareVersion:currentVersion toVersion:@"37.2.0"];
-                        if (cmp1 == NSOrderedAscending || cmp2 != NSOrderedAscending) {
-                            includeChat = YES;
+            AWEVersionUpdateManager *manager = [%c(AWEVersionUpdateManager) sharedInstance];
+            NSString *currentVersion = manager.currentVersion;
+            if (currentVersion.length > 0) {
+                NSComparisonResult cmp1 = [DYYYUtils compareVersion:currentVersion toVersion:@"35.5.0"];
+                NSComparisonResult cmp2 = [DYYYUtils compareVersion:currentVersion toVersion:@"37.2.0"];
+                BOOL enableForIMMediaDetail = YES;
+                // 检查 ABTest 配置（大于 37.2.0 时需看 ABTest 状态）
+                if (cmp2 != NSOrderedAscending) {
+                    id abTestMgr = [%c(AWEABTestManager) sharedManager];
+                    NSDictionary *abDic = [abTestMgr consistentABTestDic];
+                    NSDictionary *imOpt = [abDic objectForKey:@"im_media_detail_page_opt"];
+                    if ([imOpt isKindOfClass:[NSDictionary class]]) {
+                        id enableValue = [imOpt objectForKey:@"enable"];
+                        if ([enableValue respondsToSelector:@selector(boolValue)]) {
+                            enableForIMMediaDetail = [enableValue boolValue];
                         }
                     }
+                }
+                if (cmp1 == NSOrderedAscending || (cmp2 != NSOrderedAscending && enableForIMMediaDetail)) {
+                    includeChat = YES;
                 }
             }
             shouldRestoreChat = @(includeChat);
@@ -6531,6 +6558,7 @@ static void *DYYYTabBarHeightContext = &DYYYTabBarHeightContext;
 
 - (void)viewDidLayoutSubviews {
     %orig;
+    // self.view.hidden = YES;
     if (DYYYGetBool(@"DYYYEnableFullScreen")) {
         UIView *contentView = self.contentView;
         if (contentView && contentView.superview) {
@@ -6543,6 +6571,14 @@ static void *DYYYTabBarHeightContext = &DYYYTabBarHeightContext;
             } else if (frame.size.height == parentHeight - (gCurrentTabBarHeight * 2)) {
                 frame.size.height = parentHeight - gCurrentTabBarHeight;
                 contentView.frame = frame;
+            } else if (fabs(frame.size.height - parentHeight) < 1.0) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    CGRect dFrame = contentView.frame;
+                    if (fabs(dFrame.size.height - (parentHeight + gCurrentTabBarHeight)) > 1.0) {
+                        dFrame.size.height += gCurrentTabBarHeight;
+                        contentView.frame = dFrame;
+                    }
+                });
             }
         }
     }
@@ -7357,8 +7393,24 @@ static Class TagViewClass = nil;
 %hook AWEStoryProgressContainerView
 - (void)setCenter:(CGPoint)center {
     UIViewController *vc = [DYYYUtils firstAvailableViewControllerFromView:self];
-    if ([vc isKindOfClass:NSClassFromString(@"AWEFeedPlayControlImpl.PureModePageCellViewController")] && DYYYGetBool(@"DYYYEnableFullScreen")) {
-        center.y -= gCurrentTabBarHeight;
+    BOOL shouldAdjust = [vc isKindOfClass:NSClassFromString(@"AWEFeedPlayControlImpl.PureModePageCellViewController")] && DYYYGetBool(@"DYYYEnableFullScreen");
+    if (shouldAdjust) {
+        NSString *currentVersion = nil;
+        Class managerClass = %c(AWEVersionUpdateManager);
+        if (managerClass && [managerClass respondsToSelector:@selector(sharedInstance)]) {
+            id manager = [managerClass sharedInstance];
+            if ([manager respondsToSelector:@selector(currentVersion)]) {
+                currentVersion = [manager currentVersion];
+            }
+        }
+        
+        BOOL shouldApply = YES;
+        if (currentVersion && [DYYYUtils compareVersion:currentVersion toVersion:@"37.2.0"] != NSOrderedAscending) {
+            shouldApply = NO;
+        }
+        if (shouldApply) {
+            center.y -= gCurrentTabBarHeight;
+        }
     }
     %orig(center);
 }
