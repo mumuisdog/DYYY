@@ -2094,7 +2094,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
           [downloadItems addObject:item];
       }
 
-      // 【热更新】分类
+      // 【ABTest】分类
       NSMutableArray<AWESettingItemModel *> *hotUpdateItems = [NSMutableArray array];
       NSArray *hotUpdateSettings = @[
           @{@"identifier" : @"DYYYABTestBlockEnabled",
@@ -2271,7 +2271,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                 BOOL newValue = !item.isSwitchOn;
 
                 if (newValue) {
-                    [DYYYBottomAlertView showAlertWithTitle:@"禁止熱更新下發配置"
+                    [DYYYBottomAlertView showAlertWithTitle:@"禁止ABTest下發配置"
                         message:@"這將暫停接收測試新功能的推送。確定要繼續嗎？"
                         avatarURL:nil
                         cancelButtonText:@"取消"
@@ -2290,7 +2290,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                 } else {
                     item.isSwitchOn = newValue;
                     [DYYYSettingsHelper setUserDefaults:@(newValue) forKey:@"DYYYABTestBlockEnabled"];
-                    [DYYYUtils showToast:@"已允許熱更新下發配置，重啟後生效。"];
+                    [DYYYUtils showToast:@"已允許ABTest下發配置，重啟後生效。"];
                 }
               };
           } else if ([item.identifier isEqualToString:@"DYYYABTestModeString"]) {
@@ -2909,7 +2909,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
       [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"長按面板設定" items:longPressItems]];
       [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"媒體儲存" items:downloadItems]];
       [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"交互增強" items:interactionItems]];
-      [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"熱更新"
+      [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"ABTest"
                                                          footerTitle:@"允許使用者匯出或匯入抖音的ABTest配置。遠端配置由 Nathalie 維護，在應用啟動時自動更新遠端配置。"
                                                                items:hotUpdateItems]];
       // 创建并推入二级设置页面
