@@ -1107,6 +1107,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
             @"detail" : @"",
             @"cellType" : @6,
             @"imageName" : @"ic_eyeslash_outlined_16"},
+          @{@"identifier" : @"DYYYHideAvatarRing",
+            @"title" : @"隱藏頭像光圈",
+            @"detail" : @"",
+            @"cellType" : @6,
+            @"imageName" : @"ic_eyeslash_outlined_16"},			
           @{@"identifier" : @"DYYYHideMusicButton",
             @"title" : @"隱藏音樂按鈕",
             @"detail" : @"",
@@ -1311,7 +1316,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
             @"cellType" : @6,
             @"imageName" : @"ic_eyeslash_outlined_16"},
           @{@"identifier" : @"DYYYHideGongChuang",
-            @"title" : @"隱藏共創頭像",
+            @"title" : @"屏蔽共創訊息",
             @"detail" : @"",
             @"cellType" : @6,
             @"imageName" : @"ic_eyeslash_outlined_16"},
@@ -1336,14 +1341,13 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
             @"cellType" : @6,
             @"imageName" : @"ic_eyeslash_outlined_16"},
           @{@"identifier" : @"DYYYHideAntiAddictedNotice",
-            @"title" : @"隱藏作者聲明",
+            @"title" : @"隱藏作者聲明及風險提示",
             @"detail" : @"",
             @"cellType" : @6,
             @"imageName" : @"ic_eyeslash_outlined_16"},
           @{
               @"identifier" : @"DYYYHideFeedAnchorContainer",
               @"title" : @"隱藏影片錨點",
-              @"subTitle" : @"包括暱稱上方的拍攝同款、抖音精選、遊戲、輕顏等供稿鏈接，不包括影片定位",
               @"detail" : @"",
               @"cellType" : @37,
               @"imageName" : @"ic_eyeslash_outlined_16"
@@ -1635,95 +1639,48 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
       // 【長按面板】分類
       NSMutableArray<AWESettingItemModel *> *modernpanels = [NSMutableArray array];
       NSArray *modernpanelSettings = @[
-          @{@"identifier" : @"DYYYHidePanelDaily",
-            @"title" : @"隱藏面板日常",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelRecommend",
-            @"title" : @"隱藏面板推薦",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelReport",
-            @"title" : @"隱藏面板舉報",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelSpeed",
-            @"title" : @"隱藏面板倍速",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelClearScreen",
-            @"title" : @"隱藏面板清屏",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelFavorite",
-            @"title" : @"隱藏面板快取",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelCast",
-            @"title" : @"隱藏面板投屏",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelSubtitle",
-            @"title" : @"隱藏面板彈幕",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelSearchImage",
-            @"title" : @"隱藏面板識圖",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelListenDouyin",
-            @"title" : @"隱藏面板聽抖音",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelOpenInPC",
-            @"title" : @"隱藏電腦Pad開啟",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelLater",
-            @"title" : @"隱藏面板稍後再看",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelAutoPlay",
-            @"title" : @"隱藏面板自動連播",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelNotInterested",
-            @"title" : @"隱藏面板不感興趣",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelBackgroundPlay",
-            @"title" : @"隱藏面板後台播放",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelTimerClose",
-            @"title" : @"隱藏面板定時關閉",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHidePanelBiserial",
-            @"title" : @"隱藏雙列快捷入口",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"}
+          @{
+              @"identifier" : @"DYYYSimplifyLongPressPanel",
+              @"title" : @"精簡長按面板",
+              @"subTitle" : @"開啟後將隱藏所有原始面板選項，只保留 DYYY 自訂功能",
+              @"detail" : @"",
+              @"cellType" : @37,
+              @"imageName" : @"ic_eyeslash_outlined_16"
+          },
+          @{
+              @"identifier" : @"DYYYHidePanelItems",
+              @"title" : @"隱藏面板項目",
+              @"subTitle" : @"輸入要隱藏的按鈕名稱，多個用逗號分隔\n支援精確匹配和部分匹配，不區分大小寫\n例如：举报,倍速,投屏,弹幕",
+              @"detail" : @"逗號分隔按鈕名",
+              @"cellType" : @20,
+              @"imageName" : @"ic_eyeslash_outlined_16"
+          }
       ];
 
       for (NSDictionary *dict in modernpanelSettings) {
           AWESettingItemModel *item = [DYYYSettingsHelper createSettingItem:dict];
+
+          // 特殊处理隐藏面板项目选项（文本输入）
+          if ([item.identifier isEqualToString:@"DYYYHidePanelItems"]) {
+              NSString *savedItems = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYHidePanelItems"];
+              item.detail = savedItems.length > 0 ? savedItems : @"逗號分隔按鈕名";
+
+              item.cellTappedBlock = ^{
+                if (!item.isEnable) return;
+                NSString *defaultText = [item.detail isEqualToString:@"逗號分隔按鈕名"] ? @"" : item.detail;
+                [DYYYSettingsHelper showTextInputAlert:@"隱藏面板項目"
+                                           defaultText:defaultText
+                                           placeholder:@"例如：举报,倍速,投屏,弹幕"
+                                             onConfirm:^(NSString *text) {
+                                               NSString *trimmedText = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                                               [DYYYSettingsHelper setUserDefaults:trimmedText forKey:@"DYYYHidePanelItems"];
+                                               item.detail = trimmedText.length > 0 ? trimmedText : @"逗號分隔按鈕名";
+                                               [item refreshCell];
+                                             }
+                                              onCancel:nil];
+              };
+          }
+
           [modernpanels addObject:item];
       }
 
