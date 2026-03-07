@@ -12,6 +12,7 @@
 #import <objc/runtime.h>
 
 #import "AwemeHeaders.h"
+#import "CityManager.h"
 #import "DYYYBottomAlertView.h"
 #import "DYYYManager.h"
 
@@ -1089,27 +1090,158 @@ static CGFloat rightLabelRightMargin = -1;
 
 - (id)timestampLabel {
     UILabel *label = %orig;
+    BOOL isEnableArea = DYYYGetBool(@"DYYYEnableArea");
+    if (!isEnableArea) {
+        return label;
+    }
+
     NSString *labelColorHex = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYLabelColor"];
     if (DYYYGetBool(@"DYYYEnableRandomGradient")) {
         labelColorHex = @"random_gradient";
     }
-    if (DYYYGetBool(@"DYYYEnableArea")) {
-        [DYYYUtils processAndApplyIPLocationToLabel:label forModel:self.model withLabelColor:labelColorHex];
+
+    BOOL boldEnabled = DYYYGetBool(@"DYYYBoldTimestamp");
+    if (boldEnabled && label.font) {
+        UIFont *boldFont = [UIFont boldSystemFontOfSize:label.font.pointSize];
+        label.font = boldFont;
     }
-    // 应用IP属地标签上移
+
+    NSString *cityCode = self.model.cityCode;
+    NSString *regionCode = nil;
+    if ([self.model respondsToSelector:@selector(region)]) {
+        regionCode = [self.model performSelector:@selector(region)];
+    }
+
+    if (cityCode && ([cityCode isEqualToString:@"0"] || [cityCode integerValue] == 0)) {
+        cityCode = nil;
+    }
+
+    static NSCache *locationCache;
+    static NSMutableSet *inFlight;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        locationCache = [[NSCache alloc] init];
+        locationCache.countLimit = 100;
+        inFlight = [[NSMutableSet alloc] init];
+    });
+
+    void (^updateLabelWithLocation)(UILabel *, NSString *) = ^(UILabel *lbl, NSString *location) {
+        if (location.length == 0) return;
+
+        NSString *currentText = lbl.text ?: @"";
+        if ([currentText containsString:location]) return;
+
+        if ([currentText containsString:@"IP属地："]) {
+            NSRange range = [currentText rangeOfString:@"IP属地："];
+            NSString *baseText = [currentText substringToIndex:range.location];
+            lbl.text = [NSString stringWithFormat:@"%@IP属地：%@", baseText, location];
+        } else if (currentText.length > 0) {
+            lbl.text = [NSString stringWithFormat:@"%@  IP属地：%@", currentText, location];
+        }
+
+        [DYYYUtils applyColorSettingsToLabel:lbl colorHexString:labelColorHex];
+    };
+
+    if (cityCode.length == 0 && regionCode.length == 0) {
+        updateLabelWithLocation(label, @"未知地區");
+        return label;
+    }
+
+    NSString *cacheKey = cityCode.length > 0 ? cityCode : regionCode;
+
+    NSString *cachedLocation = [locationCache objectForKey:cacheKey];
+    if (cachedLocation) {
+        updateLabelWithLocation(label, cachedLocation);
+
+        NSString *ipScaleValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYNicknameScale"];
+        if (ipScaleValue.length > 0) {
+            UIFont *originalFont = label.font;
+            CGFloat offset = DYYYGetFloat(@"DYYYIPLabelVerticalOffset");
+            if (offset > 0) {
+                label.transform = CGAffineTransformMakeTranslation(0, -offset);
+            } else {
+                label.transform = CGAffineTransformMakeTranslation(0, -3);
+            }
+            label.font = originalFont;
+        }
+        return label;
+    }
+
+    NSString *displayLocation = nil;
+
+    if (cityCode.length > 0) {
+        displayLocation = [CityManager.sharedInstance getCityNameWithCode:cityCode];
+
+        if (!displayLocation && regionCode.length > 0) {
+            displayLocation = [CityManager.sharedInstance getCountryNameWithCode:regionCode];
+        }
+
+        if (!displayLocation) {
+            @synchronized(inFlight) {
+                if ([inFlight containsObject:cityCode]) {
+                    return label;
+                }
+                [inFlight addObject:cityCode];
+            }
+
+            [CityManager fetchLocationWithGeonameId:cityCode completionHandler:^(NSDictionary *locationInfo, NSError *error) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    @synchronized(inFlight) {
+                        [inFlight removeObject:cityCode];
+                    }
+
+                    NSString *apiLocation = nil;
+
+                    if (!error && locationInfo) {
+                        NSString *cityName = locationInfo[@"adminName1"];
+                        NSString *countryName = locationInfo[@"countryName"];
+
+                        if (cityName && countryName) {
+                            if ([cityName isEqualToString:countryName]) {
+                                apiLocation = countryName;
+                            } else {
+                                apiLocation = [NSString stringWithFormat:@"%@ %@", countryName, cityName];
+                            }
+                        } else if (countryName) {
+                            apiLocation = countryName;
+                        } else if (cityName) {
+                            apiLocation = cityName;
+                        }
+                    }
+
+                    if (apiLocation) {
+                        [locationCache setObject:apiLocation forKey:cacheKey];
+                        updateLabelWithLocation(label, apiLocation);
+                    }
+                });
+            }];
+
+            return label;
+        }
+    }
+
+    if (!displayLocation && !cityCode && regionCode.length > 0) {
+        displayLocation = [CityManager.sharedInstance getCountryNameWithCode:regionCode];
+    }
+
+    if (!displayLocation) {
+        displayLocation = @"未知地區";
+        updateLabelWithLocation(label, displayLocation);
+        return label;
+    }
+
+    [locationCache setObject:displayLocation forKey:cacheKey];
+    updateLabelWithLocation(label, displayLocation);
+
     NSString *ipScaleValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYNicknameScale"];
     if (ipScaleValue.length > 0) {
         UIFont *originalFont = label.font;
-        CGRect originalFrame = label.frame;
         CGFloat offset = DYYYGetFloat(@"DYYYIPLabelVerticalOffset");
         if (offset > 0) {
-            CGAffineTransform translationTransform = CGAffineTransformMakeTranslation(0, -offset);
-            label.transform = translationTransform;
+            label.transform = CGAffineTransformMakeTranslation(0, -offset);
         } else {
-            CGAffineTransform translationTransform = CGAffineTransformMakeTranslation(0, -3);
-            label.transform = translationTransform;
+            label.transform = CGAffineTransformMakeTranslation(0, -3);
         }
-
         label.font = originalFont;
     }
     return label;
@@ -2578,16 +2710,6 @@ static NSArray *DYYYIMMenuItemsByAddingDownloadAction(NSArray *menuItems, id cel
 }
 %end
 
-// 移除共创头像列表
-%hook AWEPlayInteractionCoCreatorNewInfoView
-- (void)layoutSubviews {
-    if (DYYYGetBool(@"DYYYHideGongChuang")) {
-        [self removeFromSuperview];
-        return;
-    }
-    %orig;
-}
-%end
 
 // 隐藏右下音乐和取消静音按钮
 %hook AFDCancelMuteAwemeView
@@ -2768,42 +2890,7 @@ static NSArray *DYYYIMMenuItemsByAddingDownloadAction(NSArray *menuItems, id cel
 
 %end
 
-%hook ACCGestureResponsibleStickerView
 
-- (void)layoutSubviews {
-    %orig;
-
-    if (DYYYGetBool(@"DYYYHideEditTags")) {
-        for (UIView *subview in self.subviews) {
-            if ([subview isKindOfClass:NSClassFromString(@"ACCEditTagStickerView")]) {
-                self.hidden = YES;
-                return;
-            }
-        }
-    }
-
-    if (DYYYGetBool(@"DYYYHideChallengeStickers")) {
-        for (UIView *subview in self.subviews) {
-            if ([subview isKindOfClass:NSClassFromString(@"ACCMordernQuickFlashStickerView")]) {
-                self.hidden = YES;
-                return;
-            }
-        }
-    }
-}
-
-%end
-
-// 去除"我的"加入挑战横幅
-%hook AWEPostWorkViewController
-- (BOOL)isDouGuideTipViewShow {
-    BOOL r = %orig;
-    if (DYYYGetBool(@"DYYYHideChallengeStickers")) {
-        return YES;
-    }
-    return r;
-}
-%end
 
 // 隐藏消息页顶栏头像气泡
 %hook AFDSkylightCellBubble
@@ -2849,39 +2936,6 @@ static NSArray *DYYYIMMenuItemsByAddingDownloadAction(NSArray *menuItems, id cel
     for (UIView *subview in siblings) {
         if (subview != self) {
             [subview removeFromSuperview];
-        }
-    }
-}
-%end
-
-// 隐藏合集和声明
-%hook AWEAntiAddictedNoticeBarView
-- (void)layoutSubviews {
-    %orig;
-
-    // 获取 tipsLabel 属性
-    UILabel *tipsLabel = [self valueForKey:@"tipsLabel"];
-
-    if (tipsLabel && [tipsLabel isKindOfClass:%c(UILabel)]) {
-        NSString *labelText = tipsLabel.text;
-
-        if (labelText) {
-            // 明确判断是合集还是作者声明
-            if ([labelText containsString:@"合集"]) {
-                // 如果是合集，只检查合集的开关
-                if (DYYYGetBool(@"DYYYHideTemplateVideo")) {
-                    [self removeFromSuperview];
-                    return;
-                } else if (DYYYGetBool(@"DYYYEnableFullScreen")) {
-                    self.backgroundColor = [UIColor clearColor];
-                }
-            } else {
-                // 如果不是合集（即作者声明），只检查声明的开关
-                if (DYYYGetBool(@"DYYYHideAntiAddictedNotice")) {
-                    [self removeFromSuperview];
-                    return;
-                }
-            }
         }
     }
 }
@@ -2936,24 +2990,6 @@ static NSArray *DYYYIMMenuItemsByAddingDownloadAction(NSArray *menuItems, id cel
 
 %end
 
-// 移除下面推荐框黑条
-%hook AWEPlayInteractionRelatedVideoView
-- (void)layoutSubviews {
-    %orig;
-    if (DYYYGetBool(@"DYYYHideBottomRelated")) {
-        [self removeFromSuperview];
-    }
-}
-%end
-
-%hook AWEFeedRelatedSearchTipView
-- (void)layoutSubviews {
-    %orig;
-    if (DYYYGetBool(@"DYYYHideBottomRelated")) {
-        [self removeFromSuperview];
-    }
-}
-%end
 
 %hook AWELeftSideBarEntranceView
 
@@ -3351,64 +3387,7 @@ static NSArray *DYYYIMMenuItemsByAddingDownloadAction(NSArray *menuItems, id cel
 }
 %end
 
-// 隐藏昵称上方元素
-%hook AWEFeedAnchorContainerView
 
-- (void)layoutSubviews {
-    %orig;
-    BOOL hideFeedAnchor = DYYYGetBool(@"DYYYHideFeedAnchorContainer");
-    BOOL hideLocation = DYYYGetBool(@"DYYYHideLocation");
-    if (hideFeedAnchor && hideLocation) {
-        self.hidden = YES;
-        return;
-    } else if (hideFeedAnchor || hideLocation) {
-        BOOL isLocation = NO;
-        for (UIView *subview in self.subviews) {
-            if ([subview isKindOfClass:%c(AWEFeedTemplateAnchorView)] || [subview isKindOfClass:%c(AWEPOITradeEntryAnchorView)]) {
-                isLocation = YES;
-                break;
-            }
-        }
-        if ((isLocation && hideLocation) || (!isLocation && hideFeedAnchor)) {
-            self.hidden = YES;
-            return;
-        }
-    }
-}
-
-%end
-
-%hook AWEFeedTemplateAnchorView
-
-- (void)layoutSubviews {
-    %orig;
-
-    BOOL hideFeedAnchor = DYYYGetBool(@"DYYYHideFeedAnchorContainer");
-    BOOL hideLocation = DYYYGetBool(@"DYYYHideLocation");
-
-    if (!hideFeedAnchor && !hideLocation)
-        return;
-
-    AWECodeGenCommonAnchorBasicInfoModel *anchorInfo = [self valueForKey:@"templateAnchorInfo"];
-    if (!anchorInfo || ![anchorInfo respondsToSelector:@selector(name)])
-        return;
-
-    NSString *name = [anchorInfo valueForKey:@"name"];
-    BOOL isPoi = [name isEqualToString:@"poi_poi"];
-
-    if ((hideFeedAnchor && !isPoi) || (hideLocation && isPoi)) {
-        UIView *parentView = self.superview;
-        if (parentView) {
-            UIView *grandparentView = parentView.superview;
-            if (grandparentView && [grandparentView isKindOfClass:%c(AWEBaseElementView)]) {
-                [grandparentView removeFromSuperview];
-                return;
-            }
-        }
-    }
-}
-
-%end
 
 %hook AWEPlayInteractionSearchAnchorView
 
@@ -3422,20 +3401,6 @@ static NSArray *DYYYIMMenuItemsByAddingDownloadAction(NSArray *menuItems, id cel
 
 %end
 
-%hook AWEAwemeMusicInfoView
-
-- (void)layoutSubviews {
-    if (DYYYGetBool(@"DYYYHideQuqishuiting")) {
-        UIView *parentView = self.superview;
-        if (parentView) {
-            [parentView removeFromSuperview];
-        }
-        return;
-    }
-    %orig;
-}
-
-%end
 
 // 隐藏暂停关键词
 %hook AWEFeedPauseRelatedWordComponent
@@ -3477,17 +3442,6 @@ static NSArray *DYYYIMMenuItemsByAddingDownloadAction(NSArray *menuItems, id cel
     }
 }
 
-%end
-
-// 隐藏短剧合集
-%hook AWETemplatePlayletView
-
-- (void)layoutSubviews {
-    %orig;
-    if (DYYYGetBool(@"DYYYHideTemplatePlaylet")) {
-        [self removeFromSuperview];
-    }
-}
 %end
 
 // 隐藏视频顶部搜索框、隐藏搜索框背景、应用全局透明
@@ -3572,40 +3526,7 @@ static NSArray *DYYYIMMenuItemsByAddingDownloadAction(NSArray *menuItems, id cel
 
 %end
 
-// 隐藏下面底部热点框
 
-%hook AWETemplateHotspotView
-
-- (void)layoutSubviews {
-    %orig;
-    if (DYYYGetBool(@"DYYYHideHotspot")) {
-        [self removeFromSuperview];
-        return;
-    }
-}
-
-%end
-
-%hook AWEHomePageBubbleLiveHeadLabelContentView
-- (void)layoutSubviews {
-    %orig;
-    if (DYYYGetBool(@"DYYYHideConcernCapsuleView")) {
-        UIView *parentView = self.superview;
-        UIView *grandparentView = parentView.superview;
-
-        if (grandparentView) {
-            grandparentView.hidden = YES;
-            return;
-        } else if (parentView) {
-            parentView.hidden = YES;
-            return;
-        } else {
-            self.hidden = YES;
-            return;
-        }
-    }
-}
-%end
 
 // 隐藏直播发现
 %hook AWEFeedLiveTabRevisitControlView
@@ -4407,74 +4328,6 @@ static NSHashTable *processedParentViews = nil;
 }
 %end
 
-// 屏蔽青少年模式弹窗
-%hook AWEChildModeModuleService
-- (BOOL)shouldShowTeenModeAlert {
-    if (DYYYGetBool(@"DYYYHideTeenMode")) {
-        return NO;
-    }
-    return %orig;
-}
-%end
-
-%hook AWEDigitalWellbeingAlertManager
-- (BOOL)teenModeShouldAlertInFeed {
-    if (DYYYGetBool(@"DYYYHideTeenMode")) {
-        return NO;
-    }
-    return %orig;
-}
-
-- (BOOL)teenModeShouldAlertInFirstPage {
-    if (DYYYGetBool(@"DYYYHideTeenMode")) {
-        return NO;
-    }
-    return %orig;
-}
-
-- (BOOL)teenModeShouldAlertInTime {
-    if (DYYYGetBool(@"DYYYHideTeenMode")) {
-        return NO;
-    }
-    return %orig;
-}
-
-- (BOOL)teenModeShouldAlertAfterRandom {
-    if (DYYYGetBool(@"DYYYHideTeenMode")) {
-        return NO;
-    }
-    return %orig;
-}
-
-- (BOOL)shouldShowTeenModeIntroductionAlert {
-    if (DYYYGetBool(@"DYYYHideTeenMode")) {
-        return NO;
-    }
-    return %orig;
-}
-
-- (void)showTeenModeIntroductionAlert {
-    if (DYYYGetBool(@"DYYYHideTeenMode")) {
-        return;
-    }
-    %orig;
-}
-
-- (void)showTeenModeSimpleStyleIntroductionAlert {
-    if (DYYYGetBool(@"DYYYHideTeenMode")) {
-        return;
-    }
-    %orig;
-}
-
-- (void)showTeenModeIntroductionAlertWithPolling {
-    if (DYYYGetBool(@"DYYYHideTeenMode")) {
-        return;
-    }
-    %orig;
-}
-%end
-
 %hook AWEAwemeModel
 
 - (id)initWithDictionary:(id)arg1 error:(id *)arg2 {
@@ -4498,8 +4351,8 @@ static NSHashTable *processedParentViews = nil;
     BOOL shouldFilterHotSpot = skipHotSpot && self.hotSpotLynxCardModel;
     BOOL shouldFilterRecLive = skipLive && (self.cellRoom != nil);
     BOOL shouldFilterAllLive = skipAllLive && [self.videoFeedTag isEqualToString:@"直播中"];
-    BOOL shouldskipPhoto = skipPhoto && (self.awemeType == 68) && self.shareRecExtra;
-    BOOL shouldskipPhotoText = skipPhotoText && self.isNewTextMode && self.shareRecExtra;
+    BOOL shouldskipPhoto = skipPhoto && (self.awemeType == 68) && [self.referString isEqualToString:@"homepage_hot"];
+    BOOL shouldskipPhotoText = skipPhotoText && self.isNewTextMode && [self.referString isEqualToString:@"homepage_hot"];
     BOOL shouldFilterHDR = NO;
     BOOL shouldFilterLowLikes = NO;
     BOOL shouldFilterKeywords = NO;
@@ -4527,7 +4380,7 @@ static NSHashTable *processedParentViews = nil;
     NSString *filterUsers = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYFilterUsers"];
 
     // 检查是否需要过滤特定用户
-    if (self.shareRecExtra && ![self.shareRecExtra isEqual:@""] && filterUsers.length > 0 && self.author) {
+    if ([self.referString isEqualToString:@"homepage_hot"] && filterUsers.length > 0 && self.author) {
         NSArray *usersList = [filterUsers componentsSeparatedByString:@","];
         NSString *currentShortID = self.author.shortID;
         NSString *currentNickname = self.author.nickname;
@@ -4550,7 +4403,7 @@ static NSHashTable *processedParentViews = nil;
     }
 
     // 只有当shareRecExtra不为空时才过滤点赞量低的视频和关键词
-    if (self.shareRecExtra && ![self.shareRecExtra isEqual:@""]) {
+    if ([self.referString isEqualToString:@"homepage_hot"]) {
         NSInteger filterLowLikesThreshold = DYYYGetInteger(@"DYYYFilterLowLikes");
         // 过滤低点赞量视频
         if (filterLowLikesThreshold > 0) {
@@ -4659,10 +4512,6 @@ static NSHashTable *processedParentViews = nil;
     %orig(extras);
 }
 
-- (BOOL)preventDownload {
-    return NO;
-}
-
 // 固定设置为 1，启用自定义背景色
 - (NSUInteger)awe_playerBackgroundViewShowType {
     if ([[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYVideoBGColor"]) {
@@ -4682,7 +4531,634 @@ static NSHashTable *processedParentViews = nil;
     return %orig;
 }
 
+//屏蔽章节要点数据
+- (NSArray *)chapterList {
+	BOOL hideChapterList = DYYYGetBool(@"DYYYHideChapterProgress");
+	if (hideChapterList) {
+		return @[]; // 返回空数组
+	}
+	return %orig;
+}
+
+// 屏蔽共创数据
+- (id)acceptedCoCreators {
+	BOOL DYYYHideGongChuang = DYYYGetBool(@"DYYYHideGongChuang");
+	if (DYYYHideGongChuang) {
+		return @[]; // 永远为空
+	}
+	return %orig;
+}
+
+- (id)unAcceptedCoCreators {
+	BOOL DYYYHideGongChuang = DYYYGetBool(@"DYYYHideGongChuang");
+	if (DYYYHideGongChuang) {
+		return @[];
+	}
+	return %orig;
+}
+
+- (NSInteger)acceptedCoCreatorsNums {
+	BOOL DYYYHideGongChuang = DYYYGetBool(@"DYYYHideGongChuang");
+	if (DYYYHideGongChuang) {
+		return 0;
+	}
+	return %orig;
+}
+
+- (id)awe_coCreatorPoster {
+	BOOL DYYYHideGongChuang = DYYYGetBool(@"DYYYHideGongChuang");
+	if (DYYYHideGongChuang) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (id)awe_coCreatorFromAuthor {
+	BOOL DYYYHideGongChuang = DYYYGetBool(@"DYYYHideGongChuang");
+	if (DYYYHideGongChuang) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (id)awe_userModelWithCoCreator:(id)creator {
+	BOOL DYYYHideGongChuang = DYYYGetBool(@"DYYYHideGongChuang");
+	if (DYYYHideGongChuang) {
+		return nil;
+	}
+	return %orig;
+}
+
+
+// 屏蔽相关视频推荐
+- (id)relatedVideoExtra {
+	BOOL DYYYHideBottomRelated = DYYYGetBool(@"DYYYHideBottomRelated");
+	if (DYYYHideBottomRelated) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (id)relatedVideo {
+	BOOL DYYYHideBottomRelated = DYYYGetBool(@"DYYYHideBottomRelated");
+	if (DYYYHideBottomRelated) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (id)playletRelatedVideoInfoModel {
+	BOOL DYYYHideBottomRelated = DYYYGetBool(@"DYYYHideBottomRelated");
+	if (DYYYHideBottomRelated) {
+		return nil;
+	}
+	return %orig;
+}
+
+// 屏蔽评论搜索锚点
+- (id)commonSearchAnchor {
+	BOOL DYYYHideCommentLongPressSearch = DYYYGetBool(@"DYYYHideCommentLongPressSearch");
+	if (DYYYHideCommentLongPressSearch) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (void)setCommonSearchAnchor:(id)arg {
+	BOOL DYYYHideCommentLongPressSearch = DYYYGetBool(@"DYYYHideCommentLongPressSearch");
+	if (DYYYHideCommentLongPressSearch) {
+		%orig(nil);
+		return;
+	}
+	%orig;
+}
+
+// 屏蔽汽水音乐锚点
+- (id)relatedMusicAnchor {
+	BOOL DYYYHideQuqishuiting = DYYYGetBool(@"DYYYHideQuqishuiting");
+	if (DYYYHideQuqishuiting) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (void)setRelatedMusicAnchor:(id)anchor {
+	BOOL DYYYHideQuqishuiting = DYYYGetBool(@"DYYYHideQuqishuiting");
+	if (DYYYHideQuqishuiting) {
+		%orig(nil);
+		return;
+	}
+	%orig;
+}
+
+// 屏蔽底栏热点
+- (id)hotSpotRawData {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (void)setHotSpotRawData:(id)data {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		%orig(nil);
+		return;
+	}
+	%orig;
+}
+
+- (id)hotSpotListModel {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (void)setHotSpotListModel:(id)model {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		%orig(nil);
+		return;
+	}
+	%orig;
+}
+
+- (NSString *)templateBarsString {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		return @"";
+	}
+	return %orig;
+}
+
+- (void)setTemplateBarsString:(NSString *)string {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		%orig(@"");
+		return;
+	}
+	%orig;
+}
+
+// 屏蔽底部合集（只对推荐页生效）
+- (id)mixInfo {
+	BOOL DYYYHideTemplateVideo = DYYYGetBool(@"DYYYHideTemplateVideo");
+	if (DYYYHideTemplateVideo && [self.referString isEqualToString:@"homepage_hot"]) {
+		return nil;
+	}
+	return %orig;
+}
+
+// 屏蔽短剧信息（复用屏蔽合集开关，只对推荐页生效）
+- (id)playletInfoModel {
+	BOOL DYYYHideTemplatePlaylet = DYYYGetBool(@"DYYYHideTemplatePlaylet");
+	if (DYYYHideTemplatePlaylet && [self.referString isEqualToString:@"homepage_hot"]) {
+		return nil;
+	}
+	return %orig;
+}
+
+// 屏蔽锚点信息
+- (id)anchorInfo {
+	BOOL DYYYHideFeedAnchorContainer = DYYYGetBool(@"DYYYHideFeedAnchorContainer");
+	if (DYYYHideFeedAnchorContainer) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (void)setAnchorInfo:(id)info {
+	BOOL DYYYHideFeedAnchorContainer = DYYYGetBool(@"DYYYHideFeedAnchorContainer");
+	if (DYYYHideFeedAnchorContainer) {
+		%orig(nil);
+		return;
+	}
+	%orig;
+}
+
+- (id)localLifeAnchorInfo {
+	BOOL DYYYHideFeedAnchorContainer = DYYYGetBool(@"DYYYHideFeedAnchorContainer");
+	if (DYYYHideFeedAnchorContainer) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (void)setLocalLifeAnchorInfo:(id)info {
+	BOOL DYYYHideFeedAnchorContainer = DYYYGetBool(@"DYYYHideFeedAnchorContainer");
+	if (DYYYHideFeedAnchorContainer) {
+		%orig(nil);
+		return;
+	}
+	%orig;
+}
+
+- (id)nearbyFeedDualAnchorInfo {
+	BOOL DYYYHideFeedAnchorContainer = DYYYGetBool(@"DYYYHideFeedAnchorContainer");
+	if (DYYYHideFeedAnchorContainer) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (void)setNearbyFeedDualAnchorInfo:(id)info {
+	BOOL DYYYHideFeedAnchorContainer = DYYYGetBool(@"DYYYHideFeedAnchorContainer");
+	if (DYYYHideFeedAnchorContainer) {
+		%orig(nil);
+		return;
+	}
+	%orig;
+}
+
+- (id)minorAnchorInfo {
+	BOOL DYYYHideFeedAnchorContainer = DYYYGetBool(@"DYYYHideFeedAnchorContainer");
+	if (DYYYHideFeedAnchorContainer) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (void)setMinorAnchorInfo:(id)info {
+	BOOL DYYYHideFeedAnchorContainer = DYYYGetBool(@"DYYYHideFeedAnchorContainer");
+	if (DYYYHideFeedAnchorContainer) {
+		%orig(nil);
+		return;
+	}
+	%orig;
+}
+
+// 屏蔽通用锚点（合并到锚点信息）
+- (id)commonAnchor {
+	BOOL DYYYHideFeedAnchorContainer = DYYYGetBool(@"DYYYHideFeedAnchorContainer");
+	if (DYYYHideFeedAnchorContainer) { 
+		return nil;
+	}
+	return %orig;
+}
+
+- (void)setCommonAnchor:(id)anchor {
+	BOOL DYYYHideFeedAnchorContainer = DYYYGetBool(@"DYYYHideFeedAnchorContainer");
+	if (DYYYHideFeedAnchorContainer) {
+		%orig(nil);
+		return;
+	}
+	%orig;
+}
+
+// 屏蔽作者声明及风险提示
+- (id)riskInfoModel {
+	BOOL DYYYHideAntiAddictedNotice = DYYYGetBool(@"DYYYHideAntiAddictedNotice");
+	if (DYYYHideAntiAddictedNotice) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (void)setRiskInfoModel:(id)model {
+	BOOL DYYYHideAntiAddictedNotice = DYYYGetBool(@"DYYYHideAntiAddictedNotice");
+	if (DYYYHideAntiAddictedNotice) {
+		%orig(nil);
+		return;
+	}
+	%orig;
+}
+
 %end
+
+
+
+//以下部分为新增
+// 屏蔽头像光圈
+%hook AWEUserModel
+
+- (id)storyRing {
+	BOOL DYYYHideAvatarRing = DYYYGetBool(@"DYYYHideAvatarRing");
+	if (DYYYHideAvatarRing) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (void)setStoryRing:(id)ring {
+	BOOL DYYYHideAvatarRing = DYYYGetBool(@"DYYYHideAvatarRing");
+	if (DYYYHideAvatarRing) {
+		%orig(nil);
+		return;
+	}
+	%orig;
+}
+
+%end
+
+%hook AWECodeGenStoryRingInfoModel
+
+- (NSArray *)storyRingsModelArray {
+	BOOL DYYYHideAvatarRing = DYYYGetBool(@"DYYYHideAvatarRing");
+	if (DYYYHideAvatarRing) {
+		return @[];
+	}
+	return %orig;
+}
+
+- (void)setStoryRingsModelArray:(NSArray *)array {
+	BOOL DYYYHideAvatarRing = DYYYGetBool(@"DYYYHideAvatarRing");
+	if (DYYYHideAvatarRing) {
+		%orig(@[]);
+		return;
+	}
+	%orig;
+}
+
+%end
+
+// 屏蔽挑战贴纸
+%hook AWEInteractionHashtagStickerModel
+
+- (id)hashtagInfo {
+	BOOL DYYYHideChallengeStickers = DYYYGetBool(@"DYYYHideChallengeStickers");
+	if (DYYYHideChallengeStickers) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (void)setHashtagInfo:(id)info {
+	BOOL DYYYHideChallengeStickers = DYYYGetBool(@"DYYYHideChallengeStickers");
+	if (DYYYHideChallengeStickers) {
+		%orig(nil);
+		return;
+	}
+	%orig;
+}
+
+- (id)hashtagId {
+	BOOL DYYYHideChallengeStickers = DYYYGetBool(@"DYYYHideChallengeStickers");
+	if (DYYYHideChallengeStickers) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (id)hashtagName {
+	BOOL DYYYHideChallengeStickers = DYYYGetBool(@"DYYYHideChallengeStickers");
+	if (DYYYHideChallengeStickers) {
+		return nil;
+	}
+	return %orig;
+}
+
+%end
+
+// 屏蔽互动贴纸（复用挑战贴纸开关）
+%hook AWEInteractionEditTagStickerModel
+
+- (id)editTagInfo {
+	BOOL DYYYHideChallengeStickers = DYYYGetBool(@"DYYYHideChallengeStickers");
+	if (DYYYHideChallengeStickers) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (void)setEditTagInfo:(id)info {
+	BOOL DYYYHideChallengeStickers = DYYYGetBool(@"DYYYHideChallengeStickers");
+	if (DYYYHideChallengeStickers) {
+		%orig(nil);
+		return;
+	}
+	%orig;
+}
+
+%end
+
+
+// 隐藏下面底部热点框
+%hook AWEHotSpotListModel
+
+- (BOOL)disableDisplay {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		return YES;
+	}
+	return %orig;
+}
+
+- (BOOL)disableDisplayInner {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		return YES;
+	}
+	return %orig;
+}
+
+- (NSString *)hotSpotTipTitleHeader {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		return @"";
+	}
+	return %orig;
+}
+
+- (NSString *)hotSpotTipTitle {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		return @"";
+	}
+	return %orig;
+}
+
+- (NSString *)hotSpotTipTitleFooter {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		return @"";
+	}
+	return %orig;
+}
+
+- (NSString *)hotInfoWord {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		return @"";
+	}
+	return %orig;
+}
+
+- (NSString *)i18NTipTitle {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		return @"";
+	}
+	return %orig;
+}
+
+- (NSString *)tipSchema {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (NSDictionary *)extraDictionary {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		return @{};
+	}
+	return %orig;
+}
+
+- (NSDictionary *)relativityExtra {
+	BOOL DYYYHideHotspot = DYYYGetBool(@"DYYYHideHotspot");
+	if (DYYYHideHotspot) {
+		return @{};
+	}
+	return %orig;
+}
+
+%end
+
+// 屏蔽汽水音乐锚点 - hook AWERelatedMusicAnchorModel
+%hook AWERelatedMusicAnchorModel
+
+- (instancetype)init {
+	BOOL DYYYHideQuqishuiting = DYYYGetBool(@"DYYYHideQuqishuiting");
+	if (DYYYHideQuqishuiting) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (instancetype)initWithDictionary:(id)dict error:(NSError **)error {
+	BOOL DYYYHideQuqishuiting = DYYYGetBool(@"DYYYHideQuqishuiting");
+	if (DYYYHideQuqishuiting) {
+		return nil;
+	}
+	return %orig;
+}
+
+%end
+
+// 屏蔽汽水音乐 - 清空 commentTopBarInfo
+%hook AWEMusicExtraModel
+
+- (id)commentTopBarInfo {
+	BOOL DYYYHideQuqishuiting = DYYYGetBool(@"DYYYHideQuqishuiting");
+	if (DYYYHideQuqishuiting) {
+		return nil;
+	}
+	return %orig;
+}
+
+- (void)setCommentTopBarInfo:(id)info {
+	BOOL DYYYHideQuqishuiting = DYYYGetBool(@"DYYYHideQuqishuiting");
+	if (DYYYHideQuqishuiting) {
+		%orig(nil);
+		return;
+	}
+	%orig;
+}
+
+%end
+
+
+// 拦截开屏广告 - hook TTAdSplashModel，直接返回 nil
+%hook TTAdSplashModel
+
++ (id)alloc {
+	if (DYYYGetBool(@"DYYYNoAds")) {
+		return nil;  // 直接返回 nil，阻止对象创建
+	}
+	return %orig;
+}
+
+%end
+
+%hook AWEOriginalAdModel
+- (instancetype)init {
+	BOOL noAds = DYYYGetBool(@"DYYYNoAds");
+	if (noAds) {
+		return nil;  // 阻止创建，直接返回 nil
+	}
+	return %orig;
+}
+
+- (instancetype)initWithDictionary:(id)dict error:(NSError **)error {
+	BOOL noAds = DYYYGetBool(@"DYYYNoAds");
+	if (noAds) {
+		return nil;  // 阻止创建，直接返回 nil
+	}
+	return %orig;
+}
+%end
+
+// 屏蔽 AWEGeneralSearchModel 中的广告卡（强判定）
+%hook AWEGeneralSearchModel
+- (instancetype)initWithDictionary:(id)dict error:(NSError **)error {
+	id orig = %orig;
+	
+	BOOL noAds = DYYYGetBool(@"DYYYNoAds");
+	if (!noAds || !orig) {
+		return orig;
+	}
+	
+	// 强判定：检查是否为广告卡（检查 commonDynamicPatchModel.is_ad == 1）
+	if ([[orig valueForKeyPath:@"commonDynamicPatchModel.is_ad"] integerValue] == 1) {
+		return nil;
+	}
+	
+	return orig;
+}
+%end
+
+// 去除启动视频广告
+%hook AWEAwesomeSplashFeedCellOldAccessoryView
+
+// 在方法入口处添加控制逻辑
+- (id)ddExtraView {
+	if (DYYYGetBool(@"DYYYNoAds")) {
+		return NULL; // 返回空视图
+	}
+
+	// 正常模式调用原始方法
+	return %orig;
+}
+
+%end
+
+// 屏蔽青少年模式弹窗
+%hook AWETeenModeAlertView
+- (BOOL)show {
+	if (DYYYGetBool(@"DYYYHideTeenMode")) {
+		return NO;
+	}
+	return %orig;
+}
+%end
+
+// 屏蔽青少年模式弹窗
+%hook AWETeenModeSimpleAlertView
+- (BOOL)show {
+	if (DYYYGetBool(@"DYYYHideTeenMode")) {
+		return NO;
+	}
+	return %orig;
+}
+%end
+
+
+
+
+
+
+
+
+
+
+
+
 
 %hook AWEFeedCommentConfigModel
 - (void)setCommentInputConfigText:(NSString *)text {
@@ -4720,23 +5196,6 @@ static NSHashTable *processedParentViews = nil;
     }
 }
 
-%end
-
-// 阻止开屏 AD
-%hook BDASplashManager
-- (void)showSplashControllerViewOnKeyWindow:(id)keyWindow model:(id)model {
-    if (DYYYGetBool(@"DYYYNoAds")) {
-        if (![NSThread isMainThread]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self splashViewShowFinished];
-            });
-        } else {
-            [self splashViewShowFinished];
-        }
-        return;
-    }
-    %orig;
-}
 %end
 
 %hook AWEPlayInteractionUserAvatarView
@@ -7583,18 +8042,6 @@ static Class TagViewClass = nil;
 
 %end
 
-// 隐藏章节进度条
-%hook AWEDemaciaChapterProgressSlider
-
-- (void)layoutSubviews {
-    %orig;
-    if (DYYYGetBool(@"DYYYHideChapterProgress")) {
-        [self removeFromSuperview];
-    }
-}
-
-%end
-
 // 隐藏上次看到
 %hook DUXPopover
 - (void)layoutSubviews {
@@ -7734,35 +8181,35 @@ static NSString *const kHideRecentUsersKey = @"DYYYHideSidebarRecentUsers";
 @end
 
 // 修复 ios26 模态透明效果
-%hook UIDropShadowView
+// %hook UIDropShadowView
 
-- (void)didMoveToSuperview {
-    %orig;
+// - (void)didMoveToSuperview {
+//     %orig;
 
-    if (@available(iOS 26.0, *)) {
-        self.backgroundColor = UIColor.clearColor;
-        self.opaque = NO;
-    }
-}
+//     if (@available(iOS 26.0, *)) {
+//         self.backgroundColor = UIColor.clearColor;
+//         self.opaque = NO;
+//     }
+// }
 
-- (void)layoutSubviews {
-    %orig;
+// - (void)layoutSubviews {
+//     %orig;
 
-    if (@available(iOS 26.0, *)) {
-        self.backgroundColor = UIColor.clearColor;
-        self.opaque = NO;
-    }
-}
+//     if (@available(iOS 26.0, *)) {
+//         self.backgroundColor = UIColor.clearColor;
+//         self.opaque = NO;
+//     }
+// }
 
-- (void)setBackgroundColor:(UIColor *)color {
-    if (@available(iOS 26.0, *)) {
-        %orig(UIColor.clearColor);
-        return;
-    }
-    %orig;
-}
+// - (void)setBackgroundColor:(UIColor *)color {
+//     if (@available(iOS 26.0, *)) {
+//         %orig(UIColor.clearColor);
+//         return;
+//     }
+//     %orig;
+// }
 
-%end
+// %end
 
 %group CommentLongPressPanelReportElementGroup
 
