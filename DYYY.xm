@@ -555,36 +555,18 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
 %end
 
 // 直播间真实人数
+%hook IESLiveUserSeqlistFragment
 
-static NSString *(*orig_displayShort)(id, SEL);
-static NSString *my_displayShort(id self, SEL _cmd) {
-    if (!DYYYGetBool(@"DYYYEnableLiveRealCount")) return orig_displayShort(self, _cmd);
-    if ([self respondsToSelector:@selector(displayValue)]) {
-        NSInteger count = (NSInteger)[self performSelector:@selector(displayValue)];
-        if (count > 0) return [NSString stringWithFormat:@"%ld", (long)count];
+- (void)refreshVerticalUserCount:(id)arg1 horizontalUserCount:(id)arg2 trueValue:(NSInteger)trueValue {
+    if ( trueValue > 0 && DYYYGetBool(@"DYYYEnableLiveRealCount") ) {
+        NSString *realStr = [NSString stringWithFormat:@"%ld", (long)trueValue];
+        %orig(realStr, realStr, trueValue);
+    } else {
+        %orig;
     }
-    return orig_displayShort(self, _cmd);
 }
 
-static NSString *(*orig_displayMiddle)(id, SEL);
-static NSString *my_displayMiddle(id self, SEL _cmd) {
-    if (!DYYYGetBool(@"DYYYEnableLiveRealCount")) return orig_displayMiddle(self, _cmd);
-    if ([self respondsToSelector:@selector(displayValue)]) {
-        NSInteger count = (NSInteger)[self performSelector:@selector(displayValue)];
-        if (count > 0) return [NSString stringWithFormat:@"%ld", (long)count];
-    }
-    return orig_displayMiddle(self, _cmd);
-}
-
-static NSString *(*orig_displayLong)(id, SEL);
-static NSString *my_displayLong(id self, SEL _cmd) {
-    if (!DYYYGetBool(@"DYYYEnableLiveRealCount")) return orig_displayLong(self, _cmd);
-    if ([self respondsToSelector:@selector(displayValue)]) {
-        NSInteger count = (NSInteger)[self performSelector:@selector(displayValue)];
-        if (count > 0) return [NSString stringWithFormat:@"%ld在线观众", (long)count];
-    }
-    return orig_displayLong(self, _cmd);
-}
+%end
 
 // 评论具体时间
 %hook AWEDateTimeFormatter
@@ -8663,6 +8645,15 @@ static Class TagViewClass = nil;
 }
 %end
 
+%hook _TtC21AWEIncentiveSwiftImpl29IncentivePendantContainerView
+- (void)layoutSubviews {
+    %orig;
+    if (DYYYGetBool(@"DYYYHidePendantGroup")) {
+        [self removeFromSuperview];
+    }
+}
+%end
+
 %hook UIImageView
 - (void)layoutSubviews {
     %orig;
@@ -8927,13 +8918,6 @@ static void findTargetViewInView(UIView *view) {
         %init(DYYYCommentExactTimeGroup, AWECommentSwiftBizUI_CommentInteractionBaseLabel = interactionBaseLabelClass);
     }
     
-    Class statsMessageClass = objc_getClass("HTSLiveRoomStatsMessage");
-    if (statsMessageClass) {
-        MSHookMessageEx(statsMessageClass, @selector(displayShort), (IMP)&my_displayShort, (IMP *)&orig_displayShort);
-        MSHookMessageEx(statsMessageClass, @selector(displayMiddle), (IMP)&my_displayMiddle, (IMP *)&orig_displayMiddle);
-        MSHookMessageEx(statsMessageClass, @selector(displayLong), (IMP)&my_displayLong, (IMP *)&orig_displayLong);
-    }
-
     Class imMenuComponentClass = objc_getClass("AWEIMCustomMenuComponent");
     if (imMenuComponentClass) {
         SEL legacySelector = NSSelectorFromString(@"msg_showMenuForBubbleFrameInScreen:tapLocationInScreen:menuItemList:moreEmoticon:onCell:extra:");
