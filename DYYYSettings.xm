@@ -1507,7 +1507,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
           @{
               @"identifier" : @"DYYYHidePendantGroup",
               @"title" : @"隱藏紅包懸浮",
-              @"subTitle" : @"隱藏抖音極速版的紅包懸浮按鈕，可能失效，不修復。",
+              @"subTitle" : @"隱藏抖音極速版和抖音部分影片的紅包懸浮按鈕，可能失效，不修復。",
               @"detail" : @"",
               @"cellType" : @37,
               @"imageName" : @"ic_eyeslash_outlined_16"
