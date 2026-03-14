@@ -108,8 +108,12 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @interface AWELiveFollowFeedCellModel : NSObject
 @end
 
+@interface AWEMusicCardModel : NSObject
+@end
+
 @interface AWEAwemeModel : NSObject
 @property(nonatomic, strong, readwrite) NSNumber *createTime;
+@property(nonatomic, strong, readwrite) NSNumber *recommendShareRate; // 推荐视频专有属性 
 @property(nonatomic, assign, readwrite) CGFloat videoDuration;
 @property(nonatomic, strong) AWEVideoModel *video;
 @property(nonatomic, strong) AWEMusicModel *music;
@@ -129,8 +133,8 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(nonatomic, strong) id hotSpotLynxCardModel;
 @property(nonatomic, strong) AWELiveFollowFeedCellModel *cellRoom;
 @property(nonatomic, strong) NSString *videoFeedTag;
-@property(nonatomic, strong) id shareRecExtra;  // 推荐视频专有属性
-@property (nonatomic, copy) NSString *referString; // 推荐页为 homepage_hot
+@property(nonatomic, strong) id shareRecExtra;  // 收藏/喜欢以外的视频专有属性
+@property(nonatomic, copy) NSString *referString; // 推荐页为 homepage_hot
 @property(nonatomic, strong) NSArray<AWEAwemeTextExtraModel *> *textExtras;
 @property(nonatomic, copy) NSString *itemTitle;
 @property(nonatomic, copy) NSString *descriptionSimpleString;
@@ -140,10 +144,16 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(nonatomic, strong) AWEAwemeStatisticsModel *statistics;
 @property(nonatomic, strong) AWEPropGuideV2Model *propGuideV2;
 @property(nonatomic, strong) AWEECommerceLabel *ecommerceBelowLabel;
+@property(nonatomic, strong) AWEMusicCardModel *musicCard;
 @property(nonatomic, assign) BOOL isShowLandscapeEntryView;
 - (BOOL)isLive;
 - (BOOL)contentFilter;
 - (AWESearchAwemeExtraModel *)searchExtraModel;
+@end
+
+@interface AWEHotListDataController : NSObject
+- (NSNumber *)dyyy_numberValueForLowLikesFilter:(id)rawValue;
+- (NSNumber *)dyyy_resolvedDiggCountForAweme:(AWEAwemeModel *)aweme;
 @end
 
 @interface AWEFeedCommentConfigModel : NSObject
@@ -154,7 +164,6 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @end
 
 @interface AWEABTestManager : NSObject
-+ (id)sharedManager;
 @property(retain, nonatomic) NSMutableDictionary *consistentABTestDic;
 @property(copy, nonatomic) NSDictionary *abTestData;
 @property(copy, nonatomic) NSDictionary *performanceReversalDic;
@@ -323,6 +332,10 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 - (void)buttonTouchUp:(id)sender;
 @end
 
+@interface HTSLiveRoomStatsMessage : NSObject
+- (NSInteger)displayValue;
+@end
+
 @interface AWEFeedVideoButton : UIButton
 @end
 
@@ -374,6 +387,10 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 - (NSString *)convertSecondsToTimeString:(NSInteger)totalSeconds;
 @end
 
+@interface AWEDProgressCoreContainer : NSObject
+@property(retain, nonatomic) id progressSlider;
+@end
+
 @interface AWEAdAvatarView : UIView
 @end
 
@@ -387,8 +404,6 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(nonatomic, assign, readonly) UITabBarController *yy_viewController;
 @property(retain, nonatomic) AWETabBarSkinContainerView *skinContainerView;
 - (void)initializeOriginalTabBarHeight;
-- (void)calculateTabBarHeight;
-- (BOOL)applyTabBarHeight;
 @end
 
 @interface AWEPlayInteractionListenFeedView : UIView
@@ -545,6 +560,7 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @class AWECommentLongPressPanelParam;
 @class AWEIMStickerModel;
 @class AWEURLModel;
+@class AWECommentAudioModel;
 
 @interface AWECommentLongPressPanelContext : NSObject
 - (AWECommentModel *)selectdComment;
@@ -903,6 +919,8 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 
 @interface AWEVideoPlayDanmakuContainerView : UIView
 @end
+@interface AWEDanmakuContainerView : UIView
+@end
 
 // 应用内推送容器
 @interface AWEInnerNotificationWindow : UIWindow
@@ -1138,6 +1156,12 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @interface IESLivePreAnnouncementPanelViewNew : UIView
 @end
 @interface IESLiveDynamicUserEnterView : UIView
+@end
+@interface _TtC18IESLiveRevenueImpl32IESLiveSwiftDynamicUserEnterView : UIView
+@end
+@interface _TtC18IESLiveRevenueImpl35IESLiveSwiftVideoLayerUserEnterView : UIView
+@end
+@interface _TtC18IESLiveRevenueImpl34IESLiveDynamicRankListEntranceView : UIView
 @end
 @interface IESLiveDynamicRankListEntranceView : UIView
 @end
