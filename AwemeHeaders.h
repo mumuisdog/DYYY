@@ -597,6 +597,9 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 - (AWECommentLongPressPanelContext *)commentPageContext;
 @end
 
+@interface _TtC21AWEIncentiveSwiftImpl29IncentivePendantContainerView : UIView
+@end
+
 @interface AWECommentLongPressPanelSwiftImpl_CommentLongPressPanelReportElement : NSObject
 - (AWECommentLongPressPanelContext *)commentPageContext;
 - (BOOL)elementShouldShow;
@@ -1256,6 +1259,10 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @end
 
 @interface IESLiveRoomComponent : NSObject
+@end
+
+@interface IESLiveUserSeqlistFragment : NSObject
+- (void)refreshVerticalUserCount:(id)arg1 horizontalUserCount:(id)arg2 trueValue:(NSInteger)arg3;
 @end
 
 @interface HTSLiveStreamQualityFragment : IESLiveRoomComponent
