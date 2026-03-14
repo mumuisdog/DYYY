@@ -10,6 +10,7 @@
 #import <float.h>
 #import <math.h>
 #import <objc/runtime.h>
+#import <substrate.h>
 
 #import "AwemeHeaders.h"
 #import "CityManager.h"
@@ -36,7 +37,6 @@ static CGFloat gCurrentTabBarHeight = kInvalidHeight;
 static CGFloat originalTabBarHeight = kInvalidHeight;
 static NSString *const kDYYYGlobalTransparencyKey = @"DYYYGlobalTransparency";
 static NSString *const kDYYYGlobalTransparencyDidChangeNotification = @"DYYYGlobalTransparencyDidChangeNotification";
-static NSString *const kDYYYTabBarHeightKey = @"DYYYTabBarHeight";
 static char kDYYYGlobalTransparencyBaseAlphaKey;
 static NSInteger dyyyGlobalTransparencyMutationDepth = 0;
 
@@ -217,6 +217,198 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
     return fabsf(defaultSpeed - 1.0f) > FLT_EPSILON;
 }
 
+@interface AWEFeedProgressSlider (DYYYProgressLabel)
+- (NSString *)dyyy_formatTimeFromSeconds:(CGFloat)seconds;
+- (CGFloat)dyyy_modelDurationInSeconds;
+- (CGFloat)dyyy_scheduleVerticalOffset;
+- (void)dyyy_removeScheduleLabels;
+- (void)dyyy_updateScheduleLabelsWithCurrentTime:(CGFloat)currentTime totalDuration:(CGFloat)totalDuration;
+@end
+
+@interface AWEPlayInteractionProgressController (DYYYProgressLabel)
+- (void)dyyy_syncScheduleLabelsWithCurrentTime:(CGFloat)currentTime totalDuration:(CGFloat)totalDuration;
+@end
+
+@interface AWEDProgressCoreContainer (DYYYProgressLabel)
+- (void)dyyy_syncScheduleLabelsWithCurrentTime:(CGFloat)currentTime totalDuration:(CGFloat)totalDuration;
+@end
+
+@interface UIView (DYYYProgressLabelLegacy)
+- (void)dyyy_updateScheduleLabelsLegacyWithCurrentTime:(CGFloat)currentTime totalDuration:(CGFloat)totalDuration model:(id)model;
+@end
+
+@implementation UIView (DYYYProgressLabelLegacy)
+
+- (NSString *)dyyy_legacyFormatTimeFromSeconds:(CGFloat)seconds {
+    CGFloat safeSeconds = seconds;
+    if (safeSeconds < 0) {
+        safeSeconds = 0;
+    }
+
+    NSInteger total = (NSInteger)floor(safeSeconds);
+    NSInteger hours = total / 3600;
+    NSInteger minutes = (total % 3600) / 60;
+    NSInteger secs = total % 60;
+
+    if (hours > 0) {
+        return [NSString stringWithFormat:@"%02ld:%02ld:%02ld", (long)hours, (long)minutes, (long)secs];
+    }
+    return [NSString stringWithFormat:@"%02ld:%02ld", (long)minutes, (long)secs];
+}
+
+- (CGFloat)dyyy_legacyScheduleVerticalOffset {
+    CGFloat verticalOffset = -12.5;
+    NSString *offsetValueString = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYTimelineVerticalPosition"];
+    if (offsetValueString.length > 0) {
+        CGFloat configuredOffset = [offsetValueString floatValue];
+        if (configuredOffset != 0) {
+            verticalOffset = configuredOffset;
+        }
+    }
+    return verticalOffset;
+}
+
+- (CGFloat)dyyy_legacyModelDurationInSeconds:(id)model {
+    if (!model || ![model respondsToSelector:@selector(videoDuration)]) {
+        return 0;
+    }
+
+    CGFloat videoDurationMs = [[model valueForKey:@"videoDuration"] doubleValue];
+    if (videoDurationMs <= 0) {
+        return 0;
+    }
+    return videoDurationMs / 1000.0;
+}
+
+- (void)dyyy_updateScheduleLabelsLegacyWithCurrentTime:(CGFloat)currentTime totalDuration:(CGFloat)totalDuration model:(id)model {
+    if (!DYYYGetBool(@"DYYYShowScheduleDisplay")) {
+        UIView *parentView = self.superview;
+        if (parentView) {
+            [[parentView viewWithTag:10001] removeFromSuperview];
+            [[parentView viewWithTag:10002] removeFromSuperview];
+        }
+        return;
+    }
+
+    if (![NSThread isMainThread]) {
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+          [weakSelf dyyy_updateScheduleLabelsLegacyWithCurrentTime:currentTime totalDuration:totalDuration model:model];
+        });
+        return;
+    }
+
+    UIView *parentView = self.superview;
+    if (!parentView) {
+        return;
+    }
+    [parentView layoutIfNeeded];
+    [self layoutIfNeeded];
+
+    NSString *scheduleStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
+    BOOL showRightRemainingTime = [scheduleStyle isEqualToString:@"进度条右侧剩余"];
+    BOOL showRightCompleteTime = [scheduleStyle isEqualToString:@"进度条右侧完整"];
+    BOOL showLeftRemainingTime = [scheduleStyle isEqualToString:@"进度条左侧剩余"];
+    BOOL showLeftCompleteTime = [scheduleStyle isEqualToString:@"进度条左侧完整"];
+
+    BOOL shouldShowLeftLabel = !showRightRemainingTime && !showRightCompleteTime;
+    BOOL shouldShowRightLabel = !showLeftRemainingTime && !showLeftCompleteTime;
+
+    CGFloat modelDuration = [self dyyy_legacyModelDurationInSeconds:model];
+    CGFloat effectiveTotalDuration = totalDuration > 0 ? totalDuration : modelDuration;
+    if (effectiveTotalDuration < 0) {
+        effectiveTotalDuration = 0;
+    }
+
+    CGFloat effectiveCurrentTime = currentTime;
+    if (effectiveCurrentTime < 0) {
+        effectiveCurrentTime = 0;
+    }
+    if (effectiveTotalDuration > 0 && effectiveCurrentTime > effectiveTotalDuration) {
+        effectiveCurrentTime = effectiveTotalDuration;
+    }
+
+    CGRect sliderFrameInParent = [self convertRect:self.bounds toView:parentView];
+    if (CGRectGetWidth(sliderFrameInParent) <= 1.0 || CGRectGetHeight(sliderFrameInParent) <= 1.0) {
+        return;
+    }
+    CGFloat labelYPosition = CGRectGetMinY(sliderFrameInParent) + [self dyyy_legacyScheduleVerticalOffset];
+    CGFloat labelHeight = 15.0;
+    UIFont *labelFont = [UIFont systemFontOfSize:8];
+    NSString *labelColorHex = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYProgressLabelColor"];
+
+    UILabel *leftLabel = (UILabel *)[parentView viewWithTag:10001];
+    if (leftLabel && ![leftLabel isKindOfClass:[UILabel class]]) {
+        [leftLabel removeFromSuperview];
+        leftLabel = nil;
+    }
+
+    if (shouldShowLeftLabel) {
+        if (!leftLabel) {
+            leftLabel = [[UILabel alloc] init];
+            leftLabel.backgroundColor = [UIColor clearColor];
+            leftLabel.tag = 10001;
+            [parentView addSubview:leftLabel];
+        }
+        leftLabel.font = labelFont;
+
+        NSString *newLeftText = nil;
+        if (showLeftRemainingTime) {
+            newLeftText = [self dyyy_legacyFormatTimeFromSeconds:MAX(effectiveTotalDuration - effectiveCurrentTime, 0)];
+        } else if (showLeftCompleteTime) {
+            newLeftText = [NSString stringWithFormat:@"%@/%@", [self dyyy_legacyFormatTimeFromSeconds:effectiveCurrentTime], [self dyyy_legacyFormatTimeFromSeconds:effectiveTotalDuration]];
+        } else {
+            newLeftText = [self dyyy_legacyFormatTimeFromSeconds:effectiveCurrentTime];
+        }
+
+        if (![leftLabel.text isEqualToString:newLeftText]) {
+            leftLabel.text = newLeftText;
+        }
+        [leftLabel sizeToFit];
+        leftLabel.frame = CGRectMake(CGRectGetMinX(sliderFrameInParent), labelYPosition, CGRectGetWidth(leftLabel.bounds), labelHeight);
+        [DYYYUtils applyColorSettingsToLabel:leftLabel colorHexString:labelColorHex];
+    } else {
+        [leftLabel removeFromSuperview];
+    }
+
+    UILabel *rightLabel = (UILabel *)[parentView viewWithTag:10002];
+    if (rightLabel && ![rightLabel isKindOfClass:[UILabel class]]) {
+        [rightLabel removeFromSuperview];
+        rightLabel = nil;
+    }
+
+    if (shouldShowRightLabel) {
+        if (!rightLabel) {
+            rightLabel = [[UILabel alloc] init];
+            rightLabel.backgroundColor = [UIColor clearColor];
+            rightLabel.tag = 10002;
+            [parentView addSubview:rightLabel];
+        }
+        rightLabel.font = labelFont;
+
+        NSString *newRightText = nil;
+        if (showRightRemainingTime) {
+            newRightText = [self dyyy_legacyFormatTimeFromSeconds:MAX(effectiveTotalDuration - effectiveCurrentTime, 0)];
+        } else if (showRightCompleteTime) {
+            newRightText = [NSString stringWithFormat:@"%@/%@", [self dyyy_legacyFormatTimeFromSeconds:effectiveCurrentTime], [self dyyy_legacyFormatTimeFromSeconds:effectiveTotalDuration]];
+        } else {
+            newRightText = [self dyyy_legacyFormatTimeFromSeconds:effectiveTotalDuration];
+        }
+
+        if (![rightLabel.text isEqualToString:newRightText]) {
+            rightLabel.text = newRightText;
+        }
+        [rightLabel sizeToFit];
+        CGFloat rightLabelX = MAX(CGRectGetMaxX(sliderFrameInParent) - CGRectGetWidth(rightLabel.bounds), CGRectGetMinX(sliderFrameInParent));
+        rightLabel.frame = CGRectMake(rightLabelX, labelYPosition, CGRectGetWidth(rightLabel.bounds), labelHeight);
+        [DYYYUtils applyColorSettingsToLabel:rightLabel colorHexString:labelColorHex];
+    } else {
+        [rightLabel removeFromSuperview];
+    }
+}
+
+@end
+
 // 关闭不可见水印
 %hook AWEHPChannelInvisibleWaterMarkModel
 
@@ -358,6 +550,202 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
     }
 
     return originalModels;
+}
+
+%end
+
+// 直播间真实人数
+
+static NSString *(*orig_displayShort)(id, SEL);
+static NSString *my_displayShort(id self, SEL _cmd) {
+    if (!DYYYGetBool(@"DYYYEnableLiveRealCount")) return orig_displayShort(self, _cmd);
+    if ([self respondsToSelector:@selector(displayValue)]) {
+        NSInteger count = (NSInteger)[self performSelector:@selector(displayValue)];
+        if (count > 0) return [NSString stringWithFormat:@"%ld", (long)count];
+    }
+    return orig_displayShort(self, _cmd);
+}
+
+static NSString *(*orig_displayMiddle)(id, SEL);
+static NSString *my_displayMiddle(id self, SEL _cmd) {
+    if (!DYYYGetBool(@"DYYYEnableLiveRealCount")) return orig_displayMiddle(self, _cmd);
+    if ([self respondsToSelector:@selector(displayValue)]) {
+        NSInteger count = (NSInteger)[self performSelector:@selector(displayValue)];
+        if (count > 0) return [NSString stringWithFormat:@"%ld", (long)count];
+    }
+    return orig_displayMiddle(self, _cmd);
+}
+
+static NSString *(*orig_displayLong)(id, SEL);
+static NSString *my_displayLong(id self, SEL _cmd) {
+    if (!DYYYGetBool(@"DYYYEnableLiveRealCount")) return orig_displayLong(self, _cmd);
+    if ([self respondsToSelector:@selector(displayValue)]) {
+        NSInteger count = (NSInteger)[self performSelector:@selector(displayValue)];
+        if (count > 0) return [NSString stringWithFormat:@"%ld在线观众", (long)count];
+    }
+    return orig_displayLong(self, _cmd);
+}
+
+// 评论具体时间
+%hook AWEDateTimeFormatter
+
++ (id)formattedDateForTimestamp:(double)timestamp {
+    if (!DYYYGetBool(@"DYYYCommentExactTime")) return %orig(timestamp);
+    return [NSString stringWithFormat:@"%.0f ", timestamp];
+}
+
+%end
+
+%hook AWERLVirtualLabel
+
+- (void)setText:(NSString *)text {
+    if (!DYYYGetBool(@"DYYYCommentExactTime") || !text || text.length == 0) {
+        %orig(text);
+        return;
+    }
+
+    if ([text isEqualToString:@"回复"]) {
+        %orig(@"");
+        return;
+    }
+
+    NSError *error = nil;
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"^(\\d{10,13})([\\s\\S]*)" options:0 error:&error];
+    
+    NSTextCheckingResult *match = [regex firstMatchInString:text options:0 range:NSMakeRange(0, text.length)];
+
+    if (match) {
+        NSString *rawTs = [text substringWithRange:[match rangeAtIndex:1]];
+        NSString *suffix = [text substringWithRange:[match rangeAtIndex:2]];
+        
+        long long ts = [rawTs longLongValue];
+        
+        if (ts > 100000000000) {
+            ts = ts / 1000;
+        }
+        
+        NSDate *date = [NSDate dateWithTimeIntervalSince1970:ts];
+        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+        [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+        NSString *formattedDate = [formatter stringFromDate:date];
+        
+        NSString *newText = [NSString stringWithFormat:@"%@%@", formattedDate, suffix];
+        %orig(newText);
+    } else {
+        %orig(text);
+    }
+}
+
+%end
+
+%group DYYYCommentExactTimeGroup
+%hook AWECommentSwiftBizUI_CommentInteractionBaseLabel
+
+- (void)setText:(NSString *)text {
+    %orig(text); // 先让系统把文本赋上去
+    
+    if (!DYYYGetBool(@"DYYYCommentExactTime")) {
+        return;
+    }
+
+    UILabel *label = (UILabel *)self;
+    if (!text || text.length == 0) return;
+
+    // --- 1. 拦截翻译文本，将其绝对定位在屏幕右侧 100 像素 ---
+    if ([text isEqualToString:@"翻译"] || [text isEqualToString:@"隐藏翻译"]) {
+        CGRect currentFrame = label.frame;
+        CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
+        // 重新计算 X 坐标：屏幕宽度 - 100 - 标签自身宽度
+        currentFrame.origin.x = screenWidth - 100.0 - currentFrame.size.width;
+        label.frame = currentFrame;
+        return;
+    }
+
+    // --- 2. 拦截时间文本，如果不够宽则扩充宽度 ---
+    UIFont *font = label.font;
+    if (font) {
+        CGFloat expectedWidth = ceilf([text sizeWithAttributes:@{NSFontAttributeName: font}].width);
+        CGRect currentFrame = label.frame;
+        
+        // 如果当前宽度不够，并且不是尚未初始化的状态（>0），则强行修改并重新赋值
+        if (currentFrame.size.width < expectedWidth && currentFrame.size.width > 0) {
+            currentFrame.size.width = expectedWidth;
+            label.frame = currentFrame; 
+            label.clipsToBounds = NO;
+        }
+    }
+}
+
+- (void)setFrame:(CGRect)frame {
+    if (!DYYYGetBool(@"DYYYCommentExactTime") || ![self respondsToSelector:@selector(text)]) {
+        %orig(frame);
+        return;
+    }
+
+    UILabel *label = (UILabel *)self;
+    NSString *text = label.text;
+
+    if (text && text.length > 0) {
+        // --- 1. 拦截翻译文本，将其绝对定位在屏幕右侧 100 像素 ---
+        if ([text isEqualToString:@"翻译"] || [text isEqualToString:@"隐藏翻译"]) {
+            CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
+            frame.origin.x = screenWidth - 100.0 - frame.size.width;
+        } 
+        // --- 2. 拦截时间文本，如果不够宽则扩充宽度 ---
+        else if ([self respondsToSelector:@selector(font)]) {
+            UIFont *font = label.font;
+            if (font) {
+                CGFloat expectedWidth = ceilf([text sizeWithAttributes:@{NSFontAttributeName: font}].width);
+                if (frame.size.width < expectedWidth && frame.size.width > 0) {
+                    frame.size.width = expectedWidth;
+                    label.clipsToBounds = NO;
+                }
+            }
+        }
+    }
+
+    %orig(frame);
+}
+
+%end
+%end
+
+// 前面的AWEDateTimeFormatter会导致图文视频展开时间文本变成时间戳，这里处理下
+%hook YYLabel
+
+// 1. Hook 富文本赋值方法 (核心)
+- (void)setAttributedText:(NSAttributedString *)attributedText {
+    if (!DYYYGetBool(@"DYYYCommentExactTime") || !attributedText || attributedText.length == 0) {
+        %orig(attributedText);
+        return;
+    }
+
+    NSString *plainText = [attributedText string];
+
+    NSError *error = nil;
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"^(\\d{10,13})" options:0 error:&error];
+    NSTextCheckingResult *match = [regex firstMatchInString:plainText options:0 range:NSMakeRange(0, plainText.length)];
+
+    if (match) {
+        NSString *rawTs = [plainText substringWithRange:[match rangeAtIndex:1]];
+        long long ts = [rawTs longLongValue];
+        
+        if (ts > 100000000000) {
+            ts = ts / 1000;
+        }
+        
+        NSDate *date = [NSDate dateWithTimeIntervalSince1970:ts];
+        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+        [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+        NSString *formattedDate = [formatter stringFromDate:date];
+        
+        NSMutableAttributedString *newAttrStr = [attributedText mutableCopy];
+        [newAttrStr replaceCharactersInRange:[match rangeAtIndex:1] withString:formattedDate];
+        
+        %orig(newAttrStr);
+    } else {
+        %orig(attributedText);
+    }
 }
 
 %end
@@ -978,101 +1366,198 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
     }
 }
 
-static CGFloat leftLabelLeftMargin = -1;
-static CGFloat rightLabelRightMargin = -1;
+%new
+- (NSString *)dyyy_formatTimeFromSeconds:(CGFloat)seconds {
+    CGFloat safeSeconds = seconds;
+    if (safeSeconds < 0) {
+        safeSeconds = 0;
+    }
+
+    NSInteger total = (NSInteger)floor(safeSeconds);
+    NSInteger hours = total / 3600;
+    NSInteger minutes = (total % 3600) / 60;
+    NSInteger secs = total % 60;
+
+    if (hours > 0) {
+        return [NSString stringWithFormat:@"%02ld:%02ld:%02ld", (long)hours, (long)minutes, (long)secs];
+    }
+    return [NSString stringWithFormat:@"%02ld:%02ld", (long)minutes, (long)secs];
+}
+
+%new
+- (CGFloat)dyyy_modelDurationInSeconds {
+    id delegate = self.progressSliderDelegate;
+    if (!delegate || ![delegate respondsToSelector:@selector(model)]) {
+        return 0;
+    }
+
+    id model = [delegate valueForKey:@"model"];
+    if (!model || ![model respondsToSelector:@selector(videoDuration)]) {
+        return 0;
+    }
+
+    CGFloat videoDurationMs = [[model valueForKey:@"videoDuration"] doubleValue];
+    if (videoDurationMs <= 0) {
+        return 0;
+    }
+    return videoDurationMs / 1000.0;
+}
+
+%new
+- (CGFloat)dyyy_scheduleVerticalOffset {
+    CGFloat verticalOffset = -12.5;
+    NSString *offsetValueString = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYTimelineVerticalPosition"];
+    if (offsetValueString.length > 0) {
+        CGFloat configuredOffset = [offsetValueString floatValue];
+        if (configuredOffset != 0) {
+            verticalOffset = configuredOffset;
+        }
+    }
+    return verticalOffset;
+}
+
+%new
+- (void)dyyy_removeScheduleLabels {
+    UIView *parentView = self.superview;
+    if (!parentView) {
+        return;
+    }
+    [parentView layoutIfNeeded];
+    [self layoutIfNeeded];
+    [[parentView viewWithTag:10001] removeFromSuperview];
+    [[parentView viewWithTag:10002] removeFromSuperview];
+}
+
+%new
+- (void)dyyy_updateScheduleLabelsWithCurrentTime:(CGFloat)currentTime totalDuration:(CGFloat)totalDuration {
+    if (!DYYYGetBool(@"DYYYShowScheduleDisplay")) {
+        [self dyyy_removeScheduleLabels];
+        return;
+    }
+
+    if (![NSThread isMainThread]) {
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+          [weakSelf dyyy_updateScheduleLabelsWithCurrentTime:currentTime totalDuration:totalDuration];
+        });
+        return;
+    }
+
+    UIView *parentView = self.superview;
+    if (!parentView) {
+        return;
+    }
+    [parentView layoutIfNeeded];
+    [self layoutIfNeeded];
+
+    NSString *scheduleStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
+    BOOL showRightRemainingTime = [scheduleStyle isEqualToString:@"进度条右侧剩余"];
+    BOOL showRightCompleteTime = [scheduleStyle isEqualToString:@"进度条右侧完整"];
+    BOOL showLeftRemainingTime = [scheduleStyle isEqualToString:@"进度条左侧剩余"];
+    BOOL showLeftCompleteTime = [scheduleStyle isEqualToString:@"进度条左侧完整"];
+
+    BOOL shouldShowLeftLabel = !showRightRemainingTime && !showRightCompleteTime;
+    BOOL shouldShowRightLabel = !showLeftRemainingTime && !showLeftCompleteTime;
+
+    CGFloat modelDuration = [self dyyy_modelDurationInSeconds];
+    CGFloat effectiveTotalDuration = totalDuration > 0 ? totalDuration : modelDuration;
+    if (effectiveTotalDuration < 0) {
+        effectiveTotalDuration = 0;
+    }
+
+    CGFloat effectiveCurrentTime = currentTime;
+    if (effectiveCurrentTime < 0) {
+        effectiveCurrentTime = 0;
+    }
+    if (effectiveTotalDuration > 0 && effectiveCurrentTime > effectiveTotalDuration) {
+        effectiveCurrentTime = effectiveTotalDuration;
+    }
+
+    CGRect sliderFrameInParent = [self convertRect:self.bounds toView:parentView];
+    if (CGRectGetWidth(sliderFrameInParent) <= 1.0 || CGRectGetHeight(sliderFrameInParent) <= 1.0) {
+        return;
+    }
+    CGFloat labelYPosition = CGRectGetMinY(sliderFrameInParent) + [self dyyy_scheduleVerticalOffset];
+    CGFloat labelHeight = 15.0;
+    UIFont *labelFont = [UIFont systemFontOfSize:8];
+    NSString *labelColorHex = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYProgressLabelColor"];
+
+    UILabel *leftLabel = (UILabel *)[parentView viewWithTag:10001];
+    if (leftLabel && ![leftLabel isKindOfClass:[UILabel class]]) {
+        [leftLabel removeFromSuperview];
+        leftLabel = nil;
+    }
+
+    if (shouldShowLeftLabel) {
+        if (!leftLabel) {
+            leftLabel = [[UILabel alloc] init];
+            leftLabel.backgroundColor = [UIColor clearColor];
+            leftLabel.tag = 10001;
+            [parentView addSubview:leftLabel];
+        }
+
+        leftLabel.font = labelFont;
+        NSString *newLeftText = nil;
+        if (showLeftRemainingTime) {
+            newLeftText = [self dyyy_formatTimeFromSeconds:MAX(effectiveTotalDuration - effectiveCurrentTime, 0)];
+        } else if (showLeftCompleteTime) {
+            newLeftText = [NSString stringWithFormat:@"%@/%@", [self dyyy_formatTimeFromSeconds:effectiveCurrentTime], [self dyyy_formatTimeFromSeconds:effectiveTotalDuration]];
+        } else {
+            newLeftText = [self dyyy_formatTimeFromSeconds:effectiveCurrentTime];
+        }
+
+        if (![leftLabel.text isEqualToString:newLeftText]) {
+            leftLabel.text = newLeftText;
+        }
+        [leftLabel sizeToFit];
+        leftLabel.frame = CGRectMake(CGRectGetMinX(sliderFrameInParent), labelYPosition, CGRectGetWidth(leftLabel.bounds), labelHeight);
+        [DYYYUtils applyColorSettingsToLabel:leftLabel colorHexString:labelColorHex];
+    } else {
+        [leftLabel removeFromSuperview];
+    }
+
+    UILabel *rightLabel = (UILabel *)[parentView viewWithTag:10002];
+    if (rightLabel && ![rightLabel isKindOfClass:[UILabel class]]) {
+        [rightLabel removeFromSuperview];
+        rightLabel = nil;
+    }
+
+    if (shouldShowRightLabel) {
+        if (!rightLabel) {
+            rightLabel = [[UILabel alloc] init];
+            rightLabel.backgroundColor = [UIColor clearColor];
+            rightLabel.tag = 10002;
+            [parentView addSubview:rightLabel];
+        }
+
+        rightLabel.font = labelFont;
+        NSString *newRightText = nil;
+        if (showRightRemainingTime) {
+            newRightText = [self dyyy_formatTimeFromSeconds:MAX(effectiveTotalDuration - effectiveCurrentTime, 0)];
+        } else if (showRightCompleteTime) {
+            newRightText = [NSString stringWithFormat:@"%@/%@", [self dyyy_formatTimeFromSeconds:effectiveCurrentTime], [self dyyy_formatTimeFromSeconds:effectiveTotalDuration]];
+        } else {
+            newRightText = [self dyyy_formatTimeFromSeconds:effectiveTotalDuration];
+        }
+
+        if (![rightLabel.text isEqualToString:newRightText]) {
+            rightLabel.text = newRightText;
+        }
+        [rightLabel sizeToFit];
+        CGFloat rightLabelX = MAX(CGRectGetMaxX(sliderFrameInParent) - CGRectGetWidth(rightLabel.bounds), CGRectGetMinX(sliderFrameInParent));
+        rightLabel.frame = CGRectMake(rightLabelX, labelYPosition, CGRectGetWidth(rightLabel.bounds), labelHeight);
+        [DYYYUtils applyColorSettingsToLabel:rightLabel colorHexString:labelColorHex];
+    } else {
+        [rightLabel removeFromSuperview];
+    }
+}
 
 - (void)setLimitUpperActionArea:(BOOL)arg1 {
     %orig;
-
-    NSString *durationFormatted = [self.progressSliderDelegate formatTimeFromSeconds:floor(self.progressSliderDelegate.model.videoDuration / 1000)];
-    if (DYYYGetBool(@"DYYYShowScheduleDisplay")) {
-        UIView *parentView = self.superview;
-        if (!parentView)
-            return;
-
-        [[parentView viewWithTag:10001] removeFromSuperview];
-        [[parentView viewWithTag:10002] removeFromSuperview];
-
-        CGRect sliderOriginalFrameInParent = [self convertRect:self.bounds toView:parentView];
-        CGRect sliderFrame = self.frame;
-
-        CGFloat verticalOffset = -12.5;
-        NSString *offsetValueString = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYTimelineVerticalPosition"];
-        if (offsetValueString.length > 0) {
-            CGFloat configOffset = [offsetValueString floatValue];
-            if (configOffset != 0)
-                verticalOffset = configOffset;
-        }
-
-        NSString *scheduleStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
-        BOOL showRemainingTime = [scheduleStyle isEqualToString:@"進度條右側剩餘"];
-        BOOL showCompleteTime = [scheduleStyle isEqualToString:@"進度條右側完整"];
-        BOOL showLeftRemainingTime = [scheduleStyle isEqualToString:@"進度條左側剩餘"];
-        BOOL showLeftCompleteTime = [scheduleStyle isEqualToString:@"進度條左側完整"];
-
-        NSString *labelColorHex = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYProgressLabelColor"];
-
-        CGFloat labelYPosition = sliderOriginalFrameInParent.origin.y + verticalOffset;
-        CGFloat labelHeight = 15.0;
-        UIFont *labelFont = [UIFont systemFontOfSize:8];
-
-        if (!showRemainingTime && !showCompleteTime) {
-            UILabel *leftLabel = [[UILabel alloc] init];
-            leftLabel.backgroundColor = [UIColor clearColor];
-            leftLabel.font = labelFont;
-            leftLabel.tag = 10001;
-            if (showLeftRemainingTime)
-                leftLabel.text = @"00:00";
-            else if (showLeftCompleteTime)
-                leftLabel.text = [NSString stringWithFormat:@"00:00/%@", durationFormatted];
-            else
-                leftLabel.text = @"00:00";
-
-            [leftLabel sizeToFit];
-
-            if (leftLabelLeftMargin == -1) {
-                leftLabelLeftMargin = sliderFrame.origin.x;
-            }
-
-            leftLabel.frame = CGRectMake(leftLabelLeftMargin, labelYPosition, leftLabel.frame.size.width, labelHeight);
-            [parentView addSubview:leftLabel];
-
-            [DYYYUtils applyColorSettingsToLabel:leftLabel colorHexString:labelColorHex];
-        }
-
-        if (!showLeftRemainingTime && !showLeftCompleteTime) {
-            UILabel *rightLabel = [[UILabel alloc] init];
-            rightLabel.backgroundColor = [UIColor clearColor];
-            rightLabel.font = labelFont;
-            rightLabel.tag = 10002;
-            if (showRemainingTime)
-                rightLabel.text = @"00:00";
-            else if (showCompleteTime)
-                rightLabel.text = [NSString stringWithFormat:@"00:00/%@", durationFormatted];
-            else
-                rightLabel.text = durationFormatted;
-
-            [rightLabel sizeToFit];
-
-            if (rightLabelRightMargin == -1) {
-                rightLabelRightMargin = sliderFrame.origin.x + sliderFrame.size.width - rightLabel.frame.size.width;
-            }
-
-            rightLabel.frame = CGRectMake(rightLabelRightMargin, labelYPosition, rightLabel.frame.size.width, labelHeight);
-            [parentView addSubview:rightLabel];
-
-            [DYYYUtils applyColorSettingsToLabel:rightLabel colorHexString:labelColorHex];
-        }
-
-        [self setNeedsLayout];
-    } else {
-        UIView *parentView = self.superview;
-        if (parentView) {
-            [[parentView viewWithTag:10001] removeFromSuperview];
-            [[parentView viewWithTag:10002] removeFromSuperview];
-        }
-        [self setNeedsLayout];
-    }
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [weakSelf dyyy_updateScheduleLabelsWithCurrentTime:0 totalDuration:0];
+    });
 }
 
 - (void)setHidden:(BOOL)hidden {
@@ -1131,12 +1616,12 @@ static CGFloat rightLabelRightMargin = -1;
         NSString *currentText = lbl.text ?: @"";
         if ([currentText containsString:location]) return;
 
-        if ([currentText containsString:@"IP属地："]) {
-            NSRange range = [currentText rangeOfString:@"IP属地："];
+        if ([currentText containsString:@"IP位置："]) {
+            NSRange range = [currentText rangeOfString:@"IP位置："];
             NSString *baseText = [currentText substringToIndex:range.location];
-            lbl.text = [NSString stringWithFormat:@"%@IP属地：%@", baseText, location];
+            lbl.text = [NSString stringWithFormat:@"%@IP位置：%@", baseText, location];
         } else if (currentText.length > 0) {
-            lbl.text = [NSString stringWithFormat:@"%@  IP属地：%@", currentText, location];
+            lbl.text = [NSString stringWithFormat:@"%@  IP位置：%@", currentText, location];
         }
 
         [DYYYUtils applyColorSettingsToLabel:lbl colorHexString:labelColorHex];
@@ -1256,86 +1741,54 @@ static CGFloat rightLabelRightMargin = -1;
 %hook AWEPlayInteractionProgressController
 
 %new
-- (NSString *)formatTimeFromSeconds:(CGFloat)seconds {
-    NSInteger hours = (NSInteger)seconds / 3600;
-    NSInteger minutes = ((NSInteger)seconds % 3600) / 60;
-    NSInteger secs = (NSInteger)seconds % 60;
+- (void)dyyy_syncScheduleLabelsWithCurrentTime:(CGFloat)currentTime totalDuration:(CGFloat)totalDuration {
+    if (!DYYYGetBool(@"DYYYShowScheduleDisplay")) {
+        return;
+    }
 
-    if (hours > 0) {
-        return [NSString stringWithFormat:@"%02ld:%02ld:%02ld", (long)hours, (long)minutes, (long)secs];
-    } else {
-        return [NSString stringWithFormat:@"%02ld:%02ld", (long)minutes, (long)secs];
+    id progressSlider = self.progressSlider;
+    if (progressSlider && [progressSlider respondsToSelector:@selector(dyyy_updateScheduleLabelsWithCurrentTime:totalDuration:)]) {
+        [progressSlider dyyy_updateScheduleLabelsWithCurrentTime:currentTime totalDuration:totalDuration];
+    }
+
+    if ([progressSlider isKindOfClass:[UIView class]]) {
+        [(UIView *)progressSlider dyyy_updateScheduleLabelsLegacyWithCurrentTime:currentTime totalDuration:totalDuration model:self.model];
     }
 }
 
 - (void)updateProgressSliderWithTime:(CGFloat)arg1 totalDuration:(CGFloat)arg2 {
     %orig;
+    [self dyyy_syncScheduleLabelsWithCurrentTime:arg1 totalDuration:arg2];
+}
 
-    if (DYYYGetBool(@"DYYYShowScheduleDisplay")) {
-        AWEFeedProgressSlider *progressSlider = self.progressSlider;
-        UIView *parentView = progressSlider.superview;
-        if (!parentView)
-            return;
+%end
 
-        UILabel *leftLabel = [parentView viewWithTag:10001];
-        UILabel *rightLabel = [parentView viewWithTag:10002];
+%hook AWEDProgressCoreContainer
 
-        NSString *labelColorHex = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYProgressLabelColor"];
-
-        NSString *scheduleStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
-        BOOL showRemainingTime = [scheduleStyle isEqualToString:@"進度條右側剩餘"];
-        BOOL showCompleteTime = [scheduleStyle isEqualToString:@"進度條右側完整"];
-        BOOL showLeftRemainingTime = [scheduleStyle isEqualToString:@"進度條左側剩餘"];
-        BOOL showLeftCompleteTime = [scheduleStyle isEqualToString:@"進度條左側完整"];
-
-        // 更新左标签
-        if (arg1 >= 0 && leftLabel) {
-            NSString *newLeftText = @"";
-            if (showLeftRemainingTime) {
-                CGFloat remainingTime = arg2 - arg1;
-                if (remainingTime < 0)
-                    remainingTime = 0;
-                newLeftText = [self formatTimeFromSeconds:remainingTime];
-            } else if (showLeftCompleteTime) {
-                newLeftText = [NSString stringWithFormat:@"%@/%@", [self formatTimeFromSeconds:arg1], [self formatTimeFromSeconds:arg2]];
-            } else {
-                newLeftText = [self formatTimeFromSeconds:arg1];
-            }
-
-            if (![leftLabel.text isEqualToString:newLeftText]) {
-                leftLabel.text = newLeftText;
-                [leftLabel sizeToFit];
-                CGRect leftFrame = leftLabel.frame;
-                leftFrame.size.height = 15.0;
-                leftLabel.frame = leftFrame;
-            }
-            [DYYYUtils applyColorSettingsToLabel:leftLabel colorHexString:labelColorHex];
-        }
-
-        // 更新右标签
-        if (arg2 > 0 && rightLabel) {
-            NSString *newRightText = @"";
-            if (showRemainingTime) {
-                CGFloat remainingTime = arg2 - arg1;
-                if (remainingTime < 0)
-                    remainingTime = 0;
-                newRightText = [self formatTimeFromSeconds:remainingTime];
-            } else if (showCompleteTime) {
-                newRightText = [NSString stringWithFormat:@"%@/%@", [self formatTimeFromSeconds:arg1], [self formatTimeFromSeconds:arg2]];
-            } else {
-                newRightText = [self formatTimeFromSeconds:arg2];
-            }
-
-            if (![rightLabel.text isEqualToString:newRightText]) {
-                rightLabel.text = newRightText;
-                [rightLabel sizeToFit];
-                CGRect rightFrame = rightLabel.frame;
-                rightFrame.size.height = 15.0;
-                rightLabel.frame = rightFrame;
-            }
-            [DYYYUtils applyColorSettingsToLabel:rightLabel colorHexString:labelColorHex];
-        }
+%new
+- (void)dyyy_syncScheduleLabelsWithCurrentTime:(CGFloat)currentTime totalDuration:(CGFloat)totalDuration {
+    if (!DYYYGetBool(@"DYYYShowScheduleDisplay")) {
+        return;
     }
+
+    id progressSlider = self.progressSlider;
+    if (progressSlider && [progressSlider respondsToSelector:@selector(dyyy_updateScheduleLabelsWithCurrentTime:totalDuration:)]) {
+        [progressSlider dyyy_updateScheduleLabelsWithCurrentTime:currentTime totalDuration:totalDuration];
+    }
+
+    id model = nil;
+    if ([self respondsToSelector:@selector(model)]) {
+        model = [self valueForKey:@"model"];
+    }
+
+    if ([progressSlider isKindOfClass:[UIView class]]) {
+        [(UIView *)progressSlider dyyy_updateScheduleLabelsLegacyWithCurrentTime:currentTime totalDuration:totalDuration model:model];
+    }
+}
+
+- (void)updateProgressSliderWithTime:(CGFloat)arg1 totalDuration:(CGFloat)arg2 {
+    %orig;
+    [self dyyy_syncScheduleLabelsWithCurrentTime:arg1 totalDuration:arg2];
 }
 
 %end
@@ -2267,7 +2720,7 @@ static BOOL dyyyShouldUseLastStickerURL = NO;
 
 - (BOOL)elementShouldShow {
     BOOL shouldShow = %orig;
-    if (!DYYYGetBool(@"DYYYForceDownloadEmotion")) {
+    if (!DYYYGetBool(@"DYYYForceDownloadEmotion") && !DYYYGetBool(@"DYYYForceDownloadCommentAudio")) {
         return shouldShow;
     }
     AWECommentLongPressPanelContext *context = [self commentPageContext];
@@ -2275,6 +2728,10 @@ static BOOL dyyyShouldUseLastStickerURL = NO;
     AWEIMStickerModel *sticker = [selected sticker];
     NSArray *originURLList = sticker.staticURLModel.originURLList;
     if (originURLList.count > 0) {
+        return YES;
+    }
+    AWECommentAudioModel *audio = [selected audioModel];
+    if (audio && audio.content) {
         return YES;
     }
     return shouldShow;
@@ -2285,10 +2742,13 @@ static BOOL dyyyShouldUseLastStickerURL = NO;
     AWECommentLongPressPanelParam *params = [context params];
     AWECommentModel *comment = [context selectdComment] ?: [params selectdComment];
     
-    // 判断是表情包还是图片
+    // 判断保存类型(表情包/音频/图片)
     AWEIMStickerModel *sticker = [comment sticker];
     NSArray *stickerURLList = sticker.staticURLModel.originURLList;
     BOOL hasSticker = (stickerURLList.count > 0);
+
+    AWECommentAudioModel *audio = [comment audioModel];
+    BOOL hasAudio = (audio && audio.content);
     
     NSArray *imageList = nil;
     if ([comment respondsToSelector:@selector(imageList)]) {
@@ -2314,7 +2774,25 @@ static BOOL dyyyShouldUseLastStickerURL = NO;
             return;
         }
     }
-    
+
+    // 音频保存逻辑
+    if (hasAudio && DYYYGetBool(@"DYYYForceDownloadCommentAudio")) {
+        NSString *audioContent = audio.content;
+        
+        NSString *userName = @"未知用户";
+        if (comment.author && [comment.author respondsToSelector:@selector(nickname)]) {
+            NSString *nickname = [comment.author performSelector:@selector(nickname)];
+            if (nickname && nickname.length > 0) {
+                userName = nickname;
+            }
+        }
+        
+        [DYYYManager downloadAndShareCommentAudio:audioContent
+                                         userName:userName
+                                       createTime:comment.createTime];
+        return;
+    }
+
     // 图片保存逻辑
     if (hasImages && DYYYGetBool(@"DYYYForceDownloadCommentImage")) {
         // 检查 is_pic_inflow 判断是保存全部还是单张
@@ -3388,7 +3866,6 @@ static NSArray *DYYYIMMenuItemsByAddingDownloadAction(NSArray *menuItems, id cel
 %end
 
 
-
 %hook AWEPlayInteractionSearchAnchorView
 
 - (void)layoutSubviews {
@@ -3542,6 +4019,16 @@ static NSArray *DYYYIMMenuItemsByAddingDownloadAction(NSArray *menuItems, id cel
 %end
 
 %hook IESLiveDynamicRankListEntranceView
+- (void)layoutSubviews {
+    %orig;
+    if (DYYYGetBool(@"DYYYHideLiveDetail")) {
+        self.hidden = YES;
+        return;
+    }
+}
+%end
+
+%hook _TtC18IESLiveRevenueImpl34IESLiveDynamicRankListEntranceView
 - (void)layoutSubviews {
     %orig;
     if (DYYYGetBool(@"DYYYHideLiveDetail")) {
@@ -4273,6 +4760,17 @@ static NSHashTable *processedParentViews = nil;
 }
 %end
 
+// 会员进场特效: 高版本启用swift类名
+%hook _TtC18IESLiveRevenueImpl32IESLiveSwiftDynamicUserEnterView
+- (void)layoutSubviews {
+    if (DYYYGetBool(@"DYYYHideLivePopup")) {
+        self.hidden = YES;
+        return;
+    }
+    %orig;
+}
+%end
+
 // 隐藏特殊进场特效
 %hook PlatformCanvasView
 - (void)layoutSubviews {
@@ -4290,6 +4788,17 @@ static NSHashTable *processedParentViews = nil;
         }
     }
     return;
+}
+%end
+
+// 特殊视频进场特效:高版本启用swift类名
+%hook _TtC18IESLiveRevenueImpl35IESLiveSwiftVideoLayerUserEnterView
+- (void)layoutSubviews {
+    if (DYYYGetBool(@"DYYYHideLivePopup")) {
+        self.hidden = YES;
+        return;
+    }
+    %orig;
 }
 %end
 
@@ -4325,35 +4834,107 @@ static NSHashTable *processedParentViews = nil;
 }
 %end
 
-// 推荐页过滤视频发布时间（数组级别过滤，属性已完整初始化）
+// 推荐页数组级过滤（直播 / 时间 / 低赞）
 %hook AWEHotListDataController
+
+%new
+- (NSNumber *)dyyy_numberValueForLowLikesFilter:(id)rawValue {
+    if (!rawValue || rawValue == [NSNull null]) {
+        return nil;
+    }
+
+    if ([rawValue isKindOfClass:[NSNumber class]]) {
+        return (NSNumber *)rawValue;
+    }
+
+    if ([rawValue isKindOfClass:[NSString class]]) {
+        NSString *trimmed = [(NSString *)rawValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        if (trimmed.length == 0) {
+            return nil;
+        }
+
+        NSScanner *integerScanner = [NSScanner scannerWithString:trimmed];
+        long long integerValue = 0;
+        if ([integerScanner scanLongLong:&integerValue] && integerScanner.isAtEnd) {
+            return @(integerValue);
+        }
+
+        NSScanner *doubleScanner = [NSScanner scannerWithString:trimmed];
+        double doubleValue = 0.0;
+        if ([doubleScanner scanDouble:&doubleValue] && doubleScanner.isAtEnd) {
+            return @((long long)llround(doubleValue));
+        }
+    }
+
+    return nil;
+}
+
+%new
+- (NSNumber *)dyyy_resolvedDiggCountForAweme:(AWEAwemeModel *)aweme {
+    if (!aweme) {
+        return nil;
+    }
+
+    static NSArray<NSString *> *diggKeyPaths = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+      diggKeyPaths = @[
+          @"statistics.diggCount",
+          @"statistics.digg_count",
+          @"diggCount",
+          @"digg_count",
+          @"feedSequenceExtendFeature.digg_count",
+          @"feedSequenceExtendFeature.diggCount",
+          @"recommendFeedExtendFeature.digg_count",
+          @"recommendFeedExtendFeature.diggCount"
+      ];
+    });
+
+    for (NSString *keyPath in diggKeyPaths) {
+        id rawValue = nil;
+        @try {
+            rawValue = [aweme valueForKeyPath:keyPath];
+        } @catch (__unused NSException *exception) {
+            rawValue = nil;
+        }
+
+        NSNumber *resolved = [self dyyy_numberValueForLowLikesFilter:rawValue];
+        if (resolved) {
+            return resolved;
+        }
+    }
+
+    return nil;
+}
 
 - (id)transferAwemeListIfNeededWithArray:(id)arg1 isInitFetch:(BOOL)arg2 {
     NSArray *orig = %orig;
-    if (!orig || orig.count == 0) return orig;
+    if (![orig isKindOfClass:[NSArray class]] || orig.count == 0) {
+        return orig;
+    }
 
     // --- 配置读取 ---
     NSInteger daysThreshold = DYYYGetInteger(@"DYYYFilterTimeLimit");
     BOOL skipLive = DYYYGetBool(@"DYYYSkipLive"); // 读取直播过滤开关
     NSInteger minLikesThreshold = DYYYGetInteger(@"DYYYFilterLowLikes"); // 读取低赞过滤阈值 (例如: 1000)
-    
-    NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
-    NSTimeInterval thresholdInSeconds = daysThreshold * 86400.0;
 
-    NSMutableArray *filtered = [NSMutableArray arrayWithCapacity:orig.count];
+    NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
+    NSTimeInterval thresholdInSeconds = MAX(daysThreshold, 0) * 86400.0;
+
+    // 第一阶段：先做稳定字段过滤（直播/时间）
+    NSMutableArray *baseFiltered = [NSMutableArray arrayWithCapacity:orig.count];
 
     for (id obj in orig) {
         if (![obj isKindOfClass:%c(AWEAwemeModel)]) {
-            [filtered addObject:obj];
+            [baseFiltered addObject:obj];
             continue;
         }
 
         AWEAwemeModel *m = (AWEAwemeModel *)obj;
 
         // 1. 广告白名单
-        // 使用 respondsToSelector 确保安全，防止属性变更
         if ([m respondsToSelector:@selector(isAds)] && m.isAds) {
-            [filtered addObject:obj];
+            [baseFiltered addObject:obj];
             continue;
         }
 
@@ -4365,33 +4946,69 @@ static NSHashTable *processedParentViews = nil;
         // 3. 时间限制过滤
         if (daysThreshold > 0 && [m respondsToSelector:@selector(createTime)]) {
             NSTimeInterval vTs = [m.createTime doubleValue];
-            if (vTs > 1e12) vTs /= 1000.0; // 毫秒转秒
+            if (vTs > 1e12) {
+                vTs /= 1000.0; // 毫秒转秒
+            }
 
             if (vTs > 0 && (now - vTs) > thresholdInSeconds) {
                 continue; // 超过设定时限，跳过
             }
         }
 
-        // 4. 低赞过滤逻辑
-        if (minLikesThreshold > 0) {
-            NSInteger diggCount = 0;
-            // 抖音的点赞数通常在 statistics 模型中的 diggCount 属性里
-            if ([m respondsToSelector:@selector(statistics)]) {
-                id stats = [m valueForKey:@"statistics"];
-                if (stats && [stats respondsToSelector:@selector(diggCount)]) {
-                    diggCount = [[stats valueForKey:@"diggCount"] integerValue];
-                }
-            }
-            
-            if (diggCount < minLikesThreshold) {
-                continue; // 点赞数低于设定的阈值，跳过
-            }
-        }
-
-        [filtered addObject:obj];
+        [baseFiltered addObject:obj];
     }
 
-    return [filtered copy];
+    if (minLikesThreshold <= 0 || baseFiltered.count == 0) {
+        return [baseFiltered copy];
+    }
+
+    // 第二阶段：低赞过滤（字段缺失时放行，避免误杀）
+    NSMutableArray *lowLikesFiltered = [NSMutableArray arrayWithCapacity:baseFiltered.count];
+    NSInteger awemeCount = 0;
+    NSInteger unresolvedLikesCount = 0;
+    NSInteger filteredByLowLikesCount = 0;
+
+    for (id obj in baseFiltered) {
+        if (![obj isKindOfClass:%c(AWEAwemeModel)]) {
+            [lowLikesFiltered addObject:obj];
+            continue;
+        }
+
+        awemeCount++;
+        AWEAwemeModel *m = (AWEAwemeModel *)obj;
+        NSNumber *diggCountValue = [self dyyy_resolvedDiggCountForAweme:m];
+        NSInteger diggCount = diggCountValue.integerValue;
+
+        // 新版部分链路点赞字段会短暂缺失/回填为0，这里按未知放行，避免整批误过滤
+        if (!diggCountValue || diggCount <= 0) {
+            unresolvedLikesCount++;
+            [lowLikesFiltered addObject:obj];
+            continue;
+        }
+
+        if (diggCount < minLikesThreshold) {
+            filteredByLowLikesCount++;
+            continue;
+        }
+
+        [lowLikesFiltered addObject:obj];
+    }
+
+    CGFloat unresolvedRatio = awemeCount > 0 ? ((CGFloat)unresolvedLikesCount / (CGFloat)awemeCount) : 0.0f;
+    BOOL shouldRollbackLowLikes = (awemeCount >= 3 && lowLikesFiltered.count <= 1 && unresolvedRatio >= 0.5f);
+    BOOL shouldPreventEmptyBatch = (awemeCount >= 3 && lowLikesFiltered.count == 0 && filteredByLowLikesCount > 0);
+
+    if (shouldRollbackLowLikes || shouldPreventEmptyBatch) {
+        NSLog(@"[DYYY] 低赞过滤回退: total=%ld kept=%ld unresolved=%ld lowLikesFiltered=%ld threshold=%ld",
+              (long)awemeCount,
+              (long)lowLikesFiltered.count,
+              (long)unresolvedLikesCount,
+              (long)filteredByLowLikesCount,
+              (long)minLikesThreshold);
+        return [baseFiltered copy];
+    }
+
+    return [lowLikesFiltered copy];
 }
 
 %end
@@ -4412,13 +5029,18 @@ static NSHashTable *processedParentViews = nil;
     BOOL skipHotSpot = DYYYGetBool(@"DYYYSkipHotSpot");
     BOOL skipPhoto = DYYYGetBool(@"DYYYSkipPhoto");
     BOOL skipPhotoText = DYYYGetBool(@"DYYYSkipPhotoText");
+    BOOL skipMusic = DYYYGetBool(@"DYYYSkipMusic");
+    BOOL skipAIInteraction = DYYYGetBool(@"DYYYSkipAIInteraction");
     BOOL filterHDR = DYYYGetBool(@"DYYYFilterFeedHDR");
 
     BOOL shouldFilterAds = noAds && (self.isAds);
     BOOL shouldFilterHotSpot = skipHotSpot && self.hotSpotLynxCardModel;
     BOOL shouldFilterAllLive = skipAllLive && [self.videoFeedTag isEqualToString:@"直播中"];
-    BOOL shouldskipPhoto = skipPhoto && (self.awemeType == 68) && [self.referString isEqualToString:@"homepage_hot"];
-    BOOL shouldskipPhotoText = skipPhotoText && self.isNewTextMode && [self.referString isEqualToString:@"homepage_hot"];
+    BOOL isRecommendFeed = [self.referString isEqualToString:@"homepage_hot"];
+    BOOL shouldskipPhoto = skipPhoto && (self.awemeType == 68) && isRecommendFeed;
+    BOOL shouldskipPhotoText = skipPhotoText && self.isNewTextMode && isRecommendFeed;
+    BOOL shouldFilterMusic = skipMusic && self.musicCard && isRecommendFeed; // or self.awemeType == 155
+    BOOL shouldFilterAIInteraction = skipAIInteraction && (self.awemeType == 162) && isRecommendFeed;
     BOOL shouldFilterHDR = NO;
     BOOL shouldFilterLowLikes = NO;
     BOOL shouldFilterKeywords = NO;
@@ -4446,7 +5068,7 @@ static NSHashTable *processedParentViews = nil;
     NSString *filterUsers = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYFilterUsers"];
 
     // 检查是否需要过滤特定用户
-    if ([self.referString isEqualToString:@"homepage_hot"] && filterUsers.length > 0 && self.author) {
+    if (isRecommendFeed && filterUsers.length > 0 && self.author) {
         NSArray *usersList = [filterUsers componentsSeparatedByString:@","];
         NSString *currentShortID = self.author.shortID;
         NSString *currentNickname = self.author.nickname;
@@ -4468,8 +5090,8 @@ static NSHashTable *processedParentViews = nil;
         }
     }
 
-    // 只有当shareRecExtra不为空时才过滤点赞量低的视频和关键词
-    if ([self.referString isEqualToString:@"homepage_hot"]) {
+    // 仅在推荐页过滤关键词和道具
+    if (isRecommendFeed) {
         // 过滤包含特定关键词的视频
         if (keywordsList.count > 0) {
             // 检查视频标题
@@ -4513,7 +5135,7 @@ static NSHashTable *processedParentViews = nil;
             }
         }
     }
-    return shouldFilterAds || shouldFilterAllLive || shouldFilterHotSpot || shouldskipPhoto || shouldskipPhotoText || shouldFilterHDR || shouldFilterKeywords || shouldFilterProp ||
+    return shouldFilterAds || shouldFilterAllLive || shouldFilterHotSpot || shouldskipPhoto || shouldskipPhotoText || shouldFilterMusic || shouldFilterAIInteraction || shouldFilterHDR || shouldFilterKeywords || shouldFilterProp ||
            shouldFilterTime || shouldFilterUser;
 }
 
@@ -5808,7 +6430,6 @@ static Class barBackgroundClass = nil;
 static Class generalButtonClass = nil;
 static Class plusButtonClass = nil;
 static Class tabBarButtonClass = nil;
-static void *DYYYTabBarHeightContext = &DYYYTabBarHeightContext;
 
 + (void)initialize {
     if (self == [%c(AWENormalModeTabBar) class]) {
@@ -5822,7 +6443,10 @@ static void *DYYYTabBarHeightContext = &DYYYTabBarHeightContext;
 %new
 - (void)initializeOriginalTabBarHeight {
     if (originalTabBarHeight != kInvalidHeight) {
-        NSLog(@"[DYYY] initializeOriginalTabBarHeight: Skipped! originalTabBarHeight already initialized.");
+        if (gCurrentTabBarHeight == kInvalidHeight) {
+            gCurrentTabBarHeight = originalTabBarHeight;
+        }
+        NSLog(@"[DYYY] initializeOriginalTabBarHeight: Skipped! originalTabBarHeight already initialized as %.1f.", originalTabBarHeight);
         return;
     }
 
@@ -5837,91 +6461,9 @@ static void *DYYYTabBarHeightContext = &DYYYTabBarHeightContext;
     } else {
         NSLog(@"[DYYY] initializeOriginalTabBarHeight: Failed! No window available.");
     }
-}
-
-%new
-- (void)calculateTabBarHeight {
-    if (originalTabBarHeight == kInvalidHeight) {
-        NSLog(@"[DYYY] calculateTabBarHeight: Skipped! originalTabBarHeight not initialized yet.");
-        return;
-    }
-
-    CGFloat newHeight = originalTabBarHeight;
-    NSString *tabBarHeightStr = [[NSUserDefaults standardUserDefaults] stringForKey:kDYYYTabBarHeightKey];
-
-    if (tabBarHeightStr.length > 0) {
-        float tabBarHeightValue;
-        NSScanner *scanner = [NSScanner scannerWithString:tabBarHeightStr];
-        if ([scanner scanFloat:&tabBarHeightValue]) {
-            newHeight = MAX(tabBarHeightValue, 0.0);
-        } else {
-            NSLog(@"[DYYY] calculateTabBarHeight: Failed! Could not parse float value for key %@: '%@'", kDYYYTabBarHeightKey, tabBarHeightStr);
-        }
-    }
-
-    if (fabs(gCurrentTabBarHeight - newHeight) > 0.1) {
-        NSLog(@"[DYYY] calculateTabBarHeight: Success! gCurrentTabBarHeight updated from %.1f to %.1f", gCurrentTabBarHeight, newHeight);
-        gCurrentTabBarHeight = newHeight;
-    }
-}
-
-%new
-- (BOOL)applyTabBarHeight {
-    if (gCurrentTabBarHeight == kInvalidHeight) {
-        NSLog(@"[DYYY] applyTabBarHeight: Skipped! gCurrentTabBarHeight not calculated yet.");
-        return NO;
-    }
-
-    CGRect frame = self.frame;
-    if (fabs(frame.size.height - gCurrentTabBarHeight) < 0.1) {
-        NSLog(@"[DYYY] applyTabBarHeight: Skipped! Frame height already applied.");
-        return NO;
-    }
-
-    if ([self respondsToSelector:@selector(setDesiredHeight:)]) {
-        ((void (*)(id, SEL, double))objc_msgSend)(self, @selector(setDesiredHeight:), gCurrentTabBarHeight);
-    }
-
-    frame.size.height = gCurrentTabBarHeight;
-    if (self.superview) {
-        frame.origin.y = self.superview.bounds.size.height - gCurrentTabBarHeight;
-    }
-    self.frame = frame;
-    NSLog(@"[DYYY] applyTabBarHeight: Success! Frame height applied to %.1f", gCurrentTabBarHeight);
-    return YES;
-}
-
-- (instancetype)initWithFrame:(CGRect)frame {
-    self = %orig;
-    if (self) {
-        [[NSUserDefaults standardUserDefaults] addObserver:self forKeyPath:kDYYYTabBarHeightKey options:NSKeyValueObservingOptionNew context:DYYYTabBarHeightContext];
-    }
-    return self;
-}
-
-- (void)dealloc {
-    @try {
-        [[NSUserDefaults standardUserDefaults] removeObserver:self forKeyPath:kDYYYTabBarHeightKey context:DYYYTabBarHeightContext];
-    } @catch (NSException *exception) {
-        NSLog(@"[DYYY] KVO removeObserver failed: %@", exception);
-    }
-    %orig;
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey, id> *)change context:(void *)context {
-    if (context == DYYYTabBarHeightContext) {
-        __weak __typeof(self) weakSelf = self;
-        dispatch_async(dispatch_get_main_queue(), ^{
-          __strong __typeof(weakSelf) strongSelf = weakSelf;
-          if (strongSelf) {
-              NSLog(@"[DYYY] observeValueForKeyPath: %@ has new value: '%@'", kDYYYTabBarHeightKey, change[NSKeyValueChangeNewKey]);
-              if (originalTabBarHeight == kInvalidHeight) {
-                  [strongSelf initializeOriginalTabBarHeight];
-              }
-              [strongSelf calculateTabBarHeight];
-              [strongSelf applyTabBarHeight];
-          }
-        });
+    if (originalTabBarHeight != kInvalidHeight) {
+        gCurrentTabBarHeight = originalTabBarHeight;
+        NSLog(@"[DYYY] initializeOriginalTabBarHeight: gCurrentTabBarHeight synced to %.1f.", gCurrentTabBarHeight);
     }
 }
 
@@ -5929,7 +6471,6 @@ static void *DYYYTabBarHeightContext = &DYYYTabBarHeightContext;
     %orig;
     if (self.window) {
         [self initializeOriginalTabBarHeight];
-        [self calculateTabBarHeight];
     }
 }
 
@@ -5942,12 +6483,9 @@ static void *DYYYTabBarHeightContext = &DYYYTabBarHeightContext;
     }
 
     if (gCurrentTabBarHeight == kInvalidHeight) {
-        NSLog(@"[DYYY] layoutSubviews: Fallback! gCurrentTabBarHeight calculation triggered.");
-        [self calculateTabBarHeight];
+        gCurrentTabBarHeight = originalTabBarHeight;
+        NSLog(@"[DYYY] layoutSubviews: gCurrentTabBarHeight fallback synced to %.1f.", gCurrentTabBarHeight);
     }
-
-    if ([self applyTabBarHeight])
-        return;
 
     BOOL hideShop = DYYYGetBool(@"DYYYHideShopButton");
     BOOL hideMsg = DYYYGetBool(@"DYYYHideMessageButton");
@@ -6836,30 +7374,18 @@ static void *DYYYTabBarHeightContext = &DYYYTabBarHeightContext;
         static NSNumber *shouldRestoreChat = nil;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            BOOL includeChat = NO;
-            AWEVersionUpdateManager *manager = [%c(AWEVersionUpdateManager) sharedInstance];
-            NSString *currentVersion = manager.currentVersion;
-            if (currentVersion.length > 0) {
-                NSComparisonResult cmp1 = [DYYYUtils compareVersion:currentVersion toVersion:@"35.5.0"];
-                NSComparisonResult cmp2 = [DYYYUtils compareVersion:currentVersion toVersion:@"37.2.0"];
-                BOOL enableForIMMediaDetail = YES;
-                // 检查 ABTest 配置（大于 37.2.0 时需看 ABTest 状态）
-                if (cmp2 != NSOrderedAscending) {
-                    id abTestMgr = [%c(AWEABTestManager) sharedManager];
-                    NSDictionary *abDic = [abTestMgr consistentABTestDic];
-                    NSDictionary *imOpt = [abDic objectForKey:@"im_media_detail_page_opt"];
-                    if ([imOpt isKindOfClass:[NSDictionary class]]) {
-                        id enableValue = [imOpt objectForKey:@"enable"];
-                        if ([enableValue respondsToSelector:@selector(boolValue)]) {
-                            enableForIMMediaDetail = [enableValue boolValue];
-                        }
-                    }
-                }
-                if (cmp1 == NSOrderedAscending || (cmp2 != NSOrderedAscending && enableForIMMediaDetail)) {
-                    includeChat = YES;
-                }
-            }
-            shouldRestoreChat = @(includeChat);
+          BOOL includeChat = NO;
+          Class managerClass = %c(AWEVersionUpdateManager);
+          if (managerClass && [managerClass respondsToSelector:@selector(sharedInstance)]) {
+              AWEVersionUpdateManager *manager = [managerClass sharedInstance];
+              if ([manager respondsToSelector:@selector(currentVersion)]) {
+                  NSString *currentVersion = manager.currentVersion;
+                  if (currentVersion.length > 0) {
+                      includeChat = ([DYYYUtils compareVersion:currentVersion toVersion:@"35.5.0"] == NSOrderedAscending);
+                  }
+              }
+          }
+          shouldRestoreChat = @(includeChat);
         });
 
         if (shouldRestoreChat.boolValue) {
@@ -7112,7 +7638,6 @@ static void *DYYYTabBarHeightContext = &DYYYTabBarHeightContext;
 
 - (void)viewDidLayoutSubviews {
     %orig;
-    // self.view.hidden = YES;
     if (DYYYGetBool(@"DYYYEnableFullScreen")) {
         UIView *contentView = self.contentView;
         if (contentView && contentView.superview) {
@@ -7125,14 +7650,6 @@ static void *DYYYTabBarHeightContext = &DYYYTabBarHeightContext;
             } else if (frame.size.height == parentHeight - (gCurrentTabBarHeight * 2)) {
                 frame.size.height = parentHeight - gCurrentTabBarHeight;
                 contentView.frame = frame;
-            } else if (fabs(frame.size.height - parentHeight) < 1.0) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    CGRect dFrame = contentView.frame;
-                    if (fabs(dFrame.size.height - (parentHeight + gCurrentTabBarHeight)) > 1.0) {
-                        dFrame.size.height += gCurrentTabBarHeight;
-                        contentView.frame = dFrame;
-                    }
-                });
             }
         }
     }
@@ -7947,24 +8464,8 @@ static Class TagViewClass = nil;
 %hook AWEStoryProgressContainerView
 - (void)setCenter:(CGPoint)center {
     UIViewController *vc = [DYYYUtils firstAvailableViewControllerFromView:self];
-    BOOL shouldAdjust = [vc isKindOfClass:NSClassFromString(@"AWEFeedPlayControlImpl.PureModePageCellViewController")] && DYYYGetBool(@"DYYYEnableFullScreen");
-    if (shouldAdjust) {
-        NSString *currentVersion = nil;
-        Class managerClass = %c(AWEVersionUpdateManager);
-        if (managerClass && [managerClass respondsToSelector:@selector(sharedInstance)]) {
-            id manager = [managerClass sharedInstance];
-            if ([manager respondsToSelector:@selector(currentVersion)]) {
-                currentVersion = [manager currentVersion];
-            }
-        }
-        
-        BOOL shouldApply = YES;
-        if (currentVersion && [DYYYUtils compareVersion:currentVersion toVersion:@"37.2.0"] != NSOrderedAscending) {
-            shouldApply = NO;
-        }
-        if (shouldApply) {
-            center.y -= gCurrentTabBarHeight;
-        }
+    if ([vc isKindOfClass:NSClassFromString(@"AWEFeedPlayControlImpl.PureModePageCellViewController")] && DYYYGetBool(@"DYYYEnableFullScreen")) {
+        center.y -= gCurrentTabBarHeight;
     }
     %orig(center);
 }
@@ -8306,93 +8807,6 @@ static NSString *const kHideRecentUsersKey = @"DYYYHideSidebarRecentUsers";
 
 // %end
 
-%group CommentLongPressPanelReportElementGroup
-
-%hook AWECommentLongPressPanelSwiftImpl_CommentLongPressPanelReportElement
-
-- (BOOL)elementShouldShow {
-    BOOL shouldShow = %orig;
-    // if (!DYYYGetBool(DYYY_SAVE_COMMENT_AUDIO_KEY)) {
-    //     return shouldShow;
-    // }
-    
-    AWECommentLongPressPanelContext *context = [self commentPageContext];
-    AWECommentModel *comment = [context selectdComment] ?: [[context params] selectdComment];
-    
-    if (comment && comment.audioModel && comment.audioModel.content) {
-        return YES;
-    }
-    
-    return shouldShow;
-}
-- (id)elementContent {
-    if (!DYYYGetBool(DYYY_SAVE_COMMENT_AUDIO_KEY)) {
-        return %orig;
-    }
-
-    AWECommentLongPressPanelContext *context = [self commentPageContext];
-    AWECommentModel *comment = [context selectdComment] ?: [[context params] selectdComment];
-    
-    if (comment && comment.audioModel && comment.audioModel.content) {
-        return @"下载";
-    }
-    
-    return %orig;
-}
-
-- (id)elementImage {
-    if (!DYYYGetBool(DYYY_SAVE_COMMENT_AUDIO_KEY)) {
-        return %orig;
-    }
-
-    AWECommentLongPressPanelContext *context = [self commentPageContext];
-    AWECommentModel *comment = [context selectdComment] ?: [[context params] selectdComment];
-    
-    if (comment && comment.audioModel && comment.audioModel.content) {
-        UIImage *downloadIcon = [UIImage systemImageNamed:@"arrow.down.circle"];
-        UIGraphicsBeginImageContextWithOptions(downloadIcon.size, NO, downloadIcon.scale);
-        [[UIColor redColor] setFill];
-        [downloadIcon drawInRect:CGRectMake(0, 0, downloadIcon.size.width, downloadIcon.size.height)];
-        UIImage *coloredIcon = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
-        return [coloredIcon imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-    }
-    
-    return %orig;
-}
-
-- (void)elementTapped {
-    if (!DYYYGetBool(DYYY_SAVE_COMMENT_AUDIO_KEY)) {
-        %orig;
-        return;
-    }
-    
-    AWECommentLongPressPanelContext *context = [self commentPageContext];
-    AWECommentModel *comment = [context selectdComment] ?: [[context params] selectdComment];
-    
-    if (comment && comment.audioModel && comment.audioModel.content) {
-        NSString *audioContent = comment.audioModel.content;
-        
-        NSString *userName = @"未知用户";
-        if (comment.author && [comment.author respondsToSelector:@selector(nickname)]) {
-            NSString *nickname = [comment.author performSelector:@selector(nickname)];
-            if (nickname && nickname.length > 0) {
-                userName = nickname;
-            }
-        }
-        
-        [DYYYManager downloadAndShareCommentAudio:audioContent
-                                         userName:userName
-                                       createTime:comment.createTime];
-        return;
-    }
-    
-    %orig;
-}
-
-%end
-%end
-
 %hook AFDViewedBottomView
 - (void)layoutSubviews {
     %orig;
@@ -8508,6 +8922,18 @@ static void findTargetViewInView(UIView *view) {
 }
 
 %ctor {
+    Class interactionBaseLabelClass = objc_getClass("AWECommentSwiftBizUI.CommentInteractionBaseLabel");
+    if (interactionBaseLabelClass) {
+        %init(DYYYCommentExactTimeGroup, AWECommentSwiftBizUI_CommentInteractionBaseLabel = interactionBaseLabelClass);
+    }
+    
+    Class statsMessageClass = objc_getClass("HTSLiveRoomStatsMessage");
+    if (statsMessageClass) {
+        MSHookMessageEx(statsMessageClass, @selector(displayShort), (IMP)&my_displayShort, (IMP *)&orig_displayShort);
+        MSHookMessageEx(statsMessageClass, @selector(displayMiddle), (IMP)&my_displayMiddle, (IMP *)&orig_displayMiddle);
+        MSHookMessageEx(statsMessageClass, @selector(displayLong), (IMP)&my_displayLong, (IMP *)&orig_displayLong);
+    }
+
     Class imMenuComponentClass = objc_getClass("AWEIMCustomMenuComponent");
     if (imMenuComponentClass) {
         SEL legacySelector = NSSelectorFromString(@"msg_showMenuForBubbleFrameInScreen:tapLocationInScreen:menuItemList:moreEmoticon:onCell:extra:");
@@ -8537,7 +8963,9 @@ static void findTargetViewInView(UIView *view) {
         if (isAutoPlayEnabled) {
             %init(AutoPlay);
         }
-        if (DYYYGetBool(@"DYYYForceDownloadEmotion")) {
+        if (DYYYGetBool(@"DYYYForceDownloadEmotion") ||
+            DYYYGetBool(@"DYYYForceDownloadCommentAudio") ||
+            DYYYGetBool(@"DYYYForceDownloadCommentImage")) {
             %init(EnableStickerSaveMenu);
         }
         NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -8563,11 +8991,6 @@ static void findTargetViewInView(UIView *view) {
         if (commentHeaderGoodsClass) {
             %init(CommentHeaderGoodsGroup, AWECommentPanelHeaderSwiftImpl_CommentHeaderGoodsView = commentHeaderGoodsClass);
         }
-        Class report = objc_getClass("AWECommentLongPressPanelSwiftImpl.CommentLongPressPanelReportElement");
-        if (report) {
-            %init(CommentLongPressPanelReportElementGroup, AWECommentLongPressPanelSwiftImpl_CommentLongPressPanelReportElement = report);
-        }
-
         Class commentHeaderTemplateClass = objc_getClass("AWECommentPanelHeaderSwiftImpl.CommentHeaderTemplateAnchorView");
         if (commentHeaderTemplateClass) {
             %init(CommentHeaderTemplateGroup, AWECommentPanelHeaderSwiftImpl_CommentHeaderTemplateAnchorView = commentHeaderTemplateClass);
