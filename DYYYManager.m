@@ -5,35 +5,10 @@
 #import <MobileCoreServices/MobileCoreServices.h>
 #import <MobileCoreServices/UTCoreTypes.h>
 #import <Photos/Photos.h>
-#import <math.h>
-#import <objc/message.h>
 #import <objc/runtime.h>
-
-@class YYImageDecoder;
-@class YYImageFrame;
-
-@interface YYImageFrame : NSObject
-@property(nonatomic, strong) UIImage *image;
-@property(nonatomic) CGFloat duration;
-@end
-
-@interface YYImageDecoder : NSObject
-@property(nonatomic, readonly) NSUInteger frameCount;
-+ (instancetype)decoderWithData:(NSData *)data scale:(CGFloat)scale;
-- (YYImageFrame *)frameAtIndex:(NSUInteger)index decodeForDisplay:(BOOL)decodeForDisplay;
-@end
 
 #import "DYYYToast.h"
 #import "DYYYUtils.h"
-
-static const NSTimeInterval kDYYYDefaultFrameDelay = 0.1f;
-
-static inline CGFloat DYYYNormalizedDelay(CGFloat delay) {
-    if (!isfinite(delay) || delay < 0.01f) {
-        return kDYYYDefaultFrameDelay;
-    }
-    return delay;
-}
 
 
 @interface DYYYManager () {
@@ -132,15 +107,14 @@ static inline CGFloat DYYYNormalizedDelay(CGFloat delay) {
       };
 
       if (mediaType == MediaTypeHeic) {
-          NSString *actualFormat = [self detectFileFormat:mediaURL];
+          NSString *actualFormat = [DYYYUtils detectFileFormat:mediaURL];
 
           if ([actualFormat isEqualToString:@"webp"]) {
-              [self convertWebpToGifSafely:mediaURL
-                                completion:^(NSURL *gifURL, BOOL success) {
+              [DYYYUtils convertWebpToGifSafely:mediaURL
+                                     completion:^(NSURL *gifURL, BOOL success) {
                                   if (success && gifURL) {
-                                      [self saveGifToPhotoLibrary:gifURL
-                                                        mediaType:mediaType
-                                                       completion:^(BOOL gifSuccess) {
+                                      [DYYYUtils saveGifToPhotoLibrary:gifURL
+                                                            completion:^(BOOL gifSuccess) {
                                                          [[NSFileManager defaultManager] removeItemAtPath:mediaURL.path error:nil];
                                                          reportResult(gifSuccess);
                                                        }];
@@ -156,12 +130,11 @@ static inline CGFloat DYYYNormalizedDelay(CGFloat delay) {
           }
 
           if ([actualFormat isEqualToString:@"heic"] || [actualFormat isEqualToString:@"heif"]) {
-              [self convertHeicToGif:mediaURL
-                          completion:^(NSURL *gifURL, BOOL success) {
+              [DYYYUtils convertHeicToGif:mediaURL
+                               completion:^(NSURL *gifURL, BOOL success) {
                             if (success && gifURL) {
-                                [self saveGifToPhotoLibrary:gifURL
-                                                  mediaType:mediaType
-                                                 completion:^(BOOL gifSuccess) {
+                                [DYYYUtils saveGifToPhotoLibrary:gifURL
+                                                      completion:^(BOOL gifSuccess) {
                                                    [[NSFileManager defaultManager] removeItemAtPath:mediaURL.path error:nil];
                                                    reportResult(gifSuccess);
                                                  }];
@@ -177,9 +150,8 @@ static inline CGFloat DYYYNormalizedDelay(CGFloat delay) {
           }
 
           if ([actualFormat isEqualToString:@"gif"]) {
-              [self saveGifToPhotoLibrary:mediaURL
-                                mediaType:mediaType
-                               completion:^(BOOL gifSuccess) {
+              [DYYYUtils saveGifToPhotoLibrary:mediaURL
+                                    completion:^(BOOL gifSuccess) {
                                  reportResult(gifSuccess);
                                }];
               return;
@@ -225,448 +197,6 @@ static inline CGFloat DYYYNormalizedDelay(CGFloat delay) {
             });
           }];
     }];
-}
-
-// 检测文件格式的方法
-+ (NSString *)detectFileFormat:(NSURL *)fileURL {
-    // 读取文件的整个数据或足够的字节用于识别
-    NSData *fileData = [NSData dataWithContentsOfURL:fileURL options:NSDataReadingMappedIfSafe error:nil];
-    if (!fileData || fileData.length < 12) {
-        return @"unknown";
-    }
-
-    // 转换为字节数组以便检查
-    const unsigned char *bytes = [fileData bytes];
-
-    // 检查WebP格式："RIFF" + 4字节 + "WEBP"
-    if (bytes[0] == 'R' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == 'F' && bytes[8] == 'W' && bytes[9] == 'E' && bytes[10] == 'B' && bytes[11] == 'P') {
-        return @"webp";
-    }
-
-    // 检查HEIF/HEIC格式："ftyp" 在第4-7字节位置
-    if (bytes[4] == 'f' && bytes[5] == 't' && bytes[6] == 'y' && bytes[7] == 'p') {
-        if (fileData.length >= 16) {
-            // 检查HEIC品牌
-            if (bytes[8] == 'h' && bytes[9] == 'e' && bytes[10] == 'i' && bytes[11] == 'c') {
-                return @"heic";
-            }
-            // 检查HEIF品牌
-            if (bytes[8] == 'h' && bytes[9] == 'e' && bytes[10] == 'i' && bytes[11] == 'f') {
-                return @"heif";
-            }
-            // 可能是其他HEIF变体
-            return @"heif";
-        }
-    }
-
-    // 检查GIF格式："GIF87a"或"GIF89a"
-    if (bytes[0] == 'G' && bytes[1] == 'I' && bytes[2] == 'F') {
-        return @"gif";
-    }
-
-    // 检查PNG格式
-    if (bytes[0] == 0x89 && bytes[1] == 'P' && bytes[2] == 'N' && bytes[3] == 'G') {
-        return @"png";
-    }
-
-    // 检查JPEG格式
-    if (bytes[0] == 0xFF && bytes[1] == 0xD8) {
-        return @"jpeg";
-    }
-
-    return @"unknown";
-}
-
-static uint32_t DYYYReadUInt32BigEndian(const uint8_t *bytes) {
-    return ((uint32_t)bytes[0] << 24) | ((uint32_t)bytes[1] << 16) | ((uint32_t)bytes[2] << 8) | (uint32_t)bytes[3];
-}
-
-static uint64_t DYYYReadUInt64BigEndian(const uint8_t *bytes) {
-    uint64_t value = 0;
-    for (NSUInteger i = 0; i < 8; i++) {
-        value = (value << 8) | (uint64_t)bytes[i];
-    }
-    return value;
-}
-
-static NSTimeInterval DYYYParseMVHDDuration(const uint8_t *bytes, NSUInteger length) {
-    NSUInteger position = 0;
-    while (position + 8 <= length) {
-        uint64_t rawSize = DYYYReadUInt32BigEndian(bytes + position);
-        NSUInteger header = 8;
-
-        if (rawSize == 1) {
-            if (position + 16 > length) {
-                break;
-            }
-            rawSize = DYYYReadUInt64BigEndian(bytes + position + 8);
-            header = 16;
-        } else if (rawSize == 0) {
-            rawSize = length - position;
-        }
-
-        if (rawSize < header || position + rawSize > length) {
-            break;
-        }
-
-        const uint8_t *typePtr = bytes + position + 4;
-        if (typePtr[0] == 'm' && typePtr[1] == 'v' && typePtr[2] == 'h' && typePtr[3] == 'd') {
-            const uint8_t *payload = bytes + position + header;
-            NSUInteger payloadLength = (NSUInteger)rawSize - header;
-            if (payloadLength < 20) {
-                break;
-            }
-
-            uint8_t version = payload[0];
-            if (version == 0) {
-                if (payloadLength < 20) {
-                    break;
-                }
-                uint32_t timescale = DYYYReadUInt32BigEndian(payload + 12);
-                uint32_t duration = DYYYReadUInt32BigEndian(payload + 16);
-                if (timescale > 0) {
-                    return (NSTimeInterval)duration / (NSTimeInterval)timescale;
-                }
-            } else if (version == 1) {
-                if (payloadLength < 32) {
-                    break;
-                }
-                uint32_t timescale = DYYYReadUInt32BigEndian(payload + 20);
-                uint64_t duration = DYYYReadUInt64BigEndian(payload + 24);
-                if (timescale > 0) {
-                    return (NSTimeInterval)duration / (NSTimeInterval)timescale;
-                }
-            }
-        }
-
-        position += (NSUInteger)rawSize;
-    }
-
-    return 0;
-}
-
-static NSTimeInterval DYYYParseHEIFDuration(const uint8_t *bytes, NSUInteger length) {
-    NSUInteger position = 0;
-    while (position + 8 <= length) {
-        uint64_t rawSize = DYYYReadUInt32BigEndian(bytes + position);
-        NSUInteger header = 8;
-
-        if (rawSize == 1) {
-            if (position + 16 > length) {
-                break;
-            }
-            rawSize = DYYYReadUInt64BigEndian(bytes + position + 8);
-            header = 16;
-        } else if (rawSize == 0) {
-            rawSize = length - position;
-        }
-
-        if (rawSize < header || position + rawSize > length) {
-            break;
-        }
-
-        const uint8_t *typePtr = bytes + position + 4;
-        if (typePtr[0] == 'm' && typePtr[1] == 'o' && typePtr[2] == 'o' && typePtr[3] == 'v') {
-            NSTimeInterval duration = DYYYParseMVHDDuration(bytes + position + header, (NSUInteger)rawSize - header);
-            if (duration > 0) {
-                return duration;
-            }
-        }
-
-        position += (NSUInteger)rawSize;
-    }
-
-    return 0;
-}
-
-static NSTimeInterval DYYYHEIFDurationFromData(NSData *data) {
-    if (!data || data.length < 16) {
-        return 0;
-    }
-    const uint8_t *bytes = (const uint8_t *)data.bytes;
-    return DYYYParseHEIFDuration(bytes, data.length);
-}
-
-// 保存GIF到相册的方法
-+ (void)saveGifToPhotoLibrary:(NSURL *)gifURL mediaType:(MediaType)mediaType completion:(void (^)(BOOL success))completion {
-    (void)mediaType;
-    [[PHPhotoLibrary sharedPhotoLibrary]
-        performChanges:^{
-          NSData *gifData = [NSData dataWithContentsOfURL:gifURL];
-          PHAssetCreationRequest *request = [PHAssetCreationRequest creationRequestForAsset];
-          PHAssetResourceCreationOptions *options = [[PHAssetResourceCreationOptions alloc] init];
-          options.uniformTypeIdentifier = @"com.compuserve.gif";
-          [request addResourceWithType:PHAssetResourceTypePhoto data:gifData options:options];
-        }
-        completionHandler:^(BOOL success, NSError *_Nullable error) {
-          dispatch_async(dispatch_get_main_queue(), ^{
-            if (!success) {
-                [DYYYUtils showToast:@"儲存失敗"];
-            }
-            [[NSFileManager defaultManager] removeItemAtPath:gifURL.path error:nil];
-            if (completion) {
-                completion(success);
-            }
-          });
-        }];
-}
-
-static NSURL *DYYYTemporaryGIFURLForSourceURL(NSURL *sourceURL) {
-    NSString *baseName = sourceURL.lastPathComponent.stringByDeletingPathExtension;
-    if (baseName.length == 0) {
-        baseName = @"image";
-    }
-    NSString *fileName = [NSString stringWithFormat:@"%@_%@.gif", baseName, [[NSUUID UUID] UUIDString]];
-    NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:fileName];
-    return [NSURL fileURLWithPath:path];
-}
-
-static YYImageDecoder *DYYYCreateYYDecoderWithData(NSData *data, CGFloat scale) {
-    if (!data || data.length == 0) {
-        return nil;
-    }
-
-    Class decoderClass = NSClassFromString(@"YYImageDecoder");
-    if (!decoderClass || ![decoderClass respondsToSelector:@selector(decoderWithData:scale:)]) {
-        return nil;
-    }
-
-    CGFloat resolvedScale = scale > 0 ? scale : 1.0f;
-    id decoderInstance = ((id(*)(id, SEL, NSData *, CGFloat))objc_msgSend)(decoderClass, @selector(decoderWithData:scale:), data, resolvedScale);
-    if (![decoderInstance isKindOfClass:decoderClass]) {
-        return nil;
-    }
-
-    return (YYImageDecoder *)decoderInstance;
-}
-
-static CGFloat DYYYTotalDurationFromYYDecoder(YYImageDecoder *decoder) {
-    if (!decoder || decoder.frameCount == 0) {
-        return 0;
-    }
-
-    CGFloat totalDuration = 0;
-    NSUInteger frameCount = decoder.frameCount;
-    for (NSUInteger i = 0; i < frameCount; i++) {
-        YYImageFrame *frame = [decoder frameAtIndex:i decodeForDisplay:NO];
-        if (!frame) {
-            continue;
-        }
-        CGFloat frameDuration = frame.duration > 0 ? frame.duration : kDYYYDefaultFrameDelay;
-        totalDuration += frameDuration;
-    }
-
-    return totalDuration;
-}
-
-static BOOL DYYYWriteGIFUsingYYDecoder(YYImageDecoder *decoder, NSURL *gifURL, NSTimeInterval fallbackTotalDuration) {
-    if (!decoder || decoder.frameCount == 0) {
-        return NO;
-    }
-
-    NSUInteger frameCount = (NSUInteger)decoder.frameCount;
-    CGFloat fallbackFrameDuration = 0;
-    if (fallbackTotalDuration > 0 && frameCount > 0) {
-        fallbackFrameDuration = fallbackTotalDuration / frameCount;
-    }
-    CGImageDestinationRef dest = CGImageDestinationCreateWithURL((__bridge CFURLRef)gifURL, kUTTypeGIF, frameCount, NULL);
-    if (!dest) {
-        return NO;
-    }
-
-    NSDictionary *gifProperties = @{(__bridge NSString *)kCGImagePropertyGIFDictionary : @{(__bridge NSString *)kCGImagePropertyGIFLoopCount : @0}};
-    CGImageDestinationSetProperties(dest, (__bridge CFDictionaryRef)gifProperties);
-
-    BOOL hasFrame = NO;
-    for (NSUInteger i = 0; i < frameCount; i++) {
-        YYImageFrame *frame = [decoder frameAtIndex:i decodeForDisplay:YES];
-        UIImage *image = frame.image;
-        CGImageRef imageRef = image.CGImage;
-        if (!imageRef) {
-            continue;
-        }
-
-        CGFloat frameDuration = frame.duration;
-        if ((!isfinite(frameDuration) || frameDuration <= 0) && fallbackFrameDuration > 0) {
-            frameDuration = fallbackFrameDuration;
-        }
-        CGFloat delay = DYYYNormalizedDelay(frameDuration);
-        NSDictionary *frameProps = @{(__bridge NSString *)kCGImagePropertyGIFDictionary : @{(__bridge NSString *)kCGImagePropertyGIFDelayTime : @(delay)}};
-        CGImageDestinationAddImage(dest, imageRef, (__bridge CFDictionaryRef)frameProps);
-        hasFrame = YES;
-    }
-
-    BOOL success = hasFrame ? CGImageDestinationFinalize(dest) : NO;
-    CFRelease(dest);
-    return success;
-}
-
-static BOOL DYYYConvertAnimatedDataWithYYDecoder(NSData *data, NSURL *gifURL, CGFloat scale) {
-    YYImageDecoder *decoder = DYYYCreateYYDecoderWithData(data, scale);
-    if (!decoder) {
-        return NO;
-    }
-    return DYYYWriteGIFUsingYYDecoder(decoder, gifURL, 0);
-}
-
-static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
-    CGImageRef imageRef = image.CGImage;
-    if (!imageRef) {
-        return NO;
-    }
-
-    CGImageDestinationRef dest = CGImageDestinationCreateWithURL((__bridge CFURLRef)gifURL, kUTTypeGIF, 1, NULL);
-    if (!dest) {
-        return NO;
-    }
-
-    NSDictionary *gifProperties = @{(__bridge NSString *)kCGImagePropertyGIFDictionary : @{(__bridge NSString *)kCGImagePropertyGIFLoopCount : @0}};
-    CGImageDestinationSetProperties(dest, (__bridge CFDictionaryRef)gifProperties);
-
-    NSDictionary *frameProperties = @{(__bridge NSString *)kCGImagePropertyGIFDictionary : @{(__bridge NSString *)kCGImagePropertyGIFDelayTime : @(kDYYYDefaultFrameDelay)}};
-    CGImageDestinationAddImage(dest, imageRef, (__bridge CFDictionaryRef)frameProperties);
-
-    BOOL success = CGImageDestinationFinalize(dest);
-    CFRelease(dest);
-    return success;
-}
-
-+ (void)convertWebpToGifSafely:(NSURL *)webpURL completion:(void (^)(NSURL *gifURL, BOOL success))completion {
-    if (!webpURL) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-          if (completion) {
-              completion(nil, NO);
-          }
-        });
-        return;
-    }
-
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-      NSData *webpData = [NSData dataWithContentsOfURL:webpURL options:NSDataReadingMappedIfSafe error:nil];
-      if (!webpData) {
-          dispatch_async(dispatch_get_main_queue(), ^{
-            if (completion) {
-                completion(nil, NO);
-            }
-          });
-          return;
-      }
-
-      NSURL *gifURL = DYYYTemporaryGIFURLForSourceURL(webpURL);
-      [[NSFileManager defaultManager] removeItemAtURL:gifURL error:nil];
-
-      // Use Aweme's bundled YYImageDecoder to handle animated WebP frames.
-      BOOL success = DYYYConvertAnimatedDataWithYYDecoder(webpData, gifURL, 1.0f);
-
-      if (!success) {
-          UIImage *fallbackImage = [UIImage imageWithData:webpData];
-          if (fallbackImage) {
-              success = DYYYWriteStaticImageToGIF(fallbackImage, gifURL);
-          }
-      }
-
-      if (!success) {
-          [[NSFileManager defaultManager] removeItemAtURL:gifURL error:nil];
-      }
-
-      dispatch_async(dispatch_get_main_queue(), ^{
-        if (completion) {
-            completion(success ? gifURL : nil, success);
-        }
-      });
-    });
-}
-
-// 将HEIC转换为GIF的方法
-+ (void)convertHeicToGif:(NSURL *)heicURL completion:(void (^)(NSURL *gifURL, BOOL success))completion {
-    if (!heicURL) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-          if (completion) {
-              completion(nil, NO);
-          }
-        });
-        return;
-    }
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-      NSData *heicData = [NSData dataWithContentsOfURL:heicURL options:NSDataReadingMappedIfSafe error:nil];
-      NSTimeInterval heifDuration = DYYYHEIFDurationFromData(heicData);
-      NSURL *gifURL = DYYYTemporaryGIFURLForSourceURL(heicURL);
-      [[NSFileManager defaultManager] removeItemAtURL:gifURL error:nil];
-
-      BOOL success = NO;
-      NSString *failureReason = nil;
-
-      if (!heicData || heicData.length == 0) {
-          failureReason = @"讀取HEIC資料失敗或資料為空";
-      } else {
-          YYImageDecoder *decoder = DYYYCreateYYDecoderWithData(heicData, 1.0f);
-          if (!decoder) {
-              failureReason = @"無法透過YYImageDecoder解析HEIC數據，可能是資源不是動圖或SDK不可用";
-          } else if (decoder.frameCount == 0) {
-              failureReason = @"YYImageDecoder未解析到任何幀，HEIC資源可能不是動圖";
-          } else {
-              success = DYYYWriteGIFUsingYYDecoder(decoder, gifURL, heifDuration);
-              if (!success) {
-                  failureReason = @"YYImageDecoder寫入GIF失敗，可能是影像資料損壞或磁碟空間不足";
-              }
-          }
-      }
-
-      if (!success) {
-          [[NSFileManager defaultManager] removeItemAtURL:gifURL error:nil];
-          if (failureReason.length > 0) {
-              NSLog(@"[DYYY] convertHeicToGif失敗: %@", failureReason);
-          }
-      }
-
-      dispatch_async(dispatch_get_main_queue(), ^{
-        if (completion) {
-            completion(success ? gifURL : nil, success);
-        }
-      });
-    });
-}
-
-+ (BOOL)framesFromAnimatedData:(NSData *)data scale:(CGFloat)scale images:(NSArray<UIImage *> *_Nullable *)images totalDuration:(CGFloat *_Nullable)totalDuration {
-    if (images) {
-        *images = nil;
-    }
-    if (totalDuration) {
-        *totalDuration = 0;
-    }
-    if (!data.length) {
-        return NO;
-    }
-
-    CGFloat resolvedScale = scale > 0 ? scale : 1.0f;
-    YYImageDecoder *decoder = DYYYCreateYYDecoderWithData(data, resolvedScale);
-    if (!decoder || decoder.frameCount == 0) {
-        return NO;
-    }
-
-    NSMutableArray<UIImage *> *decodedFrames = [NSMutableArray arrayWithCapacity:decoder.frameCount];
-    CGFloat durationAccumulator = 0;
-    for (NSUInteger i = 0; i < decoder.frameCount; i++) {
-        YYImageFrame *frame = [decoder frameAtIndex:i decodeForDisplay:YES];
-        if (!frame || !frame.image) {
-            continue;
-        }
-        [decodedFrames addObject:frame.image];
-        durationAccumulator += DYYYNormalizedDelay(frame.duration);
-    }
-
-    if (decodedFrames.count == 0) {
-        return NO;
-    }
-
-    if (images) {
-        *images = [decodedFrames copy];
-    }
-    if (totalDuration) {
-        *totalDuration = durationAccumulator > 0 ? durationAccumulator : decodedFrames.count * kDYYYDefaultFrameDelay;
-    }
-
-    return YES;
 }
 
 + (void)downloadLivePhoto:(NSURL *)imageURL videoURL:(NSURL *)videoURL completion:(void (^)(void))completion {
@@ -802,7 +332,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
           }
       }
 
-      // 下载视频
+      // 下載影片
       dispatch_group_enter(group);
       NSURLRequest *videoRequest = [NSURLRequest requestWithURL:videoURL];
       NSURLSessionDataTask *videoTask = [session dataTaskWithRequest:videoRequest
@@ -868,7 +398,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
                 [[NSFileManager defaultManager] removeItemAtPath:imagePath error:nil];
                 [[NSFileManager defaultManager] removeItemAtPath:videoPath error:nil];
                 [manager.fileLinks removeObjectForKey:uniqueKey];
-                [DYYYUtils showToast:@"儲存原況照片失敗"];
+                [DYYYUtils showToast:@"保存实况照片失败"];
             }
         } else {
             // 清理不完整的文件
@@ -877,7 +407,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
             if (videoExists)
                 [[NSFileManager defaultManager] removeItemAtPath:videoPath error:nil];
             [manager.fileLinks removeObjectForKey:uniqueKey];
-            [DYYYUtils showToast:@"下載原況照片失敗"];
+            [DYYYUtils showToast:@"下载实况照片失败"];
         }
 
         if (completion) {
@@ -930,10 +460,10 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
                                    });
                                } else {
                                    if (mediaType == MediaTypeVideo && audioURL) {
-                                       if (![self videoHasAudio:fileURL]) {
-                                           [self downloadAudioAndMergeWithVideo:fileURL
-                                                                       audioURL:audioURL
-                                                                     completion:^(BOOL mergeSuccess, NSURL *mergedURL) {
+                                       if (![DYYYUtils videoHasAudio:fileURL]) {
+                                           [DYYYUtils downloadAudioAndMergeWithVideo:fileURL
+                                                                            audioURL:audioURL
+                                                                          completion:^(BOOL mergeSuccess, NSURL *mergedURL) {
                                                                        if (mergeSuccess) {
                                                                            [[DYYYManager shared] replaceFileURL:fileURL withFileURL:mergedURL];
                                                                            [[NSFileManager defaultManager] removeItemAtURL:fileURL error:nil];
@@ -973,138 +503,36 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
                             audio:(NSURL *)audioURL
                          progress:(void (^)(float progress))progressBlock
                        completion:(void (^)(BOOL success, NSURL *fileURL))completion {
-    // 創建自訂進度條介面
+    // 创建自定义进度条界面
     dispatch_async(dispatch_get_main_queue(), ^{
-      // 創建進度視圖
+      // 创建进度视图
       CGRect screenBounds = [UIScreen mainScreen].bounds;
       DYYYToast *progressView = [[DYYYToast alloc] initWithFrame:screenBounds];
 
-      // 生成下載ID並保存進度視圖
+      // 生成下载ID并保存进度视图
       NSString *downloadID = [NSUUID UUID].UUIDString;
       [[DYYYManager shared].progressViews setObject:progressView forKey:downloadID];
 
       [progressView show];
 
-      // 儲存回調
+      // 保存回调
       [[DYYYManager shared] setCompletionBlock:completion forDownloadID:downloadID];
       [[DYYYManager shared] setMediaType:mediaType forDownloadID:downloadID];
 
-      // 配置下載會話 - 使用帶委託的會話以獲取進度更新
+      // 配置下载会话 - 使用带委托的会话以获取进度更新
       NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
       NSURLSession *session = [NSURLSession sessionWithConfiguration:configuration delegate:[DYYYManager shared] delegateQueue:[NSOperationQueue mainQueue]];
 
-      // 創建下載任務 - 不使用completionHandler，使用代理方法
+      // 创建下载任务 - 不使用completionHandler，使用代理方法
       NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithURL:url];
       downloadTask.taskDescription = downloadID;
 
-      // 儲存下載任務
+      // 存储下载任务
       [[DYYYManager shared].downloadTasks setObject:downloadTask forKey:downloadID];
-      [[DYYYManager shared].taskProgressMap setObject:@0.0 forKey:downloadID];  // 初始化進度為0
+      [[DYYYManager shared].taskProgressMap setObject:@0.0 forKey:downloadID];  // 初始化进度为0
 
-      // 開始下載
+      // 开始下载
       [downloadTask resume];
-    });
-}
-
-+ (NSString *)getMediaTypeDescription:(MediaType)mediaType {
-    switch (mediaType) {
-        case MediaTypeVideo:
-            return @"影片";
-        case MediaTypeImage:
-            return @"圖片";
-        case MediaTypeAudio:
-            return @"音訊";
-        case MediaTypeHeic:
-            return @"表情包";
-        default:
-            return @"檔案";
-    }
-}
-
-// 判斷影片是否包含音訊軌道
-+ (BOOL)videoHasAudio:(NSURL *)videoURL {
-    AVAsset *asset = [AVAsset assetWithURL:videoURL];
-    NSArray *audioTracks = [asset tracksWithMediaType:AVMediaTypeAudio];
-    return audioTracks.count > 0;
-}
-
-// 下載音訊並與影片合併
-+ (void)downloadAudioAndMergeWithVideo:(NSURL *)videoURL audioURL:(NSURL *)audioURL completion:(void (^)(BOOL success, NSURL *mergedURL))completion {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-      NSData *audioData = [NSData dataWithContentsOfURL:audioURL];
-      if (!audioData) {
-          dispatch_async(dispatch_get_main_queue(), ^{
-            if (completion)
-                completion(NO, nil);
-          });
-          return;
-      }
-
-      NSString *audioPath = [DYYYUtils cachePathForFilename:[NSString stringWithFormat:@"temp_%@", audioURL.lastPathComponent]];
-      NSURL *audioFile = [NSURL fileURLWithPath:audioPath];
-      if (![audioData writeToURL:audioFile atomically:YES]) {
-          dispatch_async(dispatch_get_main_queue(), ^{
-            if (completion)
-                completion(NO, nil);
-          });
-          return;
-      }
-
-      [self mergeVideo:videoURL
-             withAudio:audioFile
-            completion:^(BOOL success, NSURL *merged) {
-              [[NSFileManager defaultManager] removeItemAtURL:audioFile error:nil];
-              dispatch_async(dispatch_get_main_queue(), ^{
-                if (completion)
-                    completion(success, merged);
-              });
-            }];
-    });
-}
-
-// 合并视频和音频
-+ (void)mergeVideo:(NSURL *)videoURL withAudio:(NSURL *)audioURL completion:(void (^)(BOOL success, NSURL *mergedURL))completion {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-      AVURLAsset *videoAsset = [AVURLAsset URLAssetWithURL:videoURL options:nil];
-      AVURLAsset *audioAsset = [AVURLAsset URLAssetWithURL:audioURL options:nil];
-      AVAssetTrack *videoTrack = [[videoAsset tracksWithMediaType:AVMediaTypeVideo] firstObject];
-      AVAssetTrack *audioTrack = [[audioAsset tracksWithMediaType:AVMediaTypeAudio] firstObject];
-      if (!videoTrack || !audioTrack) {
-          dispatch_async(dispatch_get_main_queue(), ^{
-            if (completion)
-                completion(NO, nil);
-          });
-          return;
-      }
-
-      AVMutableComposition *composition = [AVMutableComposition composition];
-      AVMutableCompositionTrack *compVideoTrack = [composition addMutableTrackWithMediaType:AVMediaTypeVideo preferredTrackID:kCMPersistentTrackID_Invalid];
-      [compVideoTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, videoAsset.duration) ofTrack:videoTrack atTime:kCMTimeZero error:nil];
-
-      AVMutableCompositionTrack *compAudioTrack = [composition addMutableTrackWithMediaType:AVMediaTypeAudio preferredTrackID:kCMPersistentTrackID_Invalid];
-      [compAudioTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, videoAsset.duration) ofTrack:audioTrack atTime:kCMTimeZero error:nil];
-
-      NSString *outputPath = [DYYYUtils cachePathForFilename:[NSString stringWithFormat:@"merged_%@", videoURL.lastPathComponent]];
-      NSURL *outputURL = [NSURL fileURLWithPath:outputPath];
-      if ([[NSFileManager defaultManager] fileExistsAtPath:outputPath]) {
-          [[NSFileManager defaultManager] removeItemAtPath:outputPath error:nil];
-      }
-
-      AVAssetExportSession *exportSession = [[AVAssetExportSession alloc] initWithAsset:composition presetName:AVAssetExportPresetPassthrough];
-      exportSession.outputURL = outputURL;
-      exportSession.outputFileType = AVFileTypeMPEG4;
-      [exportSession exportAsynchronouslyWithCompletionHandler:^{
-        BOOL success = exportSession.status == AVAssetExportSessionStatusCompleted;
-        if (!success) {
-            NSLog(@"Merge export failed: %@", exportSession.error);
-        } else {
-            [[NSFileManager defaultManager] removeItemAtURL:videoURL error:nil];
-        }
-        dispatch_async(dispatch_get_main_queue(), ^{
-          if (completion)
-              completion(success, success ? outputURL : nil);
-        });
-      }];
     });
 }
 
@@ -1279,14 +707,14 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
             }
             [self.progressViews removeObjectForKey:batchID];
 
-            // 清理批量下載相關資訊
+            // 清理批量下载相关信息
             [self.batchCompletedCountMap removeObjectForKey:batchID];
             [self.batchSuccessCountMap removeObjectForKey:batchID];
             [self.batchTotalCountMap removeObjectForKey:batchID];
             [self.batchProgressBlocks removeObjectForKey:batchID];
             [self.batchCompletionBlocks removeObjectForKey:batchID];
 
-            // 移除關聯的下載ID
+            // 移除关联的下载ID
             NSArray *downloadIDs = [self.downloadToBatchMap allKeysForObject:batchID];
             for (NSString *downloadID in downloadIDs) {
                 [self.downloadToBatchMap removeObjectForKey:downloadID];
@@ -1295,14 +723,14 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
     }
 }
 
-// 儲存完成回調
+// 保存完成回调
 - (void)setCompletionBlock:(void (^)(BOOL success, NSURL *fileURL))completion forDownloadID:(NSString *)downloadID {
     if (completion) {
         [self.completionBlocks setObject:[completion copy] forKey:downloadID];
     }
 }
 
-// 儲存媒體類型
+// 保存媒体类型
 - (void)setMediaType:(MediaType)mediaType forDownloadID:(NSString *)downloadID {
     [self.mediaTypeMap setObject:@(mediaType) forKey:downloadID];
 }
@@ -1370,7 +798,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
     if (downloadID.length == 0) {
         dispatch_async(dispatch_get_main_queue(), ^{
           if (!success) {
-              [DYYYUtils showToast:@"保存失败"];
+              [DYYYUtils showToast:@"儲存失敗"];
           }
         });
         return;
@@ -1420,12 +848,12 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
                  didWriteData:(int64_t)bytesWritten
             totalBytesWritten:(int64_t)totalBytesWritten
     totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite {
-    // 確保不會除以0
+    // 确保不会除以0
     if (totalBytesExpectedToWrite <= 0) {
         return;
     }
 
-    // 計算進度
+    // 计算进度
     float progress = (float)totalBytesWritten / totalBytesExpectedToWrite;
 
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -1439,7 +867,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
           }
       }
 
-      // 如果找到對應的進度視圖，更新進度
+      // 如果找到对应的进度视图，更新进度
       if (downloadIDForTask) {
           [self.taskProgressMap setObject:@(progress) forKey:downloadIDForTask];
 
@@ -1453,9 +881,9 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
     });
 }
 
-// 下載完成的代理方法
+// 下载完成的代理方法
 - (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didFinishDownloadingToURL:(NSURL *)location {
-    // 找到對應的下載ID
+    // 找到对应的下载ID
     NSString *downloadIDForTask = nil;
     for (NSString *key in self.downloadTasks.allKeys) {
         NSURLSessionDownloadTask *task = self.downloadTasks[key];
@@ -1469,18 +897,18 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
         return;
     }
 
-    // 檢查是否屬於批量下載
+    // 检查是否属于批量下载
     NSString *batchID = self.downloadToBatchMap[downloadIDForTask];
     BOOL isBatchDownload = (batchID != nil);
 
-    // 獲取該下載任務的mediaType
+    // 获取该下载任务的mediaType
     NSNumber *mediaTypeNumber = self.mediaTypeMap[downloadIDForTask];
-    MediaType mediaType = MediaTypeImage;  // 預設為圖片
+    MediaType mediaType = MediaTypeImage;  // 默认为图片
     if (mediaTypeNumber) {
         mediaType = (MediaType)[mediaTypeNumber integerValue];
     }
 
-    // 處理下載的檔案
+    // 处理下载的文件
     NSString *fileName = [downloadTask.originalRequest.URL lastPathComponent];
 
     if (!fileName.pathExtension.length) {
@@ -1553,10 +981,10 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
     if (!error) {
-        return;  // 成功完成的情況已在didFinishDownloadingToURL處理
+        return;  // 成功完成的情况已在didFinishDownloadingToURL处理
     }
 
-    // 處理錯誤情況
+    // 处理错误情况
     NSString *downloadIDForTask = nil;
     for (NSString *key in self.downloadTasks.allKeys) {
         NSURLSessionTask *existingTask = self.downloadTasks[key];
@@ -1570,21 +998,21 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
         return;
     }
 
-    // 檢查是否屬於批量下載
+    // 检查是否属于批量下载
     NSString *batchID = self.downloadToBatchMap[downloadIDForTask];
     BOOL isBatchDownload = (batchID != nil);
 
     if (isBatchDownload) {
-        // 批量下載錯誤處理
+        // 批量下载错误处理
         [[DYYYManager shared] incrementCompletedAndUpdateProgressForBatch:batchID success:NO];
 
-        // 清理下載任務
+        // 清理下载任务
         [self.downloadTasks removeObjectForKey:downloadIDForTask];
         [self.taskProgressMap removeObjectForKey:downloadIDForTask];
         [self.mediaTypeMap removeObjectForKey:downloadIDForTask];
         [self.downloadToBatchMap removeObjectForKey:downloadIDForTask];
     } else {
-        // 單個下載錯誤處理
+        // 单个下载错误处理
         void (^completionBlock)(BOOL success, NSURL *fileURL) = self.completionBlocks[downloadIDForTask];
 
         if (error.code != NSURLErrorCancelled) {
@@ -1603,11 +1031,11 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
     }
 }
 
-// MARK: 以下都是創建儲存原況的調用方法
+// MARK: 以下都是创建保存实况的调用方法
 - (void)saveLivePhoto:(NSString *)imageSourcePath videoUrl:(NSString *)videoSourcePath {
-    // 首先檢查iOS版本
+    // 首先检查iOS版本
     if (@available(iOS 15.0, *)) {
-        // iOS 15及更高版本使用原有的實現
+        // iOS 15及更高版本使用原有的实现
         NSURL *photoURL = [NSURL fileURLWithPath:imageSourcePath];
         NSURL *videoURL = [NSURL fileURLWithPath:videoSourcePath];
         BOOL available = [PHAssetCreationRequest supportsAssetResourceTypes:@[ @(PHAssetResourceTypePhoto), @(PHAssetResourceTypePairedVideo) ]];
@@ -1634,7 +1062,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
                             completionHandler:^(BOOL success, NSError *_Nullable error) {
                               dispatch_async(dispatch_get_main_queue(), ^{
                                 if (success) {
-                                    // 刪除臨時檔案
+                                    // 删除临时文件
                                     [[NSFileManager defaultManager] removeItemAtPath:imageSourcePath error:nil];
                                     [[NSFileManager defaultManager] removeItemAtPath:videoSourcePath error:nil];
                                     [[NSFileManager defaultManager] removeItemAtPath:photoFile error:nil];
@@ -1987,7 +1415,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
       // 进度计算 - 为三个阶段分配权重
       NSInteger totalSteps = livePhotos.count * 10;  // 每个实况照片总共10步(4+4+2)
       __block NSInteger completedSteps = 0;
-      __block NSInteger phase = 0;  // 0:下載圖片階段，1:下載影片階段，2:合成階段
+      __block NSInteger phase = 0;  // 0:下载图片阶段，1:下載影片阶段，2:合成阶段
 
       // 创建临时目录
       NSString *livePhotoPath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"LivePhotoBatch"];
@@ -2193,7 +1621,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
           [imageTask resume];
       }
 
-      // 所有图片下载完成后，开始下载视频
+      // 所有图片下载完成后，开始下載影片
       dispatch_group_notify(imageDownloadGroup, dispatch_get_main_queue(), ^{
         phase = 1;  // 进入视频下载阶段
         updateProgress(@"正在下載影片...");
@@ -2413,7 +1841,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
                                                         return;
                                                     }
 
-                                                    // 交給handleVideoData處理資料
+                                                    // 交给handleVideoData处理数据
                                                     [self handleVideoData:dataDict];
                                                   });
                                                 }];
@@ -2436,7 +1864,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
         coverURL = dataDict[@"pics"];
     }
 
-    // 尝试获取音乐URL（供后续下载视频时合并音频使用）
+    // 尝试获取音乐URL（供后续下載影片时合并音频使用）
     NSString *musicURL = nil;
     if (dataDict[@"music"] && [dataDict[@"music"] length] > 0) {
         musicURL = dataDict[@"music"];
@@ -2584,7 +2012,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
             [actions addObject:musicAction];
         }
 
-        // 新增批量下載選項
+        // 添加批量下载选项
         NSMutableArray *allImages = [NSMutableArray array];
         if (hasImages)
             [allImages addObjectsFromArray:images];
@@ -2630,7 +2058,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
         return;
     }
 
-    // 如果前面的條件都不滿足，嘗試批量下載所有資源
+    // 如果前面的条件都不满足，尝试批量下载所有资源
     NSMutableArray *allImages = [NSMutableArray array];
     if (hasImages)
         [allImages addObjectsFromArray:images];
@@ -2648,7 +2076,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
 }
 
 #define DYYYLogVideo(format, ...) NSLog((@"[DYYY影片合成] " format), ##__VA_ARGS__)
-// 建立影片合成器從多種媒體來源
+// 创建视频合成器从多种媒体源
 + (void)createVideoFromMedia:(NSArray<NSString *> *)imageURLs
                   livePhotos:(NSArray<NSDictionary *> *)livePhotos
                       bgmURL:(NSString *)bgmURL
@@ -2677,7 +2105,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
         }
       };
 
-      // 建立暫存目錄
+      // 创建临时目录
       NSString *mediaPath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"VideoComposition"];
       NSFileManager *fileManager = [NSFileManager defaultManager];
       if ([fileManager fileExistsAtPath:mediaPath]) {
@@ -2696,16 +2124,16 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
       }
       DYYYLogVideo(@"成功建立暫存目錄: %@", mediaPath);
 
-      // 計算總共需要下載的檔案數和合成步驟
+      // 计算总共需要下载的文件数和合成步骤
       NSInteger totalImages = imageURLs.count;
-      NSInteger totalLivePhotos = livePhotos.count * 2;  // 每個原況照片有2個檔案
+      NSInteger totalLivePhotos = livePhotos.count * 2;  // 每个实况照片有2个文件
       NSInteger hasBGM = (bgmURL.length > 0) ? 1 : 0;
 
-      // 總步驟：下載所有媒體 + 合成影片 + 儲存影片
+      // 总步骤：下载所有媒体 + 合成视频 + 保存视频
       NSInteger totalSteps = totalImages + totalLivePhotos + hasBGM + 2;
       __block NSInteger completedSteps = 0;
 
-      // 儲存下載的媒體檔案路徑
+      // 储存下载的媒体文件路径
       NSMutableArray *imageFilePaths = [NSMutableArray array];
       NSMutableArray<NSDictionary *> *livePhotoFilePaths = [NSMutableArray array];
       __block NSString *bgmFilePath = nil;
@@ -2721,7 +2149,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
         });
       };
 
-      // 第一階段：下載所有普通圖片
+      // 第一阶段：下载所有普通图片
       dispatch_group_t imageDownloadGroup = dispatch_group_create();
       updateProgress(@"正在下載圖片...");
 
@@ -2738,12 +2166,12 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
 
           dispatch_group_enter(imageDownloadGroup);
 
-          // 建立檔案路徑
+          // 创建文件路径
           NSString *uniqueID = [NSUUID UUID].UUIDString;
           NSString *imagePath = [mediaPath stringByAppendingPathComponent:[NSString stringWithFormat:@"image_%@.jpg", uniqueID]];
           DYYYLogVideo(@"開始下載圖片 %ld/%ld: %@", (long)(i + 1), (long)imageURLs.count, imageURLString);
 
-          // 配置下載會話
+          // 配置下载会话
           NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
           NSURLSession *session = [NSURLSession sessionWithConfiguration:configuration];
 
@@ -2820,7 +2248,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
                             updateProgress([NSString stringWithFormat:@"已下載原況照片(圖片) %ld/%ld", (long)(i + 1), (long)livePhotos.count]);
                             dispatch_group_leave(livePhotoDownloadGroup);
                           }];
-						  
+
             // 下载视频部分
             dispatch_group_enter(livePhotoDownloadGroup);
             NSURLSessionConfiguration *vidConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
@@ -2992,17 +2420,17 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
              bgmPath:(NSString *)bgmPath
           outputPath:(NSString *)outputPath
           completion:(void (^)(BOOL success))completion {
-    // 影片尺寸（標準1080p）
+    // 视频尺寸（标准1080p）
     CGSize videoSize = CGSizeMake(1080, 1920);
     DYYYLogVideo(@"開始合成影片 - 目標尺寸: %.0fx%.0f", videoSize.width, videoSize.height);
     DYYYLogVideo(@"媒體源: %ld張圖片, %ld組原況照片, 背景音樂: %@", (long)imageFiles.count, (long)livePhotoFiles.count, bgmPath ? @"有" : @"無");
 
     dispatch_group_t processingGroup = dispatch_group_create();
 
-    // 儲存所有媒體片段資訊
+    // 存储所有媒体片段信息
     NSMutableArray *mediaSegments = [NSMutableArray array];
 
-    // 處理靜態圖片 - 先將所有圖片轉換為暫存影片片段
+    // 处理静态图片 - 先将所有图片转换为临时视频片段
     for (NSInteger i = 0; i < imageFiles.count; i++) {
         NSString *imagePath = imageFiles[i];
         if (![[NSFileManager defaultManager] fileExistsAtPath:imagePath]) {
@@ -3017,12 +2445,12 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
         }
         DYYYLogVideo(@"處理圖片 %ld/%ld: 尺寸 %.0fx%.0f", (long)(i + 1), (long)imageFiles.count, image.size.width, image.size.height);
 
-        // 創建暫存影片檔案路徑
+        // 创建临时视频文件路径
         NSString *tempVideoPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"temp_img_%@.mp4", [NSUUID UUID].UUIDString]];
 
         dispatch_group_enter(processingGroup);
 
-        // 使用Core Animation創建靜態圖片影片
+        // 使用Core Animation创建静态图片视频
         [self createVideoFromImage:image
                           duration:5.0
                         outputPath:tempVideoPath
@@ -3039,7 +2467,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
                         }];
     }
 
-    // 處理原況照片 - 收集所有影片路徑資訊
+    // 处理实况照片 - 收集所有视频路径信息
     for (NSInteger i = 0; i < livePhotoFiles.count; i++) {
         NSDictionary *livePhoto = livePhotoFiles[i];
         NSString *imagePath = livePhoto[@"image"];
@@ -3056,7 +2484,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
         DYYYLogVideo(@"成功新增原況照片影片片段 %ld/%ld", (long)(i + 1), (long)livePhotoFiles.count);
     }
 
-    // 等待所有暫存影片處理完成
+    // 等待所有临时视频处理完成
     dispatch_group_notify(processingGroup, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
       DYYYLogVideo(@"所有媒體處理完成，共有 %ld 個可用片段", (long)mediaSegments.count);
 
@@ -3077,7 +2505,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
       videoComposition.frameDuration = CMTimeMake(1, 30);  // 30fps
       videoComposition.renderSize = videoSize;
 
-      // 創建影片軌道
+      // 创建视频轨道
       AVMutableCompositionTrack *videoTrack = [composition addMutableTrackWithMediaType:AVMediaTypeVideo preferredTrackID:kCMPersistentTrackID_Invalid];
       if (!videoTrack) {
           DYYYLogVideo(@"錯誤: 無法建立影片軌道");
@@ -3089,7 +2517,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
           return;
       }
 
-      // 創建音訊軌道
+      // 创建音频轨道
       AVMutableCompositionTrack *audioTrack = [composition addMutableTrackWithMediaType:AVMediaTypeAudio preferredTrackID:kCMPersistentTrackID_Invalid];
       if (!audioTrack) {
           DYYYLogVideo(@"錯誤: 無法建立音訊軌道");
@@ -3101,7 +2529,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
           return;
       }
 
-      // 新增背景音樂
+      // 添加背景音乐
       __block CMTime currentTime = kCMTimeZero;
       if (bgmPath && [[NSFileManager defaultManager] fileExistsAtPath:bgmPath]) {
           DYYYLogVideo(@"新增背景音樂: %@", bgmPath);
@@ -3109,7 +2537,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
           AVAssetTrack *audioAssetTrack = [[audioAsset tracksWithMediaType:AVMediaTypeAudio] firstObject];
 
           if (audioAssetTrack) {
-              // 先處理所有影片片段以確定總時長
+              // 先处理所有视频片段以确定总时长
               CMTime totalDuration = kCMTimeZero;
               for (NSDictionary *segment in mediaSegments) {
                   NSString *segmentPath = segment[@"path"];
@@ -3117,7 +2545,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
                   totalDuration = CMTimeAdd(totalDuration, asset.duration);
               }
 
-              // 循環播放背景音樂直到覆蓋整個影片時長
+              // 循环播放背景音乐直到覆盖整个视频时长
               CMTime audioDuration = audioAsset.duration;
               CMTime currentAudioTime = kCMTimeZero;
 
@@ -3125,7 +2553,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
                   DYYYLogVideo(@"背景音樂時長(%.2f秒)小於影片時長(%.2f秒)，將循環播放", CMTimeGetSeconds(audioDuration), CMTimeGetSeconds(totalDuration));
 
                   while (CMTimeCompare(currentAudioTime, totalDuration) < 0) {
-                      // 確定當前片段的時長（如果到達影片末尾則截斷）
+                      // 确定当前片段的时长（如果到达视频末尾则截断）
                       CMTime remainingTime = CMTimeSubtract(totalDuration, currentAudioTime);
                       CMTime segmentDuration = audioDuration;
 
@@ -3133,7 +2561,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
                           segmentDuration = remainingTime;
                       }
 
-                      // 插入音訊片段
+                      // 插入音频片段
                       NSError *audioError = nil;
                       [audioTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, segmentDuration) ofTrack:audioAssetTrack atTime:currentAudioTime error:&audioError];
 
@@ -3144,13 +2572,13 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
 
                       DYYYLogVideo(@"新增背景音樂循環片段 - 位置: %.2f秒, 時長: %.2f秒", CMTimeGetSeconds(currentAudioTime), CMTimeGetSeconds(segmentDuration));
 
-                      // 更新當前音訊時間點
+                      // 更新当前音频时间点
                       currentAudioTime = CMTimeAdd(currentAudioTime, segmentDuration);
                   }
 
                   DYYYLogVideo(@"成功新增循環背景音樂，總時長: %.2f秒", CMTimeGetSeconds(currentAudioTime));
               } else {
-                  // 音樂長度足夠，直接新增
+                  // 音乐长度足够，直接添加
                   NSError *audioError = nil;
                   [audioTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, totalDuration) ofTrack:audioAssetTrack atTime:kCMTimeZero error:&audioError];
 
@@ -3167,7 +2595,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
 
       NSMutableArray *instructions = [NSMutableArray array];
 
-      // 處理所有媒體片段（按順序）
+      // 处理所有媒体片段（按顺序）
       DYYYLogVideo(@"開始按順序處理 %ld 個媒體片段", (long)mediaSegments.count);
       for (NSInteger i = 0; i < mediaSegments.count; i++) {
           NSDictionary *segment = mediaSegments[i];
@@ -3189,7 +2617,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
           DYYYLogVideo(@"片段 %ld/%ld: 時長=%.2f秒, 尺寸=%.0fx%.0f", (long)(i + 1), (long)mediaSegments.count, CMTimeGetSeconds(assetDuration), assetVideoTrack.naturalSize.width,
                        assetVideoTrack.naturalSize.height);
 
-          // 插入影片片段
+          // 插入视频片段
           NSError *insertError = nil;
           [videoTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, assetDuration) ofTrack:assetVideoTrack atTime:currentTime error:&insertError];
 
@@ -3200,29 +2628,29 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
               DYYYLogVideo(@"成功插入影片片段 %ld/%ld 到位置 %.2f秒", (long)(i + 1), (long)mediaSegments.count, CMTimeGetSeconds(currentTime));
           }
 
-          // 創建影片合成指令
+          // 创建视频合成指令
           AVMutableVideoCompositionInstruction *instruction = [AVMutableVideoCompositionInstruction videoCompositionInstruction];
           instruction.timeRange = CMTimeRangeMake(currentTime, assetDuration);
 
           AVMutableVideoCompositionLayerInstruction *layerInstruction = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstructionWithAssetTrack:videoTrack];
 
-          // 計算適當的影片變換
-          CGAffineTransform transform = [self transformForAssetTrack:assetVideoTrack targetSize:videoSize];
+          // 计算适当的视频变换
+          CGAffineTransform transform = [DYYYUtils transformForAssetTrack:assetVideoTrack targetSize:videoSize];
           [layerInstruction setTransform:transform atTime:currentTime];
 
           instruction.layerInstructions = @[ layerInstruction ];
           [instructions addObject:instruction];
           DYYYLogVideo(@"新增合成指令: 時間範圍=%.2f到%.2f秒", CMTimeGetSeconds(currentTime), CMTimeGetSeconds(CMTimeAdd(currentTime, assetDuration)));
 
-          // 更新時間點
+          // 更新时间点
           currentTime = CMTimeAdd(currentTime, assetDuration);
       }
 
-      // 設定合成指令
+      // 设置合成指令
       videoComposition.instructions = instructions;
       DYYYLogVideo(@"設定了 %ld 個影片合成指令，總時長: %.2f秒", (long)instructions.count, CMTimeGetSeconds(currentTime));
 
-      // 檢查是否有內容需要匯出
+      // 检查是否有内容需要导出
       if (instructions.count == 0 || CMTimeGetSeconds(currentTime) < 0.1) {
           DYYYLogVideo(@"錯誤: 沒有足夠的內容可以匯出");
           if (completion) {
@@ -3240,8 +2668,8 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
           return;
       }
 
-      // 設定匯出會話
       DYYYLogVideo(@"建立影片匯出會話，使用最高品質編碼");
+      // 设置导出会话
       AVAssetExportSession *exportSession = [[AVAssetExportSession alloc] initWithAsset:composition presetName:AVAssetExportPresetHighestQuality];
       if (!exportSession) {
           DYYYLogVideo(@"錯誤: 建立匯出會話失敗");
@@ -3258,8 +2686,8 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
       exportSession.outputFileType = AVFileTypeMPEG4;
       exportSession.shouldOptimizeForNetworkUse = YES;
 
-      // 匯出影片
       DYYYLogVideo(@"開始匯出影片到: %@", outputPath);
+      // 导出视频
       [exportSession exportAsynchronouslyWithCompletionHandler:^{
         for (NSDictionary *segment in mediaSegments) {
             if ([segment[@"type"] isEqualToString:@"image"]) {
@@ -3324,14 +2752,14 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
     });
 }
 
-// 創建從靜態圖片生成的影片片段
+// 创建从静态图片生成的视频片段
 + (void)createVideoFromImage:(UIImage *)image duration:(float)duration outputPath:(NSString *)outputPath completion:(void (^)(BOOL success))completion {
-    // 影片尺寸和參數
+    // 视频尺寸和参数
     CGSize videoSize = CGSizeMake(1080, 1920);
     NSInteger frameRate = 30;
 
     NSError *error = nil;
-    // 設定影片寫入器
+    // 设置视频写入器
     AVAssetWriter *videoWriter = [[AVAssetWriter alloc] initWithURL:[NSURL fileURLWithPath:outputPath] fileType:AVFileTypeMPEG4 error:&error];
     if (error) {
         NSLog(@"建立影片寫入器失敗: %@", error);
@@ -3340,7 +2768,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
         return;
     }
 
-    // 配置影片設定
+    // 配置视频设置
     NSDictionary *videoSettings = @{
         AVVideoCodecKey : AVVideoCodecTypeH264,
         AVVideoWidthKey : @(videoSize.width),
@@ -3351,7 +2779,7 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
     AVAssetWriterInput *writerInput = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo outputSettings:videoSettings];
     writerInput.expectsMediaDataInRealTime = YES;
 
-    // 創建像素緩衝區適配器
+    // 创建像素缓冲区适配器
     NSDictionary *sourcePixelBufferAttributes = @{
         (NSString *)kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32ARGB),
         (NSString *)kCVPixelBufferWidthKey : @(videoSize.width),
@@ -3365,15 +2793,15 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
     [videoWriter startWriting];
     [videoWriter startSessionAtSourceTime:kCMTimeZero];
 
-    // 不再調整圖片大小，只在需要時適配
+    // 不再调整图片大小，只在需要时适配
     // UIImage *resizedImage = [self resizeImage:image toSize:videoSize];
 
-    // 創建上下文並繪製圖像
+    // 创建上下文并绘制图像
     CVPixelBufferRef pixelBuffer = NULL;
     CVPixelBufferPoolCreatePixelBuffer(NULL, adaptor.pixelBufferPool, &pixelBuffer);
 
     if (pixelBuffer == NULL) {
-        // 如果池創建失敗，手動創建像素緩衝區
+        // 如果池创建失败，手动创建像素缓冲区
         NSDictionary *pixelBufferAttributes = @{
             (NSString *)kCVPixelBufferCGImageCompatibilityKey : @YES,
             (NSString *)kCVPixelBufferCGBitmapContextCompatibilityKey : @YES,
@@ -3393,18 +2821,18 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
     CGContextSetFillColorWithColor(context, [UIColor blackColor].CGColor);
     CGContextFillRect(context, CGRectMake(0, 0, videoSize.width, videoSize.height));
 
-    // 居中繪製圖像，保持原始比例
-    CGRect drawRect = [self rectForImageAspectFit:image.size inSize:videoSize];
+    // 居中绘制图像，保持原始比例
+    CGRect drawRect = [DYYYUtils rectForImageAspectFit:image.size inSize:videoSize];
     CGContextDrawImage(context, drawRect, image.CGImage);
 
     CGColorSpaceRelease(rgbColorSpace);
     CGContextRelease(context);
     CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
 
-    // 計算幀數
+    // 计算帧数
     NSInteger totalFrames = duration * frameRate;
 
-    // 寫入每一幀
+    // 写入每一帧
     dispatch_queue_t queue = dispatch_queue_create("com.dyyy.videoframe", DISPATCH_QUEUE_SERIAL);
     dispatch_async(queue, ^{
       BOOL success = YES;
@@ -3442,68 +2870,6 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
     });
 }
 
-// 縮放圖片到指定尺寸
-+ (UIImage *)resizeImage:(UIImage *)image toSize:(CGSize)size {
-    UIGraphicsBeginImageContextWithOptions(size, NO, 0.0);
-    [image drawInRect:CGRectMake(0, 0, size.width, size.height)];
-    UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return resizedImage ?: image;
-}
-
-+ (CGRect)rectForImageAspectFit:(CGSize)imageSize inSize:(CGSize)containerSize {
-    CGFloat hScale = containerSize.width / imageSize.width;
-    CGFloat vScale = containerSize.height / imageSize.height;
-    CGFloat scale = MIN(hScale, vScale);  // 使用MIN而不是MAX來保持原始比例
-
-    CGFloat newWidth = imageSize.width * scale;
-    CGFloat newHeight = imageSize.height * scale;
-
-    CGFloat x = (containerSize.width - newWidth) / 2.0;
-    CGFloat y = (containerSize.height - newHeight) / 2.0;
-
-    return CGRectMake(x, y, newWidth, newHeight);
-}
-
-// 计算视频轨道的变换（保持原始比例）
-+ (CGAffineTransform)transformForAssetTrack:(AVAssetTrack *)track targetSize:(CGSize)targetSize {
-    CGSize trackSize = CGSizeApplyAffineTransform(track.naturalSize, track.preferredTransform);
-    trackSize = CGSizeMake(fabs(trackSize.width), fabs(trackSize.height));
-
-    CGFloat xScale = targetSize.width / trackSize.width;
-    CGFloat yScale = targetSize.height / trackSize.height;
-    CGFloat scale = MIN(xScale, yScale);  // 使用MIN而不是MAX来保持原始比例
-
-    CGAffineTransform transform = track.preferredTransform;
-    transform = CGAffineTransformConcat(transform, CGAffineTransformMakeScale(scale, scale));
-
-    // 居中显示
-    CGFloat xOffset = (targetSize.width - trackSize.width * scale) / 2.0;
-    CGFloat yOffset = (targetSize.height - trackSize.height * scale) / 2.0;
-    transform = CGAffineTransformConcat(transform, CGAffineTransformMakeTranslation(xOffset, yOffset));
-
-    return transform;
-}
-
-// 计算图片的变换（保持原始比例）
-+ (CGAffineTransform)transformForImage:(UIImage *)image targetSize:(CGSize)targetSize {
-    CGSize imageSize = image.size;
-
-    CGFloat xScale = targetSize.width / imageSize.width;
-    CGFloat yScale = targetSize.height / imageSize.height;
-    CGFloat scale = MIN(xScale, yScale);
-
-    CGAffineTransform transform = CGAffineTransformIdentity;
-    transform = CGAffineTransformScale(transform, scale, scale);
-
-    // 居中显示
-    CGFloat xOffset = (targetSize.width - imageSize.width * scale) / 2.0;
-    CGFloat yOffset = (targetSize.height - imageSize.height * scale) / 2.0;
-    transform = CGAffineTransformTranslate(transform, xOffset / scale, yOffset / scale);
-
-    return transform;
-}
-
 // 动画贴纸和GIF相关方法迁移自 DYYYUtils.m
 + (void)saveAnimatedSticker:(YYAnimatedImageView *)targetStickerView {
     if (!targetStickerView) {
@@ -3516,13 +2882,13 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
             [DYYYUtils showToast:@"需要照片App權限才能儲存"];
             return;
         }
-        if ([self isBDImageWithHeifURL:targetStickerView.image]) {
+        if ([DYYYUtils isBDImageWithHeifURL:targetStickerView.image]) {
             [self saveHeifSticker:targetStickerView];
             return;
         }
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-          NSArray *images = [self getImagesFromYYAnimatedImageView:targetStickerView];
-          CGFloat duration = [self getDurationFromYYAnimatedImageView:targetStickerView];
+          NSArray *images = [DYYYUtils getImagesFromYYAnimatedImageView:targetStickerView];
+          CGFloat duration = [DYYYUtils getDurationFromYYAnimatedImageView:targetStickerView];
           if (!images || images.count == 0) {
               dispatch_async(dispatch_get_main_queue(), ^{
                 [DYYYUtils showToast:@"無法取得表情幀"];
@@ -3530,17 +2896,17 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
               return;
           }
           NSString *tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"sticker_%ld.gif", (long)[[NSDate date] timeIntervalSince1970]]];
-          BOOL success = [self createGIFWithImages:images
-                                          duration:duration
-                                              path:tempPath
-                                          progress:^(float progress){
-                                          }];
+          BOOL success = [DYYYUtils createGIFWithImages:images
+                                               duration:duration
+                                                   path:tempPath
+                                               progress:^(float progress){
+                                               }];
           dispatch_async(dispatch_get_main_queue(), ^{
             if (!success) {
                 return;
             }
-            [self saveGIFToPhotoLibrary:tempPath
-                             completion:^(BOOL saved, NSError *error) {
+            [DYYYUtils saveGIFToPhotoLibrary:tempPath
+                                  completion:^(BOOL saved, NSError *error) {
                                if (saved) {
                                    [DYYYToast showSuccessToastWithMessage:@"已儲存到照片App"];
                                } else {
@@ -3553,20 +2919,6 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
       });
     }];
 }
-+ (BOOL)isBDImageWithHeifURL:(UIImage *)image {
-    if (!image)
-        return NO;
-    if ([NSStringFromClass([image class]) containsString:@"BDImage"]) {
-        if ([image respondsToSelector:@selector(bd_webURL)]) {
-            NSURL *webURL = [image performSelector:@selector(bd_webURL)];
-            if (webURL) {
-                NSString *urlString = webURL.absoluteString;
-                return [urlString containsString:@".heif"] || [urlString containsString:@".heic"];
-            }
-        }
-    }
-    return NO;
-}
 + (void)saveHeifSticker:(YYAnimatedImageView *)stickerView {
     UIImage *image = stickerView.image;
     NSURL *heifURL = [image performSelector:@selector(bd_webURL)];
@@ -3574,8 +2926,8 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
         [DYYYUtils showToast:@"無法取得表情URL"];
         return;
     }
-    [DYYYManager convertHeicToGif:heifURL
-                       completion:^(NSURL *gifURL, BOOL success) {
+    [DYYYUtils convertHeicToGif:heifURL
+                     completion:^(NSURL *gifURL, BOOL success) {
                          if (!success || !gifURL) {
                              [DYYYUtils showToast:@"表情轉換失敗"];
                              return;
@@ -3602,112 +2954,6 @@ static BOOL DYYYWriteStaticImageToGIF(UIImage *image, NSURL *gifURL) {
                              }];
                        }];
 }
-+ (NSArray *)getImagesFromYYAnimatedImageView:(YYAnimatedImageView *)imageView {
-    if (!imageView || !imageView.image) {
-        return nil;
-    }
-    if ([imageView.image respondsToSelector:@selector(images)]) {
-        return [imageView.image performSelector:@selector(images)];
-    }
-    return nil;
-}
-+ (CGFloat)getDurationFromYYAnimatedImageView:(YYAnimatedImageView *)imageView {
-    if (!imageView || !imageView.image) {
-        return 0;
-    }
-
-    UIImage *image = imageView.image;
-
-    if (image.images.count > 0) {
-        NSTimeInterval builtInDuration = image.duration;
-        if (builtInDuration <= 0) {
-            builtInDuration = image.images.count * kDYYYDefaultFrameDelay;
-        }
-        return builtInDuration;
-    }
-
-    SEL frameCountSEL = NSSelectorFromString(@"animatedImageFrameCount");
-    SEL frameDurationSEL = NSSelectorFromString(@"animatedImageDurationAtIndex:");
-    if ([image respondsToSelector:frameCountSEL] && [image respondsToSelector:frameDurationSEL]) {
-        NSUInteger frameCount = ((NSUInteger(*)(id, SEL))objc_msgSend)(image, frameCountSEL);
-        if (frameCount > 0) {
-            CGFloat totalDuration = 0;
-            for (NSUInteger i = 0; i < frameCount; i++) {
-                CGFloat frameDuration = ((CGFloat(*)(id, SEL, NSUInteger))objc_msgSend)(image, frameDurationSEL, i);
-                totalDuration += frameDuration > 0 ? frameDuration : kDYYYDefaultFrameDelay;
-            }
-            if (totalDuration > 0) {
-                return totalDuration;
-            }
-        }
-    }
-
-    SEL dataSEL = NSSelectorFromString(@"animatedImageData");
-    NSData *animatedData = nil;
-    if ([image respondsToSelector:dataSEL]) {
-        animatedData = ((NSData *(*)(id, SEL))objc_msgSend)(image, dataSEL);
-    }
-    if (animatedData.length > 0) {
-        CGFloat scale = image.scale > 0 ? image.scale : 1.0f;
-        YYImageDecoder *decoder = DYYYCreateYYDecoderWithData(animatedData, scale);
-        CGFloat decoderDuration = DYYYTotalDurationFromYYDecoder(decoder);
-        if (decoderDuration > 0) {
-            return decoderDuration;
-        }
-    }
-
-    if ([image respondsToSelector:@selector(duration)]) {
-        NSTimeInterval duration = image.duration;
-        if (duration > 0) {
-            return duration;
-        }
-    }
-
-    id durationValue = [image valueForKey:@"duration"];
-    return [durationValue respondsToSelector:@selector(floatValue)] ? [durationValue floatValue] : 0;
-}
-+ (BOOL)createGIFWithImages:(NSArray *)images duration:(CGFloat)duration path:(NSString *)path progress:(void (^)(float progress))progressBlock {
-    if (images.count == 0)
-        return NO;
-    float frameDuration = duration / images.count;
-    CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)[NSURL fileURLWithPath:path], kUTTypeGIF, images.count, NULL);
-    if (!destination)
-        return NO;
-    NSDictionary *gifProperties = @{(__bridge NSString *)kCGImagePropertyGIFDictionary : @{(__bridge NSString *)kCGImagePropertyGIFLoopCount : @0}};
-    CGImageDestinationSetProperties(destination, (__bridge CFDictionaryRef)gifProperties);
-    for (NSUInteger i = 0; i < images.count; i++) {
-        UIImage *image = images[i];
-        NSDictionary *frameProperties = @{(__bridge NSString *)kCGImagePropertyGIFDictionary : @{(__bridge NSString *)kCGImagePropertyGIFDelayTime : @(frameDuration)}};
-        CGImageDestinationAddImage(destination, image.CGImage, (__bridge CFDictionaryRef)frameProperties);
-        if (progressBlock) {
-            progressBlock((float)(i + 1) / images.count);
-        }
-    }
-    BOOL success = CGImageDestinationFinalize(destination);
-    CFRelease(destination);
-    return success;
-}
-+ (void)saveGIFToPhotoLibrary:(NSString *)path completion:(void (^)(BOOL success, NSError *error))completion {
-    NSURL *fileURL = [NSURL fileURLWithPath:path];
-    [[PHPhotoLibrary sharedPhotoLibrary]
-        performChanges:^{
-          PHAssetCreationRequest *request = [PHAssetCreationRequest creationRequestForAsset];
-          [request addResourceWithType:PHAssetResourceTypePhoto fileURL:fileURL options:nil];
-        }
-        completionHandler:^(BOOL success, NSError *_Nullable error) {
-          dispatch_async(dispatch_get_main_queue(), ^{
-            if (completion) {
-                completion(success, error);
-            }
-            NSError *removeError = nil;
-            [[NSFileManager defaultManager] removeItemAtPath:path error:&removeError];
-            if (removeError) {
-                NSLog(@"刪除暫存GIF檔案失敗: %@", removeError);
-            }
-          });
-        }];
-}
-
 + (void)downloadAndShareCommentAudio:(NSString *)audioContent
                             userName:(NSString *)userName
                           createTime:(NSNumber *)createTime {
