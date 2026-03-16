@@ -4816,7 +4816,6 @@ static NSHashTable *processedParentViews = nil;
 }
 %end
 
-// 推荐页数组级过滤（直播 / 时间 / 低赞）
 %hook AWEHotListDataController
 
 %new
@@ -4860,16 +4859,16 @@ static NSHashTable *processedParentViews = nil;
     static NSArray<NSString *> *diggKeyPaths = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-      diggKeyPaths = @[
-          @"statistics.diggCount",
-          @"statistics.digg_count",
-          @"diggCount",
-          @"digg_count",
-          @"feedSequenceExtendFeature.digg_count",
-          @"feedSequenceExtendFeature.diggCount",
-          @"recommendFeedExtendFeature.digg_count",
-          @"recommendFeedExtendFeature.diggCount"
-      ];
+        diggKeyPaths = @[
+            @"statistics.diggCount",
+            @"statistics.digg_count",
+            @"diggCount",
+            @"digg_count",
+            @"feedSequenceExtendFeature.digg_count",
+            @"feedSequenceExtendFeature.diggCount",
+            @"recommendFeedExtendFeature.digg_count",
+            @"recommendFeedExtendFeature.diggCount"
+        ];
     });
 
     for (NSString *keyPath in diggKeyPaths) {
@@ -4899,11 +4898,13 @@ static NSHashTable *processedParentViews = nil;
     NSInteger daysThreshold = DYYYGetInteger(@"DYYYFilterTimeLimit");
     BOOL skipLive = DYYYGetBool(@"DYYYSkipLive"); // 读取直播过滤开关
     NSInteger minLikesThreshold = DYYYGetInteger(@"DYYYFilterLowLikes"); // 读取低赞过滤阈值 (例如: 1000)
+    BOOL skipPhotoText = DYYYGetBool(@"DYYYSkipPhotoText"); // 图文过滤
+    BOOL skipPhoto = DYYYGetBool(@"DYYYSkipPhoto"); // 图集过滤
 
     NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
     NSTimeInterval thresholdInSeconds = MAX(daysThreshold, 0) * 86400.0;
 
-    // 第一阶段：先做稳定字段过滤（直播/时间）
+    // 第一阶段：先做稳定字段过滤（直播/时间/类型）
     NSMutableArray *baseFiltered = [NSMutableArray arrayWithCapacity:orig.count];
 
     for (id obj in orig) {
@@ -4923,6 +4924,24 @@ static NSHashTable *processedParentViews = nil;
         // 2. 直播过滤逻辑 (仅依赖 cellRoom)
         if (skipLive && [m respondsToSelector:@selector(cellRoom)] && m.cellRoom != nil) {
             continue; // 命中直播过滤，跳过
+        }
+
+        // 2.1 图文模式过滤逻辑（推荐页）
+        if (skipPhotoText &&
+            [m respondsToSelector:@selector(isNewTextMode)] &&
+            m.isNewTextMode &&
+            [m respondsToSelector:@selector(referString)] &&
+            [m.referString isEqualToString:@"homepage_hot"]) {
+            continue; // 图文模式且来自推荐页，跳过
+        }
+
+        // 2.2 图集过滤逻辑（推荐页）
+        if (skipPhoto &&
+            [m respondsToSelector:@selector(awemeType)] &&
+            m.awemeType == 68 &&
+            [m respondsToSelector:@selector(referString)] &&
+            [m.referString isEqualToString:@"homepage_hot"]) {
+            continue; // 图集且来自推荐页，跳过
         }
 
         // 3. 时间限制过滤
@@ -5117,7 +5136,7 @@ static NSHashTable *processedParentViews = nil;
             }
         }
     }
-    return shouldFilterAds || shouldFilterAllLive || shouldFilterHotSpot || shouldskipPhoto || shouldskipPhotoText || shouldFilterMusic || shouldFilterAIInteraction || shouldFilterHDR || shouldFilterKeywords || shouldFilterProp ||
+    return shouldFilterAds || shouldFilterAllLive || shouldFilterHotSpot || shouldFilterHDR || shouldFilterKeywords || shouldFilterProp ||
            shouldFilterTime || shouldFilterUser;
 }
 
