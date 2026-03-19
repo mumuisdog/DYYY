@@ -3560,43 +3560,6 @@ static NSArray *DYYYIMMenuItemsByAddingDownloadAction(NSArray *menuItems, id cel
 
 %hook UIButton
 
-- (void)setTitle:(NSString *)title forState:(UIControlState)state {
-    %orig;
-
-    if ([title isEqualToString:@"加入挑战"]) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-          if (DYYYGetBool(@"DYYYHideChallengeStickers")) {
-              UIResponder *responder = self;
-              BOOL isInPlayInteractionViewController = NO;
-
-              while ((responder = [responder nextResponder])) {
-                  if ([responder isKindOfClass:%c(AWEPlayInteractionViewController)]) {
-                      isInPlayInteractionViewController = YES;
-                      break;
-                  }
-              }
-
-              if (isInPlayInteractionViewController) {
-                  UIView *parentView = self.superview;
-                  if (parentView) {
-                      UIView *grandParentView = parentView.superview;
-                      if (grandParentView) {
-                          [grandParentView removeFromSuperview];
-                          return;
-                      } else {
-                          [parentView removeFromSuperview];
-                          return;
-                      }
-                  } else {
-                      [self removeFromSuperview];
-                      return;
-                  }
-              }
-          }
-        });
-    }
-}
-
 - (void)layoutSubviews {
     %orig;
 
