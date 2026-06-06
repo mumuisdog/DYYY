@@ -2160,17 +2160,25 @@ static NSString *const kDYYYLongPressCopyEnabledKey = @"DYYYLongPressCopyTextEna
 %hook _TtC33AWECommentLongPressPanelSwiftImpl32CommentLongPressPanelCopyElement
 
 - (void)elementTapped {
-    if (DYYYGetBool(@"DYYYCommentCopyText")) {
-        AWECommentLongPressPanelContext *commentPageContext = [self commentPageContext];
-        AWECommentModel *selectdComment = [commentPageContext selectdComment];
-        if (!selectdComment) {
-            AWECommentLongPressPanelParam *params = [commentPageContext params];
-            selectdComment = [params selectdComment];
-        }
-        NSString *descText = [selectdComment content];
-        [[UIPasteboard generalPasteboard] setString:descText];
-        [DYYYToast showSuccessToastWithMessage:@"评论已复制"];
+    if (!DYYYGetBool(@"DYYYCommentCopyText")) {
+        %orig;
+        return;
     }
+
+    AWECommentLongPressPanelContext *commentPageContext = [self commentPageContext];
+    AWECommentModel *selectdComment = [commentPageContext selectdComment];
+    if (!selectdComment) {
+        AWECommentLongPressPanelParam *params = [commentPageContext params];
+        selectdComment = [params selectdComment];
+    }
+    NSString *descText = [selectdComment content];
+    if (descText.length == 0) {
+        %orig;
+        return;
+    }
+
+    [[UIPasteboard generalPasteboard] setString:descText];
+    [DYYYToast showSuccessToastWithMessage:@"评论已复制"];
 }
 %end
 
