@@ -462,6 +462,19 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
 
 %end
 
+// 禁止访问用户主页后上传访客记录
+%hook AWEProfileRecordHelper
+
++ (void)postProfileRecordWithParams:(id)params completionBlock:(id)completionBlock {
+    if (DYYYGetBool(@"DYYYDisableProfileVisitRecordUpload")) {
+        return;
+    }
+
+    %orig;
+}
+
+%end
+
 // 默认视频流最高画质
 %hook AWEVideoModel
 
