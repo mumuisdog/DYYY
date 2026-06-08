@@ -1,4 +1,5 @@
 #import <Photos/Photos.h>
+#import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>
 
 FOUNDATION_EXPORT void DYYYNSLog(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
@@ -1462,6 +1463,31 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 + (BOOL)p_isHDRFeatureEnable;
 + (void)setUserEnableHDR:(BOOL)enableHDR;
 + (BOOL)shouldShowHDRSwitchForRoom:(id)room;
+@end
+
+@interface BDImageDecoderFactory : NSObject
++ (BOOL)isHDRImageData:(id)data withHeifDecoderClass:(Class)decoderClass;
+@end
+
+@interface BDImageDecoderImageIO : NSObject
+- (BOOL)isHDRCGImage:(CGImageRef)image decodedToHDR:(BOOL)decodedToHDR;
+@end
+
+@class HDRMTImageView;
+
+@interface HDRMTUIImageView : UIImageView
+@property(nonatomic, assign) BOOL hdrEnabled;
+@property(nonatomic, strong) HDRMTImageView *innerHDRImageView;
+- (instancetype)initWithFrame:(CGRect)frame hdrEnabled:(BOOL)hdrEnabled;
+@end
+
+@interface HDRMTImageView : UIView
+@property(nonatomic, strong) CAMetalLayer *metalLayer;
+@end
+
+@interface HDRMTButton : UIButton
+@property(nonatomic, strong) HDRMTUIImageView *hdrmtImageView;
+- (void)configHDRContent;
 @end
 
 @interface AWEVideoPlayerConfiguration : NSObject

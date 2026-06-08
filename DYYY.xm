@@ -568,7 +568,32 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
 
 %end
 
-// 禁用全部视频播放链路中的 HDR 效果
+static BOOL DYYYShouldDisableAllHDR(void) {
+    return DYYYGetBool(@"DYYYFilterFeedHDR");
+}
+
+static void DYYYApplySDRDynamicRangeToImageView(UIImageView *imageView) {
+    if (!DYYYShouldDisableAllHDR() || !imageView) {
+        return;
+    }
+
+    if (@available(iOS 17.0, *)) {
+        imageView.preferredImageDynamicRange = UIImageDynamicRangeStandard;
+    }
+}
+
+static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
+    if (!DYYYShouldDisableAllHDR() || !metalLayer) {
+        return;
+    }
+
+    if (@available(iOS 16.0, *)) {
+        metalLayer.wantsExtendedDynamicRangeContent = NO;
+        metalLayer.EDRMetadata = nil;
+    }
+}
+
+// 禁用全部视频、图片及动图播放显示链路中的 HDR 效果
 %hook AWEKnowledgeABTestSettings
 
 + (BOOL)enableHDRAutomaticIdentification {
@@ -853,6 +878,138 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
 + (BOOL)shouldShowHDRSwitchForRoom:(id)room {
     if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
         return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook BDImageDecoderFactory
+
++ (BOOL)isHDRImageData:(id)data withHeifDecoderClass:(Class)decoderClass {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook BDImageDecoderImageIO
+
+- (BOOL)isHDRCGImage:(CGImageRef)image decodedToHDR:(BOOL)decodedToHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook HDRMTUIImageView
+
+- (instancetype)initWithFrame:(CGRect)frame hdrEnabled:(BOOL)hdrEnabled {
+    return %orig(frame, DYYYShouldDisableAllHDR() ? NO : hdrEnabled);
+}
+
+- (BOOL)hdrEnabled {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setHdrEnabled:(BOOL)hdrEnabled {
+    %orig(DYYYShouldDisableAllHDR() ? NO : hdrEnabled);
+}
+
+- (void)setImage:(UIImage *)image {
+    if (DYYYShouldDisableAllHDR()) {
+        self.hdrEnabled = NO;
+    }
+    DYYYApplySDRDynamicRangeToImageView(self);
+    %orig;
+    DYYYApplySDRDynamicRangeToImageView(self);
+}
+
+%end
+
+%hook HDRMTImageView
+
+- (void)setMetalLayer:(CAMetalLayer *)metalLayer {
+    DYYYDisableExtendedRangeForMetalLayer(metalLayer);
+    %orig;
+}
+
+- (void)setUpEnv {
+    %orig;
+    DYYYDisableExtendedRangeForMetalLayer(self.metalLayer);
+}
+
+- (void)layoutSubviews {
+    %orig;
+    DYYYDisableExtendedRangeForMetalLayer(self.metalLayer);
+}
+
+%end
+
+%hook HDRMTButton
+
+- (void)configHDRContent {
+    %orig;
+    if (DYYYShouldDisableAllHDR()) {
+        self.hdrmtImageView.hdrEnabled = NO;
+        DYYYApplySDRDynamicRangeToImageView(self.hdrmtImageView);
+    }
+}
+
+%end
+
+%hook CAMetalLayer
+
+- (void)setWantsExtendedDynamicRangeContent:(BOOL)wantsExtendedDynamicRangeContent {
+    %orig(DYYYShouldDisableAllHDR() ? NO : wantsExtendedDynamicRangeContent);
+}
+
+- (BOOL)wantsExtendedDynamicRangeContent {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEDRMetadata:(CAEDRMetadata *)EDRMetadata {
+    %orig(DYYYShouldDisableAllHDR() ? nil : EDRMetadata);
+}
+
+%end
+
+%hook CALayer
+
+- (void)setWantsExtendedDynamicRangeContent:(BOOL)wantsExtendedDynamicRangeContent {
+    %orig(DYYYShouldDisableAllHDR() ? NO : wantsExtendedDynamicRangeContent);
+}
+
+- (BOOL)wantsExtendedDynamicRangeContent {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setPreferredDynamicRange:(CADynamicRange)preferredDynamicRange {
+    if (@available(iOS 26.0, *)) {
+        %orig(DYYYShouldDisableAllHDR() ? CADynamicRangeStandard : preferredDynamicRange);
+        return;
+    }
+    %orig;
+}
+
+- (CADynamicRange)preferredDynamicRange {
+    if (@available(iOS 26.0, *)) {
+        if (DYYYShouldDisableAllHDR()) {
+            return CADynamicRangeStandard;
+        }
     }
     return %orig;
 }
@@ -8974,8 +9131,33 @@ static Class TagViewClass = nil;
 %end
 
 %hook UIImageView
+- (void)setImage:(UIImage *)image {
+    DYYYApplySDRDynamicRangeToImageView(self);
+    %orig;
+    DYYYApplySDRDynamicRangeToImageView(self);
+}
+
+- (void)setHighlightedImage:(UIImage *)highlightedImage {
+    DYYYApplySDRDynamicRangeToImageView(self);
+    %orig;
+    DYYYApplySDRDynamicRangeToImageView(self);
+}
+
+- (void)setAnimationImages:(NSArray<UIImage *> *)animationImages {
+    DYYYApplySDRDynamicRangeToImageView(self);
+    %orig;
+    DYYYApplySDRDynamicRangeToImageView(self);
+}
+
+- (void)setHighlightedAnimationImages:(NSArray<UIImage *> *)highlightedAnimationImages {
+    DYYYApplySDRDynamicRangeToImageView(self);
+    %orig;
+    DYYYApplySDRDynamicRangeToImageView(self);
+}
+
 - (void)layoutSubviews {
     %orig;
+    DYYYApplySDRDynamicRangeToImageView(self);
     if (DYYYGetBool(@"DYYYHideCommentDiscover")) {
         if (!self.accessibilityLabel) {
             UIView *parentView = self.superview;
