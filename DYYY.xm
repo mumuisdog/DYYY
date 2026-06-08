@@ -569,8 +569,25 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
 
 %end
 
+static void DYYYMigrateSeparatedHDRSettingsIfNeeded(void) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        if ([defaults boolForKey:@"DYYYHDRSettingsSeparatedV1"]) {
+            return;
+        }
+
+        id previousValue = [defaults objectForKey:@"DYYYFilterFeedHDR"];
+        if (previousValue && ![defaults objectForKey:@"DYYYDisableAllHDR"]) {
+            [defaults setBool:[previousValue boolValue] forKey:@"DYYYDisableAllHDR"];
+        }
+        [defaults setBool:NO forKey:@"DYYYFilterFeedHDR"];
+        [defaults setBool:YES forKey:@"DYYYHDRSettingsSeparatedV1"];
+    });
+}
+
 static BOOL DYYYShouldDisableAllHDR(void) {
-    return DYYYGetBool(@"DYYYFilterFeedHDR");
+    return DYYYGetBool(@"DYYYDisableAllHDR");
 }
 
 static id DYYYStandardCADynamicRange(void) {
@@ -611,7 +628,7 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook AWEKnowledgeABTestSettings
 
 + (BOOL)enableHDRAutomaticIdentification {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
@@ -622,21 +639,21 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook AWEFeedABSettings
 
 + (BOOL)enableHDRBrightnessOpt {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 + (BOOL)enableHDRFullModelAdaptation {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 + (BOOL)hdrAutomaticIdentification {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
@@ -647,21 +664,21 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook BDSimPlayerBizConfig
 
 - (BOOL)enableHDRBrightnessOpt {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 - (BOOL)enableHDRFullModelAdaptation {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 - (BOOL)hdrAutomaticIdentification {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
@@ -672,21 +689,21 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook AWEBDSimPlayerBizConfig
 
 - (BOOL)enableHDRBrightnessOpt {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 - (BOOL)enableHDRFullModelAdaptation {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 - (BOOL)hdrAutomaticIdentification {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
@@ -697,13 +714,13 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook AWEVideoPlayerConfiguration
 
 + (void)setHDRBrightnessStrategy:(id)strategy {
-    if (!DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (!DYYYGetBool(@"DYYYDisableAllHDR")) {
         %orig;
     }
 }
 
 + (double)getHDRBrightnessOffset:(id)configuration brightness:(double)brightness {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return 0.0;
     }
     return %orig;
@@ -714,7 +731,7 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook BDSimPlayerHelper
 
 + (id)hdrValueFor:(long long)value enableHDR:(BOOL)enableHDR {
-    return %orig(value, DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+    return %orig(value, DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
 }
 
 %end
@@ -722,14 +739,14 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook BDSimStreamContext
 
 - (BOOL)enableHDR {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 - (void)setEnableHDR:(BOOL)enableHDR {
-    %orig(DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+    %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
 }
 
 %end
@@ -737,24 +754,24 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook BDSimMediaPlayer
 
 - (BOOL)enableHDR {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 - (void)setEnableHDR:(BOOL)enableHDR {
-    %orig(DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+    %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
 }
 
 - (void)setEnablePlayHDRMode {
-    if (!DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (!DYYYGetBool(@"DYYYDisableAllHDR")) {
         %orig;
     }
 }
 
 - (id)awe_HDRValueFor:(long long)value enableHDR:(BOOL)enableHDR {
-    return %orig(value, DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+    return %orig(value, DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
 }
 
 %end
@@ -762,14 +779,14 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook AWEDPlayerVideoDisplayOptState
 
 - (BOOL)enableHDR {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 - (void)setEnableHDR:(BOOL)enableHDR {
-    %orig(DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+    %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
 }
 
 %end
@@ -777,14 +794,14 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook AWEPlayVideoPlayerContext
 
 - (BOOL)enableHDR {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 - (void)setEnableHDR:(BOOL)enableHDR {
-    %orig(DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+    %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
 }
 
 %end
@@ -792,14 +809,14 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook AWEPlayVideoViewController
 
 - (BOOL)enableHDR {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 - (void)setEnableHDR:(BOOL)enableHDR {
-    %orig(DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+    %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
 }
 
 %end
@@ -807,7 +824,7 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook AWEDPlayerFeedPlayerViewController
 
 - (BOOL)enableHDR {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
@@ -818,7 +835,7 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook AWEDPlayerViewController_Merge
 
 - (BOOL)enableHDR {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
@@ -829,14 +846,14 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook TTVideoEngineOwnPlayer
 
 - (BOOL)enableHDR10 {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 - (void)setEnableHDR10:(BOOL)enableHDR10 {
-    %orig(DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR10);
+    %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR10);
 }
 
 %end
@@ -844,53 +861,53 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook IESLiveAudienceHDRController
 
 + (BOOL)currentHDRStatusForRoomID:(id)roomID {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 + (BOOL)isCurrentRoomSupportHDR:(id)roomID roomModel:(id)roomModel {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 + (BOOL)isFeedCanEnableHDRFeature {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 + (BOOL)isInnerFeedCanEnableHDRFeature {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 + (BOOL)isUserEnableHDR {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 + (BOOL)p_isHDRFeatureEnable {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 + (void)setUserEnableHDR:(BOOL)enableHDR {
-    %orig(DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+    %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
 }
 
 + (BOOL)shouldShowHDRSwitchForRoom:(id)room {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
@@ -5478,6 +5495,7 @@ static NSHashTable *processedParentViews = nil;
     BOOL skipPhotoText = DYYYGetBool(@"DYYYSkipPhotoText");
     BOOL skipMusic = DYYYGetBool(@"DYYYSkipMusic");
     BOOL skipAIInteraction = DYYYGetBool(@"DYYYSkipAIInteraction");
+    BOOL filterHDR = DYYYGetBool(@"DYYYFilterFeedHDR");
 
     BOOL shouldFilterAds = noAds && (self.isAds);
     BOOL shouldFilterHotSpot = skipHotSpot && self.hotSpotLynxCardModel;
@@ -5487,6 +5505,7 @@ static NSHashTable *processedParentViews = nil;
     BOOL shouldskipPhotoText = skipPhotoText && self.isNewTextMode && isRecommendFeed;
     BOOL shouldFilterMusic = skipMusic && self.musicCard && isRecommendFeed; // or self.awemeType == 155
     BOOL shouldFilterAIInteraction = skipAIInteraction && (self.awemeType == 162) && isRecommendFeed;
+    BOOL shouldFilterHDR = NO;
     BOOL shouldFilterLowLikes = NO;
     BOOL shouldFilterKeywords = NO;
     BOOL shouldFilterProp = NO;
@@ -5566,20 +5585,33 @@ static NSHashTable *processedParentViews = nil;
         }
     }
 
+    // 检查是否为HDR视频
+    if (filterHDR && self.video && self.video.bitrateModels) {
+        for (id bitrateModel in self.video.bitrateModels) {
+            NSNumber *hdrType = [bitrateModel valueForKey:@"hdrType"];
+            NSNumber *hdrBit = [bitrateModel valueForKey:@"hdrBit"];
 
-    return shouldFilterAds || shouldFilterAllLive || shouldFilterHotSpot || shouldFilterKeywords || shouldFilterProp ||
+            // 如果hdrType=1且hdrBit=10，则视为HDR视频
+            if (hdrType && [hdrType integerValue] == 1 && hdrBit && [hdrBit integerValue] == 10) {
+                shouldFilterHDR = YES;
+                break;
+            }
+        }
+    }
+
+    return shouldFilterAds || shouldFilterAllLive || shouldFilterHotSpot || shouldFilterHDR || shouldFilterKeywords || shouldFilterProp ||
            shouldFilterTime || shouldFilterUser;
 }
 
 - (BOOL)awe_enableHDR {
-    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
         return NO;
     }
     return %orig;
 }
 
 - (id)awe_HDRValueFor:(long long)value enableHDR:(BOOL)enableHDR {
-    return %orig(value, DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+    return %orig(value, DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
 }
 
 - (AWEECommerceLabel *)ecommerceBelowLabel {
@@ -9427,6 +9459,8 @@ static void findTargetViewInView(UIView *view) {
 }
 
 %ctor {
+    DYYYMigrateSeparatedHDRSettingsIfNeeded();
+
     Class interactionBaseLabelClass = objc_getClass("AWECommentSwiftBizUI.CommentInteractionBaseLabel");
     if (interactionBaseLabelClass) {
         %init(DYYYCommentExactTimeGroup, AWECommentSwiftBizUI_CommentInteractionBaseLabel = interactionBaseLabelClass);

@@ -148,6 +148,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
             [DYYYSettingItem itemWithTitle:@"推荐过滤热点" key:@"DYYYSkipHotSpot" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"推荐过滤低赞" key:@"DYYYFilterLowLikes" type:DYYYSettingItemTypeTextField placeholder:@"填0关闭"],
             [DYYYSettingItem itemWithTitle:@"推荐视频时限" key:@"DYYYFilterTimeLimit" type:DYYYSettingItemTypeTextField placeholder:@"填0关闭，单位为天"],
+            [DYYYSettingItem itemWithTitle:@"推荐过滤HDR" key:@"DYYYFilterFeedHDR" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"启用首页净化" key:@"DYYYEnablePure" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"启用首页全屏" key:@"DYYYEnableFullScreen" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"启用屏蔽广告" key:@"DYYYNoAds" type:DYYYSettingItemTypeSwitch],
@@ -166,7 +167,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
             [DYYYSettingItem itemWithTitle:@"收藏二次确认" key:@"DYYYCollectTips" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"默认直播画质" key:@"DYYYLiveQuality" type:DYYYSettingItemTypePicker],
             [DYYYSettingItem itemWithTitle:@"提高视频画质" key:@"DYYYEnableVideoHighestQuality" type:DYYYSettingItemTypeSwitch],
-            [DYYYSettingItem itemWithTitle:@"禁用全部视频图文HDR效果" key:@"DYYYFilterFeedHDR" type:DYYYSettingItemTypeSwitch],
+            [DYYYSettingItem itemWithTitle:@"禁用全部视频图文HDR效果" key:@"DYYYDisableAllHDR" type:DYYYSettingItemTypeSwitch],
             [DYYYSettingItem itemWithTitle:@"禁用直播PCDN功能" key:@"DYYYDisableLivePCDN" type:DYYYSettingItemTypeSwitch]
         ],
         @[
@@ -728,7 +729,22 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
 - (void)switchToggled:(UISwitch *)sender {
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:sender.tag % 1000 inSection:sender.tag / 1000];
     DYYYSettingItem *item = self.settingSections[indexPath.section][indexPath.row];
-    [[NSUserDefaults standardUserDefaults] setBool:sender.isOn forKey:item.key];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setBool:sender.isOn forKey:item.key];
+
+    if (sender.isOn) {
+        NSString *conflictingKey = nil;
+        if ([item.key isEqualToString:@"DYYYFilterFeedHDR"]) {
+            conflictingKey = @"DYYYDisableAllHDR";
+        } else if ([item.key isEqualToString:@"DYYYDisableAllHDR"]) {
+            conflictingKey = @"DYYYFilterFeedHDR";
+        }
+
+        if (conflictingKey) {
+            [defaults setBool:NO forKey:conflictingKey];
+            [self.tableView reloadData];
+        }
+    }
 }
 
 - (void)textFieldDidChange:(UITextField *)textField {
