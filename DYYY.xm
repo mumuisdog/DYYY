@@ -568,6 +568,297 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
 
 %end
 
+// 禁用全部视频播放链路中的 HDR 效果
+%hook AWEKnowledgeABTestSettings
+
++ (BOOL)enableHDRAutomaticIdentification {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEFeedABSettings
+
++ (BOOL)enableHDRBrightnessOpt {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)enableHDRFullModelAdaptation {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)hdrAutomaticIdentification {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook BDSimPlayerBizConfig
+
+- (BOOL)enableHDRBrightnessOpt {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)enableHDRFullModelAdaptation {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)hdrAutomaticIdentification {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEBDSimPlayerBizConfig
+
+- (BOOL)enableHDRBrightnessOpt {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)enableHDRFullModelAdaptation {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)hdrAutomaticIdentification {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEVideoPlayerConfiguration
+
++ (void)setHDRBrightnessStrategy:(id)strategy {
+    if (!DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        %orig;
+    }
+}
+
++ (double)getHDRBrightnessOffset:(id)configuration brightness:(double)brightness {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return 0.0;
+    }
+    return %orig;
+}
+
+%end
+
+%hook BDSimPlayerHelper
+
++ (id)hdrValueFor:(long long)value enableHDR:(BOOL)enableHDR {
+    return %orig(value, DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+}
+
+%end
+
+%hook BDSimStreamContext
+
+- (BOOL)enableHDR {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEnableHDR:(BOOL)enableHDR {
+    %orig(DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+}
+
+%end
+
+%hook BDSimMediaPlayer
+
+- (BOOL)enableHDR {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEnableHDR:(BOOL)enableHDR {
+    %orig(DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+}
+
+- (void)setEnablePlayHDRMode {
+    if (!DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        %orig;
+    }
+}
+
+- (id)awe_HDRValueFor:(long long)value enableHDR:(BOOL)enableHDR {
+    return %orig(value, DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+}
+
+%end
+
+%hook AWEDPlayerVideoDisplayOptState
+
+- (BOOL)enableHDR {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEnableHDR:(BOOL)enableHDR {
+    %orig(DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+}
+
+%end
+
+%hook AWEPlayVideoPlayerContext
+
+- (BOOL)enableHDR {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEnableHDR:(BOOL)enableHDR {
+    %orig(DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+}
+
+%end
+
+%hook AWEPlayVideoViewController
+
+- (BOOL)enableHDR {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEnableHDR:(BOOL)enableHDR {
+    %orig(DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+}
+
+%end
+
+%hook AWEDPlayerFeedPlayerViewController
+
+- (BOOL)enableHDR {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEDPlayerViewController_Merge
+
+- (BOOL)enableHDR {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook TTVideoEngineOwnPlayer
+
+- (BOOL)enableHDR10 {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEnableHDR10:(BOOL)enableHDR10 {
+    %orig(DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR10);
+}
+
+%end
+
+%hook IESLiveAudienceHDRController
+
++ (BOOL)currentHDRStatusForRoomID:(id)roomID {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)isCurrentRoomSupportHDR:(id)roomID roomModel:(id)roomModel {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)isFeedCanEnableHDRFeature {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)isInnerFeedCanEnableHDRFeature {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)isUserEnableHDR {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)p_isHDRFeatureEnable {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (void)setUserEnableHDR:(BOOL)enableHDR {
+    %orig(DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
+}
+
++ (BOOL)shouldShowHDRSwitchForRoom:(id)room {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
 // 直播间真实人数
 %hook IESLiveUserSeqlistFragment
 
@@ -5017,7 +5308,6 @@ static NSHashTable *processedParentViews = nil;
     BOOL skipPhotoText = DYYYGetBool(@"DYYYSkipPhotoText");
     BOOL skipMusic = DYYYGetBool(@"DYYYSkipMusic");
     BOOL skipAIInteraction = DYYYGetBool(@"DYYYSkipAIInteraction");
-    BOOL filterHDR = DYYYGetBool(@"DYYYFilterFeedHDR");
 
     BOOL shouldFilterAds = noAds && (self.isAds);
     BOOL shouldFilterHotSpot = skipHotSpot && self.hotSpotLynxCardModel;
@@ -5027,7 +5317,6 @@ static NSHashTable *processedParentViews = nil;
     BOOL shouldskipPhotoText = skipPhotoText && self.isNewTextMode && isRecommendFeed;
     BOOL shouldFilterMusic = skipMusic && self.musicCard && isRecommendFeed; // or self.awemeType == 155
     BOOL shouldFilterAIInteraction = skipAIInteraction && (self.awemeType == 162) && isRecommendFeed;
-    BOOL shouldFilterHDR = NO;
     BOOL shouldFilterLowLikes = NO;
     BOOL shouldFilterKeywords = NO;
     BOOL shouldFilterProp = NO;
@@ -5108,21 +5397,19 @@ static NSHashTable *processedParentViews = nil;
     }
 
 
-    // 检查是否为HDR视频
-    if (filterHDR && self.video && self.video.bitrateModels) {
-        for (id bitrateModel in self.video.bitrateModels) {
-            NSNumber *hdrType = [bitrateModel valueForKey:@"hdrType"];
-            NSNumber *hdrBit = [bitrateModel valueForKey:@"hdrBit"];
-
-            // 如果hdrType=1且hdrBit=10，则视为HDR视频
-            if (hdrType && [hdrType integerValue] == 1 && hdrBit && [hdrBit integerValue] == 10) {
-                shouldFilterHDR = YES;
-                break;
-            }
-        }
-    }
-    return shouldFilterAds || shouldFilterAllLive || shouldFilterHotSpot || shouldFilterHDR || shouldFilterKeywords || shouldFilterProp ||
+    return shouldFilterAds || shouldFilterAllLive || shouldFilterHotSpot || shouldFilterKeywords || shouldFilterProp ||
            shouldFilterTime || shouldFilterUser;
+}
+
+- (BOOL)awe_enableHDR {
+    if (DYYYGetBool(@"DYYYFilterFeedHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (id)awe_HDRValueFor:(long long)value enableHDR:(BOOL)enableHDR {
+    return %orig(value, DYYYGetBool(@"DYYYFilterFeedHDR") ? NO : enableHDR);
 }
 
 - (AWEECommerceLabel *)ecommerceBelowLabel {
