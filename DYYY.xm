@@ -7,6 +7,7 @@
 //
 #import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>
+#import <dlfcn.h>
 #import <float.h>
 #import <math.h>
 #import <objc/runtime.h>
@@ -462,6 +463,19 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
 
 %end
 
+// 禁止访问用户主页后上传访客记录
+%hook AWEProfileRecordHelper
+
++ (void)postProfileRecordWithParams:(id)params completionBlock:(id)completionBlock {
+    if (DYYYGetBool(@"DYYYDisableProfileVisitRecordUpload")) {
+        return;
+    }
+
+    %orig;
+}
+
+%end
+
 // 默认视频流最高画质
 %hook AWEVideoModel
 
@@ -551,6 +565,466 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
     }
 
     return originalModels;
+}
+
+%end
+
+static BOOL DYYYShouldDisableAllHDR(void) {
+    return DYYYGetBool(@"DYYYDisableAllHDR");
+}
+
+static id DYYYStandardCADynamicRange(void) {
+    static id standardDynamicRange = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        void *symbol = dlsym(RTLD_DEFAULT, "CADynamicRangeStandard");
+        if (symbol) {
+            id __unsafe_unretained *value = (id __unsafe_unretained *)symbol;
+            standardDynamicRange = *value;
+        }
+    });
+    return standardDynamicRange;
+}
+
+static void DYYYApplySDRDynamicRangeToImageView(UIImageView *imageView) {
+    if (!DYYYShouldDisableAllHDR() || !imageView) {
+        return;
+    }
+
+    if (@available(iOS 17.0, *)) {
+        imageView.preferredImageDynamicRange = UIImageDynamicRangeStandard;
+    }
+}
+
+static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
+    if (!DYYYShouldDisableAllHDR() || !metalLayer) {
+        return;
+    }
+
+    if (@available(iOS 16.0, *)) {
+        metalLayer.wantsExtendedDynamicRangeContent = NO;
+        metalLayer.EDRMetadata = nil;
+    }
+}
+
+// 禁用全部视频、图片及动图播放显示链路中的 HDR 效果
+%hook AWEKnowledgeABTestSettings
+
++ (BOOL)enableHDRAutomaticIdentification {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEFeedABSettings
+
++ (BOOL)enableHDRBrightnessOpt {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)enableHDRFullModelAdaptation {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)hdrAutomaticIdentification {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook BDSimPlayerBizConfig
+
+- (BOOL)enableHDRBrightnessOpt {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)enableHDRFullModelAdaptation {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)hdrAutomaticIdentification {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEBDSimPlayerBizConfig
+
+- (BOOL)enableHDRBrightnessOpt {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)enableHDRFullModelAdaptation {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)hdrAutomaticIdentification {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEVideoPlayerConfiguration
+
++ (void)setHDRBrightnessStrategy:(id)strategy {
+    if (!DYYYGetBool(@"DYYYDisableAllHDR")) {
+        %orig;
+    }
+}
+
++ (double)getHDRBrightnessOffset:(id)configuration brightness:(double)brightness {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return 0.0;
+    }
+    return %orig;
+}
+
+%end
+
+%hook BDSimPlayerHelper
+
++ (id)hdrValueFor:(long long)value enableHDR:(BOOL)enableHDR {
+    return %orig(value, DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
+}
+
+%end
+
+%hook BDSimStreamContext
+
+- (BOOL)enableHDR {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEnableHDR:(BOOL)enableHDR {
+    %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
+}
+
+%end
+
+%hook BDSimMediaPlayer
+
+- (BOOL)enableHDR {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEnableHDR:(BOOL)enableHDR {
+    %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
+}
+
+- (void)setEnablePlayHDRMode {
+    if (!DYYYGetBool(@"DYYYDisableAllHDR")) {
+        %orig;
+    }
+}
+
+- (id)awe_HDRValueFor:(long long)value enableHDR:(BOOL)enableHDR {
+    return %orig(value, DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
+}
+
+%end
+
+%hook AWEDPlayerVideoDisplayOptState
+
+- (BOOL)enableHDR {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEnableHDR:(BOOL)enableHDR {
+    %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
+}
+
+%end
+
+%hook AWEPlayVideoPlayerContext
+
+- (BOOL)enableHDR {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEnableHDR:(BOOL)enableHDR {
+    %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
+}
+
+%end
+
+%hook AWEPlayVideoViewController
+
+- (BOOL)enableHDR {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEnableHDR:(BOOL)enableHDR {
+    %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
+}
+
+%end
+
+%hook AWEDPlayerFeedPlayerViewController
+
+- (BOOL)enableHDR {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEDPlayerViewController_Merge
+
+- (BOOL)enableHDR {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook TTVideoEngineOwnPlayer
+
+- (BOOL)enableHDR10 {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEnableHDR10:(BOOL)enableHDR10 {
+    %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR10);
+}
+
+%end
+
+%hook IESLiveAudienceHDRController
+
++ (BOOL)currentHDRStatusForRoomID:(id)roomID {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)isCurrentRoomSupportHDR:(id)roomID roomModel:(id)roomModel {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)isFeedCanEnableHDRFeature {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)isInnerFeedCanEnableHDRFeature {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)isUserEnableHDR {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)p_isHDRFeatureEnable {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (void)setUserEnableHDR:(BOOL)enableHDR {
+    %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
+}
+
++ (BOOL)shouldShowHDRSwitchForRoom:(id)room {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook BDImageDecoderFactory
+
++ (BOOL)isHDRImageData:(id)data withHeifDecoderClass:(Class)decoderClass {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook BDImageDecoderImageIO
+
+- (BOOL)isHDRCGImage:(CGImageRef)image decodedToHDR:(BOOL)decodedToHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook HDRMTUIImageView
+
+- (instancetype)initWithFrame:(CGRect)frame hdrEnabled:(BOOL)hdrEnabled {
+    return %orig(frame, DYYYShouldDisableAllHDR() ? NO : hdrEnabled);
+}
+
+- (BOOL)hdrEnabled {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setHdrEnabled:(BOOL)hdrEnabled {
+    %orig(DYYYShouldDisableAllHDR() ? NO : hdrEnabled);
+}
+
+- (void)setImage:(UIImage *)image {
+    if (DYYYShouldDisableAllHDR()) {
+        self.hdrEnabled = NO;
+    }
+    DYYYApplySDRDynamicRangeToImageView(self);
+    %orig;
+    DYYYApplySDRDynamicRangeToImageView(self);
+}
+
+%end
+
+%hook HDRMTImageView
+
+- (void)setMetalLayer:(CAMetalLayer *)metalLayer {
+    DYYYDisableExtendedRangeForMetalLayer(metalLayer);
+    %orig;
+}
+
+- (void)setUpEnv {
+    %orig;
+    DYYYDisableExtendedRangeForMetalLayer(self.metalLayer);
+}
+
+- (void)layoutSubviews {
+    %orig;
+    DYYYDisableExtendedRangeForMetalLayer(self.metalLayer);
+}
+
+%end
+
+%hook HDRMTButton
+
+- (void)configHDRContent {
+    %orig;
+    if (DYYYShouldDisableAllHDR()) {
+        self.hdrmtImageView.hdrEnabled = NO;
+        DYYYApplySDRDynamicRangeToImageView(self.hdrmtImageView);
+    }
+}
+
+%end
+
+%hook CAMetalLayer
+
+- (void)setWantsExtendedDynamicRangeContent:(BOOL)wantsExtendedDynamicRangeContent {
+    %orig(DYYYShouldDisableAllHDR() ? NO : wantsExtendedDynamicRangeContent);
+}
+
+- (BOOL)wantsExtendedDynamicRangeContent {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEDRMetadata:(CAEDRMetadata *)EDRMetadata {
+    %orig(DYYYShouldDisableAllHDR() ? nil : EDRMetadata);
+}
+
+%end
+
+%hook CALayer
+
+- (void)setWantsExtendedDynamicRangeContent:(BOOL)wantsExtendedDynamicRangeContent {
+    %orig(DYYYShouldDisableAllHDR() ? NO : wantsExtendedDynamicRangeContent);
+}
+
+- (BOOL)wantsExtendedDynamicRangeContent {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setPreferredDynamicRange:(id)preferredDynamicRange {
+    id standardDynamicRange = DYYYStandardCADynamicRange();
+    %orig(DYYYShouldDisableAllHDR() && standardDynamicRange ? standardDynamicRange : preferredDynamicRange);
+}
+
+- (id)preferredDynamicRange {
+    id preferredDynamicRange = %orig;
+    if (DYYYShouldDisableAllHDR()) {
+        id standardDynamicRange = DYYYStandardCADynamicRange();
+        if (standardDynamicRange) {
+            return standardDynamicRange;
+        }
+    }
+    return preferredDynamicRange;
 }
 
 %end
@@ -2160,17 +2634,25 @@ static NSString *const kDYYYLongPressCopyEnabledKey = @"DYYYLongPressCopyTextEna
 %hook _TtC33AWECommentLongPressPanelSwiftImpl32CommentLongPressPanelCopyElement
 
 - (void)elementTapped {
-    if (DYYYGetBool(@"DYYYCommentCopyText")) {
-        AWECommentLongPressPanelContext *commentPageContext = [self commentPageContext];
-        AWECommentModel *selectdComment = [commentPageContext selectdComment];
-        if (!selectdComment) {
-            AWECommentLongPressPanelParam *params = [commentPageContext params];
-            selectdComment = [params selectdComment];
-        }
-        NSString *descText = [selectdComment content];
-        [[UIPasteboard generalPasteboard] setString:descText];
-        [DYYYToast showSuccessToastWithMessage:@"评论已复制"];
+    if (!DYYYGetBool(@"DYYYCommentCopyText")) {
+        %orig;
+        return;
     }
+
+    AWECommentLongPressPanelContext *commentPageContext = [self commentPageContext];
+    AWECommentModel *selectdComment = [commentPageContext selectdComment];
+    if (!selectdComment) {
+        AWECommentLongPressPanelParam *params = [commentPageContext params];
+        selectdComment = [params selectdComment];
+    }
+    NSString *descText = [selectdComment content];
+    if (descText.length == 0) {
+        %orig;
+        return;
+    }
+
+    [[UIPasteboard generalPasteboard] setString:descText];
+    [DYYYToast showSuccessToastWithMessage:@"评论已复制"];
 }
 %end
 
@@ -5086,7 +5568,6 @@ static NSHashTable *processedParentViews = nil;
         }
     }
 
-
     // 检查是否为HDR视频
     if (filterHDR && self.video && self.video.bitrateModels) {
         for (id bitrateModel in self.video.bitrateModels) {
@@ -5100,8 +5581,20 @@ static NSHashTable *processedParentViews = nil;
             }
         }
     }
+
     return shouldFilterAds || shouldFilterAllLive || shouldFilterHotSpot || shouldFilterHDR || shouldFilterKeywords || shouldFilterProp ||
            shouldFilterTime || shouldFilterUser;
+}
+
+- (BOOL)awe_enableHDR {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (id)awe_HDRValueFor:(long long)value enableHDR:(BOOL)enableHDR {
+    return %orig(value, DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
 }
 
 - (AWEECommerceLabel *)ecommerceBelowLabel {
@@ -8666,8 +9159,33 @@ static Class TagViewClass = nil;
 %end
 
 %hook UIImageView
+- (void)setImage:(UIImage *)image {
+    DYYYApplySDRDynamicRangeToImageView(self);
+    %orig;
+    DYYYApplySDRDynamicRangeToImageView(self);
+}
+
+- (void)setHighlightedImage:(UIImage *)highlightedImage {
+    DYYYApplySDRDynamicRangeToImageView(self);
+    %orig;
+    DYYYApplySDRDynamicRangeToImageView(self);
+}
+
+- (void)setAnimationImages:(NSArray<UIImage *> *)animationImages {
+    DYYYApplySDRDynamicRangeToImageView(self);
+    %orig;
+    DYYYApplySDRDynamicRangeToImageView(self);
+}
+
+- (void)setHighlightedAnimationImages:(NSArray<UIImage *> *)highlightedAnimationImages {
+    DYYYApplySDRDynamicRangeToImageView(self);
+    %orig;
+    DYYYApplySDRDynamicRangeToImageView(self);
+}
+
 - (void)layoutSubviews {
     %orig;
+    DYYYApplySDRDynamicRangeToImageView(self);
     if (DYYYGetBool(@"DYYYHideCommentDiscover")) {
         if (!self.accessibilityLabel) {
             UIView *parentView = self.superview;

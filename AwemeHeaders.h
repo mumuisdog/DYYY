@@ -1,4 +1,5 @@
 #import <Photos/Photos.h>
+#import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>
 
 FOUNDATION_EXPORT void DYYYNSLog(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
@@ -157,6 +158,8 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(nonatomic, assign) BOOL isShowLandscapeEntryView;
 - (BOOL)isLive;
 - (BOOL)contentFilter;
+- (BOOL)awe_enableHDR;
+- (id)awe_HDRValueFor:(long long)value enableHDR:(BOOL)enableHDR;
 - (AWESearchAwemeExtraModel *)searchExtraModel;
 @end
 
@@ -207,6 +210,8 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 
 @interface AWEPlayVideoViewController : UIViewController
 @property(nonatomic, strong) AWEAwemeModel *model;
+- (BOOL)enableHDR;
+- (void)setEnableHDR:(BOOL)enableHDR;
 @end
 
 @interface AWELongPressPanelViewGroupModel : NSObject
@@ -1229,11 +1234,13 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 
 @interface AWEDPlayerFeedPlayerViewController : UIViewController
 @property(nonatomic) UIView *contentView;
+- (BOOL)enableHDR;
 - (void)setVideoControllerPlaybackRate:(double)arg0;
 @end
 
 @interface AWEDPlayerViewController_Merge : UIViewController
 @property(nonatomic) UIView *contentView;
+- (BOOL)enableHDR;
 - (void)setVideoControllerPlaybackRate:(double)arg0;
 @end
 
@@ -1397,9 +1404,95 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(retain, nonatomic) AWECodeGenCommonAnchorBasicInfoModel *templateAnchorInfo;
 @end
 
+@interface AWEKnowledgeABTestSettings : NSObject
++ (BOOL)enableHDRAutomaticIdentification;
+@end
+
+@interface AWEFeedABSettings : NSObject
++ (BOOL)enableHDRBrightnessOpt;
++ (BOOL)enableHDRFullModelAdaptation;
++ (BOOL)hdrAutomaticIdentification;
+@end
+
+@interface BDSimPlayerBizConfig : NSObject
+- (BOOL)enableHDRBrightnessOpt;
+- (BOOL)enableHDRFullModelAdaptation;
+- (BOOL)hdrAutomaticIdentification;
+@end
+
+@interface AWEBDSimPlayerBizConfig : BDSimPlayerBizConfig
+@end
+
+@interface AWEDPlayerVideoDisplayOptState : NSObject
+- (BOOL)enableHDR;
+- (void)setEnableHDR:(BOOL)enableHDR;
+@end
+
+@interface AWEPlayVideoPlayerContext : NSObject
+- (BOOL)enableHDR;
+- (void)setEnableHDR:(BOOL)enableHDR;
+@end
+
+@interface BDSimStreamContext : NSObject
+- (BOOL)enableHDR;
+- (void)setEnableHDR:(BOOL)enableHDR;
+@end
+
+@interface BDSimPlayerHelper : NSObject
++ (id)hdrValueFor:(long long)value enableHDR:(BOOL)enableHDR;
+@end
+
+@interface BDSimMediaPlayer : NSObject
+- (BOOL)enableHDR;
+- (void)setEnableHDR:(BOOL)enableHDR;
+- (void)setEnablePlayHDRMode;
+- (id)awe_HDRValueFor:(long long)value enableHDR:(BOOL)enableHDR;
+@end
+
+@interface TTVideoEngineOwnPlayer : NSObject
+- (BOOL)enableHDR10;
+- (void)setEnableHDR10:(BOOL)enableHDR10;
+@end
+
+@interface IESLiveAudienceHDRController : NSObject
++ (BOOL)currentHDRStatusForRoomID:(id)roomID;
++ (BOOL)isCurrentRoomSupportHDR:(id)roomID roomModel:(id)roomModel;
++ (BOOL)isFeedCanEnableHDRFeature;
++ (BOOL)isInnerFeedCanEnableHDRFeature;
++ (BOOL)isUserEnableHDR;
++ (BOOL)p_isHDRFeatureEnable;
++ (void)setUserEnableHDR:(BOOL)enableHDR;
++ (BOOL)shouldShowHDRSwitchForRoom:(id)room;
+@end
+
+@interface BDImageDecoderFactory : NSObject
++ (BOOL)isHDRImageData:(id)data withHeifDecoderClass:(Class)decoderClass;
+@end
+
+@interface BDImageDecoderImageIO : NSObject
+- (BOOL)isHDRCGImage:(CGImageRef)image decodedToHDR:(BOOL)decodedToHDR;
+@end
+
+@class HDRMTImageView;
+
+@interface HDRMTUIImageView : UIImageView
+@property(nonatomic, assign) BOOL hdrEnabled;
+@property(nonatomic, strong) HDRMTImageView *innerHDRImageView;
+- (instancetype)initWithFrame:(CGRect)frame hdrEnabled:(BOOL)hdrEnabled;
+@end
+
+@interface HDRMTImageView : UIView
+@property(nonatomic, strong) CAMetalLayer *metalLayer;
+@end
+
+@interface HDRMTButton : UIButton
+@property(nonatomic, strong) HDRMTUIImageView *hdrmtImageView;
+- (void)configHDRContent;
+@end
+
 @interface AWEVideoPlayerConfiguration : NSObject
 + (void)setHDRBrightnessStrategy:(id)strategy;
-+ (double)getHDRBrightnessOffset:(double)offset brightness:(double)brightness;
++ (double)getHDRBrightnessOffset:(id)configuration brightness:(double)brightness;
 @end
 
 @interface IESFiltersManager : NSObject
