@@ -86,6 +86,8 @@
               @"DYYYSkipAllLive" : @[ @"DYYYSkipLive" ],
               @"DYYYHideEntry" : @[ @"DYYYRemoveEntry" ],
               @"DYYYRemoveEntry" : @[ @"DYYYHideEntry" ],
+              @"DYYYFilterFeedHDR" : @[ @"DYYYDisableAllHDR" ],
+              @"DYYYDisableAllHDR" : @[ @"DYYYFilterFeedHDR" ],
           },
 
           // ===== 互斥激活配置 =====
@@ -355,6 +357,8 @@ static NSArray *allSettingsViewControllers(void) {
     [self updateDependentItemsForSetting:identifier value:@(isEnabled)];
 }
 + (void)updateConflictingItemUIState:(NSString *)identifier withValue:(BOOL)value {
+    [self setUserDefaults:@(value) forKey:identifier];
+
     for (AWESettingBaseViewController *settingsVC in allSettingsViewControllers()) {
         AWESettingsViewModel *viewModel = (AWESettingsViewModel *)[settingsVC viewModel];
         if (!viewModel || ![viewModel respondsToSelector:@selector(sectionDataArray)])
@@ -371,7 +375,6 @@ static NSArray *allSettingsViewControllers(void) {
                 if ([item.identifier isEqualToString:identifier]) {
                     if (item.cellType == 6 || item.cellType == 37) {
                         item.isSwitchOn = value;
-                        [self setUserDefaults:@(value) forKey:identifier];
                     }
                     item.isEnable = value;
                     [item refreshCell];
