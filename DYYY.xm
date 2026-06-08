@@ -7,6 +7,7 @@
 //
 #import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>
+#import <dlfcn.h>
 #import <float.h>
 #import <math.h>
 #import <objc/runtime.h>
@@ -572,6 +573,19 @@ static BOOL DYYYShouldDisableAllHDR(void) {
     return DYYYGetBool(@"DYYYFilterFeedHDR");
 }
 
+static id DYYYStandardCADynamicRange(void) {
+    static id standardDynamicRange = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        void *symbol = dlsym(RTLD_DEFAULT, "CADynamicRangeStandard");
+        if (symbol) {
+            id __unsafe_unretained *value = (id __unsafe_unretained *)symbol;
+            standardDynamicRange = *value;
+        }
+    });
+    return standardDynamicRange;
+}
+
 static void DYYYApplySDRDynamicRangeToImageView(UIImageView *imageView) {
     if (!DYYYShouldDisableAllHDR() || !imageView) {
         return;
@@ -997,21 +1011,20 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
     return %orig;
 }
 
-- (void)setPreferredDynamicRange:(CADynamicRange)preferredDynamicRange {
-    if (@available(iOS 26.0, *)) {
-        %orig(DYYYShouldDisableAllHDR() ? CADynamicRangeStandard : preferredDynamicRange);
-        return;
-    }
-    %orig;
+- (void)setPreferredDynamicRange:(id)preferredDynamicRange {
+    id standardDynamicRange = DYYYStandardCADynamicRange();
+    %orig(DYYYShouldDisableAllHDR() && standardDynamicRange ? standardDynamicRange : preferredDynamicRange);
 }
 
-- (CADynamicRange)preferredDynamicRange {
-    if (@available(iOS 26.0, *)) {
-        if (DYYYShouldDisableAllHDR()) {
-            return CADynamicRangeStandard;
+- (id)preferredDynamicRange {
+    id preferredDynamicRange = %orig;
+    if (DYYYShouldDisableAllHDR()) {
+        id standardDynamicRange = DYYYStandardCADynamicRange();
+        if (standardDynamicRange) {
+            return standardDynamicRange;
         }
     }
-    return %orig;
+    return preferredDynamicRange;
 }
 
 %end
