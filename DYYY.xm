@@ -582,6 +582,23 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
 
 %end
 
+static void DYYYMigrateSeparatedHDRSettingsIfNeeded(void) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        if ([defaults boolForKey:@"DYYYHDRSettingsSeparatedV1"]) {
+            return;
+        }
+
+        id previousValue = [defaults objectForKey:@"DYYYFilterFeedHDR"];
+        if (previousValue && ![defaults objectForKey:@"DYYYDisableAllHDR"]) {
+            [defaults setBool:[previousValue boolValue] forKey:@"DYYYDisableAllHDR"];
+        }
+        [defaults setBool:NO forKey:@"DYYYFilterFeedHDR"];
+        [defaults setBool:YES forKey:@"DYYYHDRSettingsSeparatedV1"];
+    });
+}
+
 static BOOL DYYYShouldDisableAllHDR(void) {
     return DYYYGetBool(@"DYYYDisableAllHDR");
 }
@@ -9455,6 +9472,8 @@ static void findTargetViewInView(UIView *view) {
 }
 
 %ctor {
+    DYYYMigrateSeparatedHDRSettingsIfNeeded();
+
     Class interactionBaseLabelClass = objc_getClass("AWECommentSwiftBizUI.CommentInteractionBaseLabel");
     if (interactionBaseLabelClass) {
         %init(DYYYCommentExactTimeGroup, AWECommentSwiftBizUI_CommentInteractionBaseLabel = interactionBaseLabelClass);
