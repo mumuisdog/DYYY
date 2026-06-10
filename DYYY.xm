@@ -463,7 +463,20 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
 
 %end
 
-// 禁止访问用户主页后上传访客记录
+// 抖音 39.1.0 访问他人主页时会由详情组件直接上传访客记录
+%hook AWEProfileUserDetailComponent
+
+- (void)reportUserDetailVisitIfNeeded:(id)user {
+    if (DYYYGetBool(@"DYYYDisableProfileVisitRecordUpload")) {
+        return;
+    }
+
+    %orig;
+}
+
+%end
+
+// 兼容旧版访客记录上传路径
 %hook AWEProfileRecordHelper
 
 + (void)postProfileRecordWithParams:(id)params completionBlock:(id)completionBlock {
