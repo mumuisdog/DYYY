@@ -724,6 +724,10 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @interface AWEProfileTaskCardStyleListCollectionViewCell : UIView
 @end
 
+@interface AWEProfileUserDetailComponent : NSObject
+- (void)reportUserDetailVisitIfNeeded:(id)user;
+@end
+
 // AWEVersionUpdateManager相关接口声明
 @interface AWEVersionUpdateManager : NSObject
 @property(nonatomic, strong) id networkModule;
