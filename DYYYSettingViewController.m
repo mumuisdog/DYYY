@@ -738,6 +738,10 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
             conflictingKey = @"DYYYDisableAllHDR";
         } else if ([item.key isEqualToString:@"DYYYDisableAllHDR"]) {
             conflictingKey = @"DYYYFilterFeedHDR";
+        } else if ([item.key isEqualToString:@"DYYYHideLOTAnimationView"]) {
+            conflictingKey = @"DYYYHideFollowPromptView";
+        } else if ([item.key isEqualToString:@"DYYYHideFollowPromptView"]) {
+            conflictingKey = @"DYYYHideLOTAnimationView";
         }
 
         if (conflictingKey) {
