@@ -6488,6 +6488,57 @@ static NSHashTable *processedParentViews = nil;
 %end
 
 %hook AWEPlayInteractionUserAvatarFollowPromptController
+- (void)onFollowViewClicked:(UITapGestureRecognizer *)gesture {
+    if (DYYYGetBool(@"DYYYFollowTips")) {
+        AWEPlayInteractionUserAvatarContext *context = nil;
+        if ([self respondsToSelector:@selector(userAvatarContext)]) {
+            context = [self valueForKey:@"userAvatarContext"];
+        }
+
+        AWEUserModel *author = context.model.author;
+        NSString *nickname = @"";
+        NSString *signature = @"";
+        NSString *avatarURL = @"";
+
+        if (author) {
+            if ([author respondsToSelector:@selector(nickname)]) {
+                nickname = [author valueForKey:@"nickname"] ?: @"";
+            }
+
+            if ([author respondsToSelector:@selector(signature)]) {
+                signature = [author valueForKey:@"signature"] ?: @"";
+            }
+
+            if ([author respondsToSelector:@selector(avatarThumb)]) {
+                AWEURLModel *avatarThumb = [author valueForKey:@"avatarThumb"];
+                if (avatarThumb && avatarThumb.originURLList.count > 0) {
+                    avatarURL = avatarThumb.originURLList.firstObject;
+                }
+            }
+        }
+
+        NSMutableString *messageContent = [NSMutableString string];
+        if (signature.length > 0) {
+            [messageContent appendFormat:@"%@", signature];
+        }
+
+        NSString *title = nickname.length > 0 ? nickname : @"关注确认";
+
+        [DYYYBottomAlertView showAlertWithTitle:title
+                                        message:messageContent
+                                      avatarURL:avatarURL
+                               cancelButtonText:@"取消"
+                              confirmButtonText:@"关注"
+                                   cancelAction:nil
+                                    closeAction:nil
+                                  confirmAction:^{
+                                    %orig(gesture);
+                                  }];
+    } else {
+        %orig;
+    }
+}
+
 - (void)layoutElementView {
     %orig;
     DYYYApplyAvatarFollowPromptSettings(self);
