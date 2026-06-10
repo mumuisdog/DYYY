@@ -3599,15 +3599,78 @@ static NSArray *DYYYIMMenuItemsByAddingDownloadAction(NSArray *menuItems, id cel
 }
 %end
 
+static id DYYYAvatarObjectForSelector(id object, SEL selector) {
+    if (!object || !selector || ![object respondsToSelector:selector]) {
+        return nil;
+    }
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+    return [object performSelector:selector];
+#pragma clang diagnostic pop
+}
+
+static UIView *DYYYAvatarViewForSelector(id object, SEL selector) {
+    id value = DYYYAvatarObjectForSelector(object, selector);
+    return [value isKindOfClass:[UIView class]] ? value : nil;
+}
+
+static void DYYYHideAvatarViewForSelector(id object, SEL selector) {
+    UIView *view = DYYYAvatarViewForSelector(object, selector);
+    if (!view) {
+        return;
+    }
+    view.hidden = YES;
+    view.userInteractionEnabled = NO;
+}
+
+static void DYYYMakeAvatarViewInvisibleForSelector(id object, SEL selector) {
+    UIView *view = DYYYAvatarViewForSelector(object, selector);
+    if (view) {
+        view.layer.opacity = 0.0;
+    }
+}
+
+static void DYYYApplyAvatarFollowPromptSettings(id owner) {
+    BOOL hideAvatar = DYYYGetBool(@"DYYYHideAvatarButton");
+    BOOL hidePlus = DYYYGetBool(@"DYYYHideLOTAnimationView");
+    BOOL removePlus = DYYYGetBool(@"DYYYHideFollowPromptView");
+    if (!hideAvatar && !hidePlus && !removePlus) {
+        return;
+    }
+
+    DYYYHideAvatarViewForSelector(owner, NSSelectorFromString(@"followAnimationView"));
+    DYYYHideAvatarViewForSelector(owner, NSSelectorFromString(@"unfollowAnimationView"));
+    DYYYHideAvatarViewForSelector(owner, NSSelectorFromString(@"staticFollowAnimationView"));
+
+    if (hideAvatar || removePlus) {
+        DYYYHideAvatarViewForSelector(owner, NSSelectorFromString(@"followAddView"));
+        DYYYHideAvatarViewForSelector(owner, NSSelectorFromString(@"followPromptView"));
+    } else if (hidePlus) {
+        DYYYMakeAvatarViewInvisibleForSelector(owner, NSSelectorFromString(@"followAddView"));
+    }
+}
+
+static BOOL DYYYIsLegacyAvatarFollowAnimationView(UIView *view) {
+    Class promptClass = NSClassFromString(@"AWEPlayInteractionFollowPromptView");
+    UIView *ancestor = view.superview;
+    for (NSInteger depth = 0; ancestor && depth < 6; depth++, ancestor = ancestor.superview) {
+        if (promptClass && [ancestor isKindOfClass:promptClass]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 // 隐藏头像加号和透明
 %hook LOTAnimationView
 - (void)layoutSubviews {
     %orig;
-    // 确保只有头像的LOTAnimationView才则执行该逻辑, 防止误杀
-    if ([self.superview isKindOfClass:%c(AWEPlayInteractionFollowPromptView)]) {
+    // 旧版加号动画可能被额外容器包裹，沿父视图向上识别关注提示视图。
+    if (DYYYIsLegacyAvatarFollowAnimationView(self)) {
         // 检查是否需要隐藏加号
         if (DYYYGetBool(@"DYYYHideLOTAnimationView") || DYYYGetBool(@"DYYYHideFollowPromptView")) {
-            [self removeFromSuperview];
+            self.hidden = YES;
+            self.userInteractionEnabled = NO;
             return;
         }
         // 应用透明度设置
@@ -3616,6 +3679,17 @@ static NSArray *DYYYIMMenuItemsByAddingDownloadAction(NSArray *menuItems, id cel
             CGFloat alphaValue = [transparencyValue floatValue];
             self.alpha = alphaValue;
         }
+    }
+}
+%end
+
+%hook AWEPlayInteractionStaticFollowAnimationView
+- (void)layoutSubviews {
+    %orig;
+    if (DYYYGetBool(@"DYYYHideAvatarButton") || DYYYGetBool(@"DYYYHideLOTAnimationView") || DYYYGetBool(@"DYYYHideFollowPromptView")) {
+        UIView *animationView = (UIView *)self;
+        animationView.hidden = YES;
+        animationView.userInteractionEnabled = NO;
     }
 }
 %end
@@ -4136,14 +4210,10 @@ static NSArray *DYYYIMMenuItemsByAddingDownloadAction(NSArray *menuItems, id cel
 - (void)layoutSubviews {
     %orig;
 
-    NSString *accessibilityLabel = self.accessibilityLabel;
-
-    if ([accessibilityLabel isEqualToString:@"关注"]) {
-        if (DYYYGetBool(@"DYYYHideAvatarButton") || DYYYGetBool(@"DYYYHideFollowPromptView")) {
-            self.userInteractionEnabled = NO;
-            self.hidden = YES;
-            return;
-        }
+    if (DYYYGetBool(@"DYYYHideAvatarButton") || DYYYGetBool(@"DYYYHideFollowPromptView")) {
+        self.userInteractionEnabled = NO;
+        self.hidden = YES;
+        return;
     }
 }
 
@@ -6377,27 +6447,44 @@ static NSHashTable *processedParentViews = nil;
 - (void)layoutSubviews {
     %orig;
 
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideFollowPromptView"]) {
+    if (DYYYGetBool(@"DYYYHideAvatarButton")) {
+        self.hidden = YES;
+        self.userInteractionEnabled = NO;
         return;
     }
 
-    static char kDYAvatarCacheKey;
-    NSArray *viewCache = objc_getAssociatedObject(self, &kDYAvatarCacheKey);
-    if (!viewCache) {
-        NSMutableArray *tmp = [NSMutableArray array];
-        for (UIView *subview in self.subviews) {
-            if ([subview isMemberOfClass:[UIView class]]) {
-                [tmp addObject:subview];
-            }
-        }
-        viewCache = [tmp copy];
-        objc_setAssociatedObject(self, &kDYAvatarCacheKey, viewCache, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    }
+    DYYYApplyAvatarFollowPromptSettings(self);
+}
+%end
 
-    for (UIView *container in viewCache) {
-        for (UIView *child in container.subviews) {
-            child.alpha = 0.0;
-        }
+%hook AWEPlayInteractionUserAvatarFollowPromptController
+- (void)layoutElementView {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettings(self);
+}
+
+- (void)showFollowAddView:(BOOL)show {
+    %orig(show);
+    DYYYApplyAvatarFollowPromptSettings(self);
+}
+%end
+
+%hook AWEPlayInteractionUserAvatarMainBusinessController
+- (void)layoutElementView {
+    %orig;
+    if (DYYYGetBool(@"DYYYHideAvatarButton")) {
+        DYYYHideAvatarViewForSelector(self, NSSelectorFromString(@"avatarPicContainerView"));
+        DYYYHideAvatarViewForSelector(self, NSSelectorFromString(@"avatarPicView"));
+    }
+}
+%end
+
+%hook AWEPlayInteractionUserAvatarOptElementElement
+- (void)layoutElementView {
+    %orig;
+    if (DYYYGetBool(@"DYYYHideAvatarButton")) {
+        DYYYHideAvatarViewForSelector(self, NSSelectorFromString(@"view"));
+        DYYYHideAvatarViewForSelector(self, NSSelectorFromString(@"getUserAvatarButton"));
     }
 }
 %end
