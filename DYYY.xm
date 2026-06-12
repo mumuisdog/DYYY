@@ -672,6 +672,31 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
     return %orig;
 }
 
++ (BOOL)enableProfilePreloadHDRBrightnessFilter {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)enableDynamicGaussianBlurHDR {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEFeedABTestServiceObjc
+
++ (BOOL)enableProfilePreloadHDRBrightnessFilter {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
 %end
 
 %hook BDSimPlayerBizConfig
@@ -783,6 +808,12 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
     }
 }
 
+- (void)buildHDRConfig:(id)config {
+    if (!DYYYGetBool(@"DYYYDisableAllHDR")) {
+        %orig;
+    }
+}
+
 - (id)awe_HDRValueFor:(long long)value enableHDR:(BOOL)enableHDR {
     return %orig(value, DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
 }
@@ -832,6 +863,17 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
     %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR);
 }
 
+- (void)setPlayerLutFilter:(id)lutFilter HDRLutImage:(id)HDRLutImage {
+    %orig(lutFilter, DYYYGetBool(@"DYYYDisableAllHDR") ? nil : HDRLutImage);
+}
+
+- (BOOL)awe_isCurrentVideoHDR {
+    if (DYYYGetBool(@"DYYYDisableAllHDR")) {
+        return NO;
+    }
+    return %orig;
+}
+
 %end
 
 %hook AWEDPlayerFeedPlayerViewController
@@ -867,6 +909,179 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 
 - (void)setEnableHDR10:(BOOL)enableHDR10 {
     %orig(DYYYGetBool(@"DYYYDisableAllHDR") ? NO : enableHDR10);
+}
+
+%end
+
+%hook AWEDPlayerVideoConfig
+
+- (BOOL)enableMetalRenderHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEnableMetalRenderHDR:(BOOL)enableMetalRenderHDR {
+    %orig(DYYYShouldDisableAllHDR() ? NO : enableMetalRenderHDR);
+}
+
+%end
+
+%hook AWEDPlayerVideoController
+
+- (void)configEnableMetalRenderHDRIfNeeded {
+    if (!DYYYShouldDisableAllHDR()) {
+        %orig;
+    }
+}
+
+- (void)setEnablePlayHDRModeIfNeeded {
+    if (!DYYYShouldDisableAllHDR()) {
+        %orig;
+    }
+}
+
+%end
+
+%hook AWEDPlayerVideoController_Merge
+
+- (void)configEnableMetalRenderHDRIfNeeded {
+    if (!DYYYShouldDisableAllHDR()) {
+        %orig;
+    }
+}
+
+- (void)setEnablePlayHDRModeIfNeeded {
+    if (!DYYYShouldDisableAllHDR()) {
+        %orig;
+    }
+}
+
+%end
+
+%hook AWEDPlayerPlayControlContainer
+
+- (void)configEnableMetalRenderHDRIfNeeded {
+    if (!DYYYShouldDisableAllHDR()) {
+        %orig;
+    }
+}
+
+%end
+
+%hook AWEDPlayerNonSimplayerContainer
+
+- (void)setEnablePlayHDRMode {
+    if (!DYYYShouldDisableAllHDR()) {
+        %orig;
+    }
+}
+
+%end
+
+%hook AWEDPlayerSimpleModeContainer
+
+- (void)setEnablePlayHDRModeIfNeeded {
+    if (!DYYYShouldDisableAllHDR()) {
+        %orig;
+    }
+}
+
+%end
+
+%hook AWEDPlayerBrightnessContainer
+
+- (BOOL)awe_isCurrentVideoHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEVideoPlayerScreenBrightnessManager
+
+- (BOOL)isHDRVideo {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setIsHDRVideo:(BOOL)isHDRVideo {
+    %orig(DYYYShouldDisableAllHDR() ? NO : isHDRVideo);
+}
+
+%end
+
+%hook ALMOwnPlayerWrapper
+
+- (void)setLutFilter:(id)lutFilter HDRLutImage:(id)HDRLutImage {
+    %orig(lutFilter, DYYYShouldDisableAllHDR() ? nil : HDRLutImage);
+}
+
+%end
+
+%hook ALMSysPlayerWrapper
+
+- (void)setLutFilter:(id)lutFilter HDRLutImage:(id)HDRLutImage {
+    %orig(lutFilter, DYYYShouldDisableAllHDR() ? nil : HDRLutImage);
+}
+
+%end
+
+%hook ALMVideoPlayerConfig
+
++ (void)setPlayerEffectHDRLutImageEnable:(BOOL)enable {
+    %orig(DYYYShouldDisableAllHDR() ? NO : enable);
+}
+
+%end
+
+%hook IESVideoPlayerConfig
+
++ (void)setPlayerEffectHDRLutImageEnable:(BOOL)enable {
+    %orig(DYYYShouldDisableAllHDR() ? NO : enable);
+}
+
+%end
+
+%hook AWEIMModuleService
+
+- (BOOL)im_forceHDRToSDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return YES;
+    }
+    return %orig;
+}
+
+%end
+
+%hook IESIMVideoPlayerWrapper
+
+- (void)setupHDREnable:(BOOL)enable {
+    %orig(DYYYShouldDisableAllHDR() ? NO : enable);
+}
+
+%end
+
+%hook AWEIMVideoBrowserCollectionViewCell
+
+- (void)setEnablePlayHDR:(BOOL)enable {
+    %orig(DYYYShouldDisableAllHDR() ? NO : enable);
+}
+
+%end
+
+%hook AWEECOMIMAppSettingsService
+
++ (BOOL)enableVideoPreviewSupportHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
 }
 
 %end
@@ -928,6 +1143,124 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 
 %end
 
+%hook IESLivePlayerController
+
+- (BOOL)isVideoSDR2HDRSupport {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEnableVideoSDR2HDR:(BOOL)enable callTrace:(id)callTrace {
+    %orig(DYYYShouldDisableAllHDR() ? NO : enable, callTrace);
+}
+
+- (BOOL)enableCloseSDR2HDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return YES;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWELivePreStreamPlayer
+
+- (void)changeSDR2HDRWithStrategy {
+    if (!DYYYShouldDisableAllHDR()) {
+        %orig;
+    }
+}
+
+%end
+
+%hook HTSLiveStreamPlayer
+
+- (void)setEnableVideoSDR2HDR:(BOOL)enable callTrace:(id)callTrace {
+    %orig(DYYYShouldDisableAllHDR() ? NO : enable, callTrace);
+}
+
+- (void)changeSDR2HDRWithStrategy {
+    if (!DYYYShouldDisableAllHDR()) {
+        %orig;
+    }
+}
+
+%end
+
+%hook IESLiveStreamPlayerVideoAudioEffectPlugin
+
+- (void)setEnableVideoSDR2HDR:(BOOL)enable callTrace:(id)callTrace {
+    %orig(DYYYShouldDisableAllHDR() ? NO : enable, callTrace);
+}
+
+- (void)changeSDR2HDRWithStrategy {
+    if (!DYYYShouldDisableAllHDR()) {
+        %orig;
+    }
+}
+
+%end
+
+%hook TVLManager
+
+- (BOOL)shouldForbidHDR10Render {
+    if (DYYYShouldDisableAllHDR()) {
+        return YES;
+    }
+    return %orig;
+}
+
+- (void)setShouldForbidHDR10Render:(BOOL)shouldForbid {
+    %orig(DYYYShouldDisableAllHDR() ? YES : shouldForbid);
+}
+
+- (void)setupVideoSDR2HDR:(id)config {
+    if (!DYYYShouldDisableAllHDR()) {
+        %orig;
+    }
+}
+
+%end
+
+%hook TVLPlayerItemPreferences
+
+- (BOOL)forbidSDR2HDRInPreview {
+    if (DYYYShouldDisableAllHDR()) {
+        return YES;
+    }
+    return %orig;
+}
+
+- (void)setForbidSDR2HDRInPreview:(BOOL)forbid {
+    %orig(DYYYShouldDisableAllHDR() ? YES : forbid);
+}
+
+- (BOOL)enableUseSDR2HDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setEnableUseSDR2HDR:(BOOL)enable {
+    %orig(DYYYShouldDisableAllHDR() ? NO : enable);
+}
+
+%end
+
+%hook TVLSettingsManager
+
+- (BOOL)enableMetalRenderHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
 %hook BDImageDecoderFactory
 
 + (BOOL)isHDRImageData:(id)data withHeifDecoderClass:(Class)decoderClass {
@@ -946,6 +1279,83 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
         return NO;
     }
     return %orig;
+}
+
+- (id)hdrOptionsFor:(id)image decodedToHDR:(BOOL *)decodedToHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        if (decodedToHDR) {
+            *decodedToHDR = NO;
+        }
+        return nil;
+    }
+    return %orig;
+}
+
+%end
+
+%hook BDImageDecoderHeic
+
++ (BOOL)isHDRData:(id)data {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)isHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setIsHDR:(BOOL)isHDR {
+    %orig(DYYYShouldDisableAllHDR() ? NO : isHDR);
+}
+
+%end
+
+%hook BDImageDecoderBVC2
+
+- (BOOL)isHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setIsHDR:(BOOL)isHDR {
+    %orig(DYYYShouldDisableAllHDR() ? NO : isHDR);
+}
+
+%end
+
+%hook BDImageDecoderWebP
+
+- (BOOL)isHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setIsHDR:(BOOL)isHDR {
+    %orig(DYYYShouldDisableAllHDR() ? NO : isHDR);
+}
+
+%end
+
+%hook BDImage
+
+- (BOOL)isHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setIsHDR:(BOOL)isHDR {
+    %orig(DYYYShouldDisableAllHDR() ? NO : isHDR);
 }
 
 %end
@@ -5668,16 +6078,29 @@ static NSHashTable *processedParentViews = nil;
         }
     }
 
-    // 检查是否为HDR视频
-    if (filterHDR && self.video && self.video.bitrateModels) {
-        for (id bitrateModel in self.video.bitrateModels) {
-            NSNumber *hdrType = [bitrateModel valueForKey:@"hdrType"];
-            NSNumber *hdrBit = [bitrateModel valueForKey:@"hdrBit"];
+    // 仅过滤推荐流，并优先使用 39.1.0 视频模型上的源 HDR 标记。
+    if (filterHDR && isRecommendFeed && self.video) {
+        AWEVideoModel *video = self.video;
+        if ([video respondsToSelector:@selector(isSourceHDR)] && video.isSourceHDR > 0) {
+            shouldFilterHDR = YES;
+        } else if ([video respondsToSelector:@selector(hasFilterHDR)] && video.hasFilterHDR) {
+            shouldFilterHDR = YES;
+        }
 
-            // 如果hdrType=1且hdrBit=10，则视为HDR视频
-            if (hdrType && [hdrType integerValue] == 1 && hdrBit && [hdrBit integerValue] == 10) {
-                shouldFilterHDR = YES;
-                break;
+        if (!shouldFilterHDR) {
+            for (id bitrateModel in video.bitrateModels) {
+                @try {
+                    NSNumber *hdrType = [bitrateModel valueForKey:@"hdrType"];
+                    NSNumber *hdrBit = [bitrateModel valueForKey:@"hdrBit"];
+
+                    // hdrType 覆盖 HDR10、HLG、HDR Vivid 等类型；无类型字段时保留 10bit 兜底。
+                    if ((hdrType && [hdrType integerValue] > 0) ||
+                        (!hdrType && hdrBit && [hdrBit integerValue] >= 10)) {
+                        shouldFilterHDR = YES;
+                        break;
+                    }
+                } @catch (__unused NSException *exception) {
+                }
             }
         }
     }

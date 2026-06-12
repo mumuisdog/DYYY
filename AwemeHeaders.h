@@ -69,6 +69,8 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(copy, nonatomic) NSArray *bitrateRawData;
 @property(nonatomic, strong) URLModel *h264URL;
 @property(nonatomic, strong) URLModel *coverURL;
+@property(nonatomic, assign) BOOL hasFilterHDR;
+@property(nonatomic, assign) NSInteger isSourceHDR;
 @end
 
 @interface AWEMusicModel : NSObject
@@ -1461,6 +1463,7 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 - (BOOL)enableHDR;
 - (void)setEnableHDR:(BOOL)enableHDR;
 - (void)setEnablePlayHDRMode;
+- (void)buildHDRConfig:(id)config;
 - (id)awe_HDRValueFor:(long long)value enableHDR:(BOOL)enableHDR;
 @end
 
@@ -1486,6 +1489,28 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 
 @interface BDImageDecoderImageIO : NSObject
 - (BOOL)isHDRCGImage:(CGImageRef)image decodedToHDR:(BOOL)decodedToHDR;
+- (id)hdrOptionsFor:(id)image decodedToHDR:(BOOL *)decodedToHDR;
+@end
+
+@interface BDImageDecoderHeic : NSObject
++ (BOOL)isHDRData:(id)data;
+- (BOOL)isHDR;
+- (void)setIsHDR:(BOOL)isHDR;
+@end
+
+@interface BDImageDecoderBVC2 : NSObject
+- (BOOL)isHDR;
+- (void)setIsHDR:(BOOL)isHDR;
+@end
+
+@interface BDImageDecoderWebP : NSObject
+- (BOOL)isHDR;
+- (void)setIsHDR:(BOOL)isHDR;
+@end
+
+@interface BDImage : UIImage
+- (BOOL)isHDR;
+- (void)setIsHDR:(BOOL)isHDR;
 @end
 
 @class HDRMTImageView;
@@ -1508,6 +1533,115 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @interface AWEVideoPlayerConfiguration : NSObject
 + (void)setHDRBrightnessStrategy:(id)strategy;
 + (double)getHDRBrightnessOffset:(id)configuration brightness:(double)brightness;
+@end
+
+@interface AWEFeedABTestServiceObjc : NSObject
++ (BOOL)enableProfilePreloadHDRBrightnessFilter;
+@end
+
+@interface AWEDPlayerVideoConfig : NSObject
+- (BOOL)enableMetalRenderHDR;
+- (void)setEnableMetalRenderHDR:(BOOL)enableMetalRenderHDR;
+@end
+
+@interface AWEDPlayerVideoController : NSObject
+- (void)configEnableMetalRenderHDRIfNeeded;
+- (void)setEnablePlayHDRModeIfNeeded;
+@end
+
+@interface AWEDPlayerVideoController_Merge : NSObject
+- (void)configEnableMetalRenderHDRIfNeeded;
+- (void)setEnablePlayHDRModeIfNeeded;
+@end
+
+@interface AWEDPlayerPlayControlContainer : NSObject
+- (void)configEnableMetalRenderHDRIfNeeded;
+@end
+
+@interface AWEDPlayerNonSimplayerContainer : NSObject
+- (void)setEnablePlayHDRMode;
+@end
+
+@interface AWEDPlayerSimpleModeContainer : NSObject
+- (void)setEnablePlayHDRModeIfNeeded;
+@end
+
+@interface AWEDPlayerBrightnessContainer : NSObject
+- (BOOL)awe_isCurrentVideoHDR;
+@end
+
+@interface AWEVideoPlayerScreenBrightnessManager : NSObject
+- (BOOL)isHDRVideo;
+- (void)setIsHDRVideo:(BOOL)isHDRVideo;
+@end
+
+@interface ALMOwnPlayerWrapper : NSObject
+- (void)setLutFilter:(id)lutFilter HDRLutImage:(id)HDRLutImage;
+@end
+
+@interface ALMSysPlayerWrapper : NSObject
+- (void)setLutFilter:(id)lutFilter HDRLutImage:(id)HDRLutImage;
+@end
+
+@interface ALMVideoPlayerConfig : NSObject
++ (void)setPlayerEffectHDRLutImageEnable:(BOOL)enable;
+@end
+
+@interface IESVideoPlayerConfig : NSObject
++ (void)setPlayerEffectHDRLutImageEnable:(BOOL)enable;
+@end
+
+@interface AWEIMModuleService : NSObject
+- (BOOL)im_forceHDRToSDR;
+@end
+
+@interface IESIMVideoPlayerWrapper : NSObject
+- (void)setupHDREnable:(BOOL)enable;
+@end
+
+@interface AWEIMVideoBrowserCollectionViewCell : UICollectionViewCell
+- (void)setEnablePlayHDR:(BOOL)enable;
+@end
+
+@interface AWEECOMIMAppSettingsService : NSObject
++ (BOOL)enableVideoPreviewSupportHDR;
+@end
+
+@interface IESLivePlayerController : NSObject
+- (BOOL)isVideoSDR2HDRSupport;
+- (void)setEnableVideoSDR2HDR:(BOOL)enable callTrace:(id)callTrace;
+- (BOOL)enableCloseSDR2HDR;
+@end
+
+@interface AWELivePreStreamPlayer : NSObject
+- (void)changeSDR2HDRWithStrategy;
+@end
+
+@interface HTSLiveStreamPlayer : NSObject
+- (void)setEnableVideoSDR2HDR:(BOOL)enable callTrace:(id)callTrace;
+- (void)changeSDR2HDRWithStrategy;
+@end
+
+@interface IESLiveStreamPlayerVideoAudioEffectPlugin : NSObject
+- (void)setEnableVideoSDR2HDR:(BOOL)enable callTrace:(id)callTrace;
+- (void)changeSDR2HDRWithStrategy;
+@end
+
+@interface TVLManager : NSObject
+- (BOOL)shouldForbidHDR10Render;
+- (void)setShouldForbidHDR10Render:(BOOL)shouldForbid;
+- (void)setupVideoSDR2HDR:(id)config;
+@end
+
+@interface TVLPlayerItemPreferences : NSObject
+- (BOOL)forbidSDR2HDRInPreview;
+- (void)setForbidSDR2HDRInPreview:(BOOL)forbid;
+- (BOOL)enableUseSDR2HDR;
+- (void)setEnableUseSDR2HDR:(BOOL)enable;
+@end
+
+@interface TVLSettingsManager : NSObject
+- (BOOL)enableMetalRenderHDR;
 @end
 
 @interface IESFiltersManager : NSObject
