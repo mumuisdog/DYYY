@@ -520,12 +520,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
             @"detail" : @"",
             @"cellType" : @6,
             @"imageName" : @"ic_squaretriangletwo_outlined_20"},
-          @{@"identifier" : @"DYYYDisableAllHDR",
-            @"title" : @"禁用全部视频图文HDR效果",
-            @"subTitle" : @"开启后全部视频图文将禁用 HDR 效果。与推荐过滤HDR不能同时打开。",
-            @"detail" : @"",
-            @"cellType" : @37,
-            @"imageName" : @"ic_sun_outlined"},
           @{@"identifier" : @"DYYYHideStatusbar",
             @"title" : @"隐藏系统顶栏",
             @"subTitle" : @"隐藏系统状态栏",
@@ -640,11 +634,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
               @"cellType" : @20,
               @"imageName" : @"ic_playertime_outlined_20"
           },
-          @{@"identifier" : @"DYYYFilterFeedHDR",
-            @"title" : @"推荐过滤HDR",
-            @"subTitle" : @"开启后推荐流会屏蔽 HDR 视频。与禁用全部视频图文HDR效果不能同时打开。",
-            @"detail" : @"",
-            @"cellType" : @37,
+          @{@"identifier" : @"DYYYHDRMode",
+            @"title" : @"全局HDR设置",
+            @"subTitle" : @"开启并选择后全局屏蔽HDR效果/过滤HDR作品。",
+            @"detail" : @"关闭",
+            @"cellType" : @26,
             @"imageName" : @"ic_sun_outlined"},
           @{@"identifier" : @"DYYYNoAds",
             @"title" : @"启用屏蔽广告",
@@ -762,6 +756,20 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                   [item refreshCell];
                 };
                 [keywordListView show];
+              };
+          } else if ([item.identifier isEqualToString:@"DYYYHDRMode"]) {
+              NSString *savedMode = [[NSUserDefaults standardUserDefaults] stringForKey:@"DYYYHDRMode"] ?: @"关闭";
+              item.detail = savedMode;
+              item.cellTappedBlock = ^{
+                NSArray *options = @[ @"关闭", @"全局屏蔽HDR效果", @"全局过滤HDR作品" ];
+                [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYHDRMode"
+                                                   optionsArray:options
+                                                     headerText:@"选择 HDR 处理模式"
+                                                 onPresentingVC:topView()
+                                               selectionChanged:^(NSString *selectedValue) {
+                                                 item.detail = selectedValue;
+                                                 [item refreshCell];
+                                               }];
               };
           }
           [filterItems addObject:item];

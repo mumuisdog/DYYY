@@ -86,8 +86,6 @@
               @"DYYYSkipAllLive" : @[ @"DYYYSkipLive" ],
               @"DYYYHideEntry" : @[ @"DYYYRemoveEntry" ],
               @"DYYYRemoveEntry" : @[ @"DYYYHideEntry" ],
-              @"DYYYFilterFeedHDR" : @[ @"DYYYDisableAllHDR" ],
-              @"DYYYDisableAllHDR" : @[ @"DYYYFilterFeedHDR" ],
           },
 
           // ===== 互斥激活配置 =====
