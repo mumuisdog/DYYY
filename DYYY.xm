@@ -796,6 +796,69 @@ static void DYYYHandleCurrentSpeedAwemeChanged(id aweme) {
 
 %end
 
+@interface AWENowPlayingInfoCenter : NSObject
+@property(nonatomic, weak) id playingPlayer;
+@end
+
+static BOOL DYYYShouldBlockFeedNowPlayingPlayer(id player) {
+    if (!DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") || !player) {
+        return NO;
+    }
+
+    Class feedBackgroundPlayClass = NSClassFromString(@"AWEAwemeBackgroundPlayModule");
+    return feedBackgroundPlayClass && [player isKindOfClass:feedBackgroundPlayClass];
+}
+
+%hook AWEAwemeBackgroundPlayModule
+
+- (id)nowPlayingInfo {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
+        return nil;
+    }
+
+    return %orig;
+}
+
+- (void)refreshNowPlayingInfoIfNeeded {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
+        return;
+    }
+
+    %orig;
+}
+
+- (void)updateNowPlayingInfoPlayback {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
+        return;
+    }
+
+    %orig;
+}
+
+%end
+
+// 再从播放中心入口兜底，保留听抖音和音乐服务的系统播放信息。
+%hook AWENowPlayingInfoCenter
+
+- (void)becomePlayingPlayer:(id)player {
+    if (DYYYShouldBlockFeedNowPlayingPlayer(player)) {
+        return;
+    }
+
+    %orig;
+}
+
+- (void)setNowPlayingInfo:(id)nowPlayingInfo {
+    if (DYYYShouldBlockFeedNowPlayingPlayer(self.playingPlayer)) {
+        %orig(nil);
+        return;
+    }
+
+    %orig;
+}
+
+%end
+
 // 默认视频流最高画质
 %hook AWEVideoModel
 
@@ -9803,6 +9866,10 @@ static void findTargetViewInView(UIView *view) {
 }
 
 %ctor {
+    [[NSUserDefaults standardUserDefaults] registerDefaults:@{
+        @"DYYYDisableFeedNowPlayingInfo" : @YES
+    }];
+
     DYYYMigrateCombinedHDRModeIfNeeded();
 
     Class interactionBaseLabelClass = objc_getClass("AWECommentSwiftBizUI.CommentInteractionBaseLabel");
