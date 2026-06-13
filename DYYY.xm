@@ -8027,7 +8027,7 @@ static Class tabBarButtonClass = nil;
     dyyyActiveSpeedInteractionController = self;
     dyyyInteractionViewVisible = YES;
     DYYYEnsureFloatSpeedButton(self);
-    updateClearButtonVisibility();
+    reloadClearButtonConfiguration();
 }
 
 - (void)viewDidLayoutSubviews {
@@ -8037,8 +8037,10 @@ static Class tabBarButtonClass = nil;
         dyyyActiveSpeedInteractionController = self;
         dyyyInteractionViewVisible = YES;
         DYYYEnsureFloatSpeedButton(self);
+        reloadClearButtonConfiguration();
     } else {
         [FloatingSpeedButton reloadConfiguration];
+        updateClearButtonVisibility();
     }
 
     UIWindow *keyWindow = [DYYYUtils getActiveWindow];
@@ -8450,11 +8452,13 @@ static Class tabBarButtonClass = nil;
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
     isPureViewVisible = YES;
+    updateClearButtonVisibility();
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
     %orig;
     isPureViewVisible = NO;
+    updateClearButtonVisibility();
 }
 %end
 
@@ -8520,57 +8524,31 @@ static void DYYYRemoveKeyboardObserver(void) {
 
     [[NSUserDefaults standardUserDefaults] addObserver:(NSObject *)self forKeyPath:kDYYYGlobalTransparencyKey options:NSKeyValueObservingOptionNew context:DYYYGlobalTransparencyContext];
 
-    BOOL isEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYEnableFloatClearButton"];
-    if (isEnabled) {
-        if (hideButton) {
-            [hideButton removeFromSuperview];
-            hideButton = nil;
-        }
+    reloadClearButtonConfiguration();
+    DYYYRemoveAppLifecycleObservers();
 
-        CGFloat buttonSize = [[NSUserDefaults standardUserDefaults] floatForKey:@"DYYYEnableFloatClearButtonSize"] ?: 40.0;
-        hideButton = [[HideUIButton alloc] initWithFrame:CGRectMake(0, 0, buttonSize, buttonSize)];
-        hideButton.alpha = 0.5;
+    dyyyWindowKeyObserverToken = [[NSNotificationCenter defaultCenter] addObserverForName:UIWindowDidBecomeKeyNotification
+                                                                                   object:nil
+                                                                                    queue:[NSOperationQueue mainQueue]
+                                                                               usingBlock:^(NSNotification *_Nonnull notification) {
+                                                                                 reloadClearButtonConfiguration();
+                                                                               }];
 
-        NSString *savedPositionString = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYHideUIButtonPosition"];
-        if (savedPositionString) {
-            hideButton.center = CGPointFromString(savedPositionString);
-        } else {
-            CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
-            CGFloat screenHeight = [UIScreen mainScreen].bounds.size.height;
-            hideButton.center = CGPointMake(screenWidth - buttonSize / 2 - 5, screenHeight / 2);
-        }
+    dyyyDidBecomeActiveToken = [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidBecomeActiveNotification
+                                                                                 object:nil
+                                                                                  queue:[NSOperationQueue mainQueue]
+                                                                             usingBlock:^(NSNotification *_Nonnull notification) {
+                                                                               isAppActive = YES;
+                                                                               reloadClearButtonConfiguration();
+                                                                             }];
 
-        hideButton.hidden = NO;
-        [getKeyWindow() addSubview:hideButton];
-        updateClearButtonVisibility();
-
-        DYYYRemoveAppLifecycleObservers();
-
-        dyyyWindowKeyObserverToken = [[NSNotificationCenter defaultCenter] addObserverForName:UIWindowDidBecomeKeyNotification
-                                                                                       object:nil
-                                                                                        queue:[NSOperationQueue mainQueue]
-                                                                                   usingBlock:^(NSNotification *_Nonnull notification) {
-                                                                                     updateClearButtonVisibility();
-                                                                                   }];
-
-        dyyyDidBecomeActiveToken = [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidBecomeActiveNotification
-                                                                                     object:nil
-                                                                                      queue:[NSOperationQueue mainQueue]
-                                                                                 usingBlock:^(NSNotification *_Nonnull notification) {
-                                                                                   isAppActive = YES;
-                                                                                   updateClearButtonVisibility();
-                                                                                 }];
-
-        dyyyWillResignActiveToken = [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationWillResignActiveNotification
-                                                                                      object:nil
-                                                                                       queue:[NSOperationQueue mainQueue]
-                                                                                  usingBlock:^(NSNotification *_Nonnull notification) {
-                                                                                    isAppActive = NO;
-                                                                                    updateClearButtonVisibility();
-                                                                                  }];
-    } else {
-        DYYYRemoveAppLifecycleObservers();
-    }
+    dyyyWillResignActiveToken = [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationWillResignActiveNotification
+                                                                                  object:nil
+                                                                                   queue:[NSOperationQueue mainQueue]
+                                                                              usingBlock:^(NSNotification *_Nonnull notification) {
+                                                                                isAppActive = NO;
+                                                                                updateClearButtonVisibility();
+                                                                              }];
 
     return result;
 }

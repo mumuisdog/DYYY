@@ -2,6 +2,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "DYYYConstants.h"
+#import "DYYYFloatClearButton.h"
 #import "DYYYFloatSpeedButton.h"
 
 typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYYYSettingItemTypeTextField, DYYYSettingItemTypePicker };
@@ -740,6 +741,16 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
     if ([item.key isEqualToString:@"DYYYEnableFloatSpeedButton"] || [item.key isEqualToString:@"DYYYSpeedButtonShowX"]) {
         [FloatingSpeedButton reloadConfiguration];
     }
+    if ([item.key isEqualToString:@"DYYYEnableFloatClearButton"] ||
+        [item.key isEqualToString:@"DYYYHideDanmaku"] ||
+        [item.key isEqualToString:@"DYYYRemoveTimeProgress"] ||
+        [item.key isEqualToString:@"DYYYHideTimeProgress"] ||
+        [item.key isEqualToString:@"DYYYHideSlider"] ||
+        [item.key isEqualToString:@"DYYYHideTabBar"] ||
+        [item.key isEqualToString:@"DYYYHideSpeed"] ||
+        [item.key isEqualToString:@"DYYYHideChapter"]) {
+        reloadClearButtonConfiguration();
+    }
 
     if (sender.isOn) {
         NSString *conflictingKey = nil;
@@ -762,6 +773,9 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
     [[NSUserDefaults standardUserDefaults] setObject:textField.text forKey:item.key];
     if ([item.key isEqualToString:@"DYYYSpeedSettings"] || [item.key isEqualToString:@"DYYYSpeedButtonSize"]) {
         [FloatingSpeedButton reloadConfiguration];
+    }
+    if ([item.key isEqualToString:@"DYYYEnableFloatClearButtonSize"]) {
+        reloadClearButtonConfiguration();
     }
 }
 
