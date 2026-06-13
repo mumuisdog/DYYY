@@ -14,6 +14,7 @@
 #import "DYYYOptionsSelectionView.h"
 
 #import "DYYYConstants.h"
+#import "DYYYFloatSpeedButton.h"
 #import "DYYYSettingsHelper.h"
 #import "DYYYUtils.h"
 
@@ -2991,8 +2992,9 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                                        // 保存用户输入的倍速值
                                        NSString *trimmedText = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
                                        [[NSUserDefaults standardUserDefaults] setObject:trimmedText forKey:@"DYYYSpeedSettings"];
-speedSettingsItem.detail = trimmedText;
+                                       speedSettingsItem.detail = trimmedText;
                                        [speedSettingsItem refreshCell];
+                                       [FloatingSpeedButton reloadConfiguration];
                                      }
                                       onCancel:nil];
       };
@@ -3029,7 +3031,8 @@ speedSettingsItem.detail = trimmedText;
         BOOL newValue = !showXItem.isSwitchOn;
         showXItem.isSwitchOn = newValue;
         [[NSUserDefaults standardUserDefaults] setBool:newValue forKey:@"DYYYSpeedButtonShowX"];
-};
+        [FloatingSpeedButton reloadConfiguration];
+      };
       [speedButtonItems addObject:showXItem];
       // 添加按钮大小配置项
       AWESettingItemModel *buttonSizeItem = [[%c(AWESettingItemModel) alloc] init];
@@ -3044,7 +3047,7 @@ speedSettingsItem.detail = trimmedText;
       buttonSizeItem.colorStyle = 0;
       buttonSizeItem.isEnable = YES;
       buttonSizeItem.cellTappedBlock = ^{
-        NSString *currentValue = [NSString stringWithFormat:@"%.0f", currentButtonSize];
+        NSString *currentValue = buttonSizeItem.detail ?: @"32";
         [DYYYSettingsHelper showTextInputAlert:@"设置按钮大小"
                                    defaultText:currentValue
                                    placeholder:@"请输入20-60之间的数值"
@@ -3054,6 +3057,7 @@ speedSettingsItem.detail = trimmedText;
                                            [[NSUserDefaults standardUserDefaults] setFloat:size forKey:@"DYYYSpeedButtonSize"];
                                            buttonSizeItem.detail = [NSString stringWithFormat:@"%.0f", (CGFloat)size];
                                            [buttonSizeItem refreshCell];
+                                           [FloatingSpeedButton reloadConfiguration];
                                        } else {
                                            [DYYYUtils showToast:@"请输入20-60之间的有效数值"];
                                        }
@@ -3085,6 +3089,7 @@ speedSettingsItem.detail = trimmedText;
         if (originalSpeedSwitchChangedBlock) {
             originalSpeedSwitchChangedBlock();
         }
+        [FloatingSpeedButton reloadConfiguration];
         refreshSpeedDependentItems();
       };
 

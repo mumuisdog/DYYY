@@ -340,6 +340,8 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(nonatomic, strong) AWEAwemeModel *model;
 @property(nonatomic, strong) NSString *referString;
 @property(nonatomic, assign) BOOL isCommentVCShowing;
+- (id)controllerByProtocol:(Protocol *)protocol;
+- (id)videoDelegate;
 - (void)performCommentAction;
 - (void)performLikeAction;
 - (void)showSharePanel;
@@ -1354,12 +1356,17 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 
 @interface AWEPlayInteractionSpeedController : NSObject
 @property(nonatomic, strong) id progressSliderDelegate;
+- (id)playVideoViewController;
 - (CGFloat)longPressFastSpeedValue;
 - (void)changeSpeed:(double)speed;
 - (void)handleLongPressLockedDoubleSpeedChanged:(id)arg1 gesture:(UIGestureRecognizer *)gesture;
 - (void)handleLongPressLockedSpeedBegan;
 - (void)handleLongPressLockedDoubleSpeedEnded:(id)arg1 gesture:(UIGestureRecognizer *)gesture;
 - (void)longPressSpeedControlDidChangeSpeed:(double)speed;
+@end
+
+@interface AWEPlayInteractionDPlayerSpeedController : NSObject
+- (id)playVideoViewController;
 @end
 
 @interface AWEPlayInteractionUserAvatarView : UIView

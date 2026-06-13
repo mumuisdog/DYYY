@@ -2,6 +2,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "DYYYConstants.h"
+#import "DYYYFloatSpeedButton.h"
 
 typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYYYSettingItemTypeTextField, DYYYSettingItemTypePicker };
 
@@ -736,6 +737,9 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
     DYYYSettingItem *item = self.settingSections[indexPath.section][indexPath.row];
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     [defaults setBool:sender.isOn forKey:item.key];
+    if ([item.key isEqualToString:@"DYYYEnableFloatSpeedButton"] || [item.key isEqualToString:@"DYYYSpeedButtonShowX"]) {
+        [FloatingSpeedButton reloadConfiguration];
+    }
 
     if (sender.isOn) {
         NSString *conflictingKey = nil;
@@ -756,6 +760,9 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:textField.tag % 1000 inSection:textField.tag / 1000];
     DYYYSettingItem *item = self.settingSections[indexPath.section][indexPath.row];
     [[NSUserDefaults standardUserDefaults] setObject:textField.text forKey:item.key];
+    if ([item.key isEqualToString:@"DYYYSpeedSettings"] || [item.key isEqualToString:@"DYYYSpeedButtonSize"]) {
+        [FloatingSpeedButton reloadConfiguration];
+    }
 }
 
 - (void)headerTapped:(UIButton *)sender {
