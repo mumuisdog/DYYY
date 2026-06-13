@@ -221,6 +221,7 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
 
 static __weak AWEPlayInteractionViewController *dyyyActiveSpeedInteractionController = nil;
 static __weak AWEAwemeModel *dyyyCurrentSpeedAweme = nil;
+static NSString *dyyyLastAutoRestoredSpeedAwemeIdentifier = nil;
 
 static CGFloat DYYYViewControllerVisibilityScore(UIViewController *viewController) {
     if (!viewController || !viewController.isViewLoaded) {
@@ -258,6 +259,34 @@ static BOOL DYYYAwemeModelsMatch(AWEAwemeModel *lhs, AWEAwemeModel *rhs) {
     NSString *lhsItemID = lhs.itemID;
     NSString *rhsItemID = rhs.itemID;
     return lhsItemID.length > 0 && rhsItemID.length > 0 && [lhsItemID isEqualToString:rhsItemID];
+}
+
+static NSString *DYYYSpeedAwemeIdentifier(AWEAwemeModel *aweme) {
+    if (!aweme) {
+        return nil;
+    }
+    if (aweme.itemID.length > 0) {
+        return aweme.itemID;
+    }
+    return [NSString stringWithFormat:@"%p", aweme];
+}
+
+static void DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(AWEAwemeModel *aweme) {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    BOOL shouldAutoRestore = [defaults boolForKey:@"DYYYEnableFloatSpeedButton"] && [defaults boolForKey:@"DYYYAutoRestoreSpeed"];
+    if (!shouldAutoRestore) {
+        dyyyLastAutoRestoredSpeedAwemeIdentifier = nil;
+        return;
+    }
+
+    NSString *awemeIdentifier = DYYYSpeedAwemeIdentifier(aweme);
+    if (awemeIdentifier.length == 0 || [awemeIdentifier isEqualToString:dyyyLastAutoRestoredSpeedAwemeIdentifier]) {
+        return;
+    }
+
+    dyyyLastAutoRestoredSpeedAwemeIdentifier = [awemeIdentifier copy];
+    setCurrentSpeedIndex(0);
+    updateSpeedButtonUI();
 }
 
 static NSArray<AWEPlayInteractionViewController *> *DYYYSpeedInteractionControllers(AWEPlayInteractionViewController *preferredController) {
@@ -330,6 +359,7 @@ static void DYYYEnsureFloatSpeedButton(AWEPlayInteractionViewController *interac
 
     dyyyActiveSpeedInteractionController = currentController;
     dyyyInteractionViewVisible = YES;
+    DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(currentController.model);
 
     if (!speedButton) {
         CGRect windowBounds = keyWindow.bounds;
@@ -488,11 +518,7 @@ static void DYYYHandleCurrentSpeedAwemeChanged(id aweme) {
         return;
     }
 
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    if ([defaults boolForKey:@"DYYYEnableFloatSpeedButton"] && [defaults boolForKey:@"DYYYAutoRestoreSpeed"]) {
-        setCurrentSpeedIndex(0);
-        updateSpeedButtonUI();
-    }
+    DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(dyyyCurrentSpeedAweme);
 
     DYYYBindAndApplyCurrentPlaybackSpeed();
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -8225,6 +8251,8 @@ static Class tabBarButtonClass = nil;
 - (void)viewWillAppear:(BOOL)animated {
     %orig;
     isInPlayInteractionVC = YES;
+    dyyyCurrentSpeedAweme = self.model;
+    DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(self.model);
     DYYYEnsureFloatSpeedButton(self);
     reloadClearButtonConfiguration();
 }
