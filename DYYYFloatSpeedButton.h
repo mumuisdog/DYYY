@@ -10,6 +10,7 @@
 @property(nonatomic, strong) NSTimer *statusCheckTimer;
 @property(nonatomic, strong) NSTimer *fadeTimer;
 @property(nonatomic, assign) CGFloat originalAlpha;
++ (void)reloadConfiguration;
 - (void)saveButtonPosition;
 - (void)loadSavedPosition;
 - (void)resetButtonState;

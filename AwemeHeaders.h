@@ -69,6 +69,8 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(copy, nonatomic) NSArray *bitrateRawData;
 @property(nonatomic, strong) URLModel *h264URL;
 @property(nonatomic, strong) URLModel *coverURL;
+@property(nonatomic, assign) BOOL hasFilterHDR;
+@property(nonatomic, assign) NSInteger isSourceHDR;
 @end
 
 @interface AWEMusicModel : NSObject
@@ -145,6 +147,8 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(nonatomic, strong) NSString *videoFeedTag;
 @property(nonatomic, strong) id shareRecExtra;  // 收藏/喜欢以外的视频专有属性
 @property(nonatomic, copy) NSString *referString; // 推荐页为 homepage_hot
+- (BOOL)dyyy_shouldExcludeFromGlobalHDRFilter;
+- (BOOL)dyyy_containsHDRMetadataInObject:(id)object depth:(NSUInteger)depth;
 @property(nonatomic, strong) NSArray<AWEAwemeTextExtraModel *> *textExtras;
 @property(nonatomic, copy) NSString *itemTitle;
 @property(nonatomic, copy) NSString *descriptionSimpleString;
@@ -336,6 +340,8 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(nonatomic, strong) AWEAwemeModel *model;
 @property(nonatomic, strong) NSString *referString;
 @property(nonatomic, assign) BOOL isCommentVCShowing;
+- (id)controllerByProtocol:(Protocol *)protocol;
+- (id)videoDelegate;
 - (void)performCommentAction;
 - (void)performLikeAction;
 - (void)showSharePanel;
@@ -1350,6 +1356,7 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 
 @interface AWEPlayInteractionSpeedController : NSObject
 @property(nonatomic, strong) id progressSliderDelegate;
+- (id)playVideoViewController;
 - (CGFloat)longPressFastSpeedValue;
 - (void)changeSpeed:(double)speed;
 - (void)handleLongPressLockedDoubleSpeedChanged:(id)arg1 gesture:(UIGestureRecognizer *)gesture;
@@ -1358,7 +1365,16 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 - (void)longPressSpeedControlDidChangeSpeed:(double)speed;
 @end
 
+@interface AWEPlayInteractionDPlayerSpeedController : NSObject
+- (id)playVideoViewController;
+@end
+
 @interface AWEPlayInteractionUserAvatarView : UIView
+@end
+
+@interface AWEPlayInteractionStaticFollowAnimationView : UIView
+@property(retain, nonatomic) UIImageView *plusImageView;
+@property(retain, nonatomic) UIImageView *tickImageView;
 @end
 
 @interface AWELeftSideBarViewController : UIViewController <UICollectionViewDelegate, UICollectionViewDataSource>
@@ -1398,6 +1414,7 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 
 @interface AWEPlayInteractionUserAvatarContext : NSObject
 @property(retain, nonatomic) AWEAwemeModel *model;
+@property(nonatomic, weak) UIView *avatarPicView;
 @end
 
 @interface AWEPlayInteractionUserAvatarFollowController : UIViewController
@@ -1409,6 +1426,23 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 - (void)onFollowViewClicked:(id)gesture;
 - (void)layoutElementView;
 - (void)showFollowAddView:(BOOL)show;
+@end
+
+@interface AWEPlayInteractionUserAvatarMainBusinessController : NSObject
+@property(retain, nonatomic) AWEPlayInteractionUserAvatarContext *userAvatarContext;
+@property(retain, nonatomic) UIView *avatarPicView;
+- (void)layoutElementView;
+@end
+
+@interface AWEPlayInteractionUserAvatarOptElementElement : NSObject
+@property(retain, nonatomic) AWEPlayInteractionUserAvatarContext *userAvatarContext;
+- (void)layoutElementView;
+@end
+
+@interface AWEPlayInteractionUserAvatarStoryController : NSObject
+@property(nonatomic, weak) UIView *colorRingView;
+- (void)layoutElementView;
+- (void)showStory25RingView;
 @end
 
 @interface AWECodeGenCommonAnchorBasicInfoModel : UIViewController
@@ -1461,6 +1495,7 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 - (BOOL)enableHDR;
 - (void)setEnableHDR:(BOOL)enableHDR;
 - (void)setEnablePlayHDRMode;
+- (void)buildHDRConfig:(id)config;
 - (id)awe_HDRValueFor:(long long)value enableHDR:(BOOL)enableHDR;
 @end
 
@@ -1486,6 +1521,28 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 
 @interface BDImageDecoderImageIO : NSObject
 - (BOOL)isHDRCGImage:(CGImageRef)image decodedToHDR:(BOOL)decodedToHDR;
+- (id)hdrOptionsFor:(id)image decodedToHDR:(BOOL *)decodedToHDR;
+@end
+
+@interface BDImageDecoderHeic : NSObject
++ (BOOL)isHDRData:(id)data;
+- (BOOL)isHDR;
+- (void)setIsHDR:(BOOL)isHDR;
+@end
+
+@interface BDImageDecoderBVC2 : NSObject
+- (BOOL)isHDR;
+- (void)setIsHDR:(BOOL)isHDR;
+@end
+
+@interface BDImageDecoderWebP : NSObject
+- (BOOL)isHDR;
+- (void)setIsHDR:(BOOL)isHDR;
+@end
+
+@interface BDImage : UIImage
+- (BOOL)isHDR;
+- (void)setIsHDR:(BOOL)isHDR;
 @end
 
 @class HDRMTImageView;
@@ -1508,6 +1565,115 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @interface AWEVideoPlayerConfiguration : NSObject
 + (void)setHDRBrightnessStrategy:(id)strategy;
 + (double)getHDRBrightnessOffset:(id)configuration brightness:(double)brightness;
+@end
+
+@interface AWEFeedABTestServiceObjc : NSObject
++ (BOOL)enableProfilePreloadHDRBrightnessFilter;
+@end
+
+@interface AWEDPlayerVideoConfig : NSObject
+- (BOOL)enableMetalRenderHDR;
+- (void)setEnableMetalRenderHDR:(BOOL)enableMetalRenderHDR;
+@end
+
+@interface AWEDPlayerVideoController : NSObject
+- (void)configEnableMetalRenderHDRIfNeeded;
+- (void)setEnablePlayHDRModeIfNeeded;
+@end
+
+@interface AWEDPlayerVideoController_Merge : NSObject
+- (void)configEnableMetalRenderHDRIfNeeded;
+- (void)setEnablePlayHDRModeIfNeeded;
+@end
+
+@interface AWEDPlayerPlayControlContainer : NSObject
+- (void)configEnableMetalRenderHDRIfNeeded;
+@end
+
+@interface AWEDPlayerNonSimplayerContainer : NSObject
+- (void)setEnablePlayHDRMode;
+@end
+
+@interface AWEDPlayerSimpleModeContainer : NSObject
+- (void)setEnablePlayHDRModeIfNeeded;
+@end
+
+@interface AWEDPlayerBrightnessContainer : NSObject
+- (BOOL)awe_isCurrentVideoHDR;
+@end
+
+@interface AWEVideoPlayerScreenBrightnessManager : NSObject
+- (BOOL)isHDRVideo;
+- (void)setIsHDRVideo:(BOOL)isHDRVideo;
+@end
+
+@interface ALMOwnPlayerWrapper : NSObject
+- (void)setLutFilter:(id)lutFilter HDRLutImage:(id)HDRLutImage;
+@end
+
+@interface ALMSysPlayerWrapper : NSObject
+- (void)setLutFilter:(id)lutFilter HDRLutImage:(id)HDRLutImage;
+@end
+
+@interface ALMVideoPlayerConfig : NSObject
++ (void)setPlayerEffectHDRLutImageEnable:(BOOL)enable;
+@end
+
+@interface IESVideoPlayerConfig : NSObject
++ (void)setPlayerEffectHDRLutImageEnable:(BOOL)enable;
+@end
+
+@interface AWEIMModuleService : NSObject
+- (BOOL)im_forceHDRToSDR;
+@end
+
+@interface IESIMVideoPlayerWrapper : NSObject
+- (void)setupHDREnable:(BOOL)enable;
+@end
+
+@interface AWEIMVideoBrowserCollectionViewCell : UICollectionViewCell
+- (void)setEnablePlayHDR:(BOOL)enable;
+@end
+
+@interface AWEECOMIMAppSettingsService : NSObject
++ (BOOL)enableVideoPreviewSupportHDR;
+@end
+
+@interface IESLivePlayerController : NSObject
+- (BOOL)isVideoSDR2HDRSupport;
+- (void)setEnableVideoSDR2HDR:(BOOL)enable callTrace:(id)callTrace;
+- (BOOL)enableCloseSDR2HDR;
+@end
+
+@interface AWELivePreStreamPlayer : NSObject
+- (void)changeSDR2HDRWithStrategy;
+@end
+
+@interface HTSLiveStreamPlayer : NSObject
+- (void)setEnableVideoSDR2HDR:(BOOL)enable callTrace:(id)callTrace;
+- (void)changeSDR2HDRWithStrategy;
+@end
+
+@interface IESLiveStreamPlayerVideoAudioEffectPlugin : NSObject
+- (void)setEnableVideoSDR2HDR:(BOOL)enable callTrace:(id)callTrace;
+- (void)changeSDR2HDRWithStrategy;
+@end
+
+@interface TVLManager : NSObject
+- (BOOL)shouldForbidHDR10Render;
+- (void)setShouldForbidHDR10Render:(BOOL)shouldForbid;
+- (void)setupVideoSDR2HDR:(id)config;
+@end
+
+@interface TVLPlayerItemPreferences : NSObject
+- (BOOL)forbidSDR2HDRInPreview;
+- (void)setForbidSDR2HDRInPreview:(BOOL)forbid;
+- (BOOL)enableUseSDR2HDR;
+- (void)setEnableUseSDR2HDR:(BOOL)enable;
+@end
+
+@interface TVLSettingsManager : NSObject
+- (BOOL)enableMetalRenderHDR;
 @end
 
 @interface IESFiltersManager : NSObject

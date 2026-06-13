@@ -14,6 +14,8 @@
 #import "DYYYOptionsSelectionView.h"
 
 #import "DYYYConstants.h"
+#import "DYYYFloatClearButton.h"
+#import "DYYYFloatSpeedButton.h"
 #import "DYYYSettingsHelper.h"
 #import "DYYYUtils.h"
 
@@ -520,12 +522,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
             @"detail" : @"",
             @"cellType" : @6,
             @"imageName" : @"ic_squaretriangletwo_outlined_20"},
-          @{@"identifier" : @"DYYYDisableAllHDR",
-            @"title" : @"禁用全部视频图文HDR效果",
-            @"subTitle" : @"开启后全部视频图文将禁用 HDR 效果。与推荐过滤HDR不能同时打开。",
-            @"detail" : @"",
-            @"cellType" : @37,
-            @"imageName" : @"ic_sun_outlined"},
           @{@"identifier" : @"DYYYHideStatusbar",
             @"title" : @"隐藏系统顶栏",
             @"subTitle" : @"隐藏系统状态栏",
@@ -640,11 +636,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
               @"cellType" : @20,
               @"imageName" : @"ic_playertime_outlined_20"
           },
-          @{@"identifier" : @"DYYYFilterFeedHDR",
-            @"title" : @"推荐过滤HDR",
-            @"subTitle" : @"开启后推荐流会屏蔽 HDR 视频。与禁用全部视频图文HDR效果不能同时打开。",
-            @"detail" : @"",
-            @"cellType" : @37,
+          @{@"identifier" : @"DYYYHDRMode",
+            @"title" : @"全局HDR设置",
+            @"subTitle" : @"开启并选择后全局屏蔽HDR效果/过滤HDR作品。",
+            @"detail" : @"关闭",
+            @"cellType" : @26,
             @"imageName" : @"ic_sun_outlined"},
           @{@"identifier" : @"DYYYNoAds",
             @"title" : @"启用屏蔽广告",
@@ -762,6 +758,20 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                   [item refreshCell];
                 };
                 [keywordListView show];
+              };
+          } else if ([item.identifier isEqualToString:@"DYYYHDRMode"]) {
+              NSString *savedMode = [[NSUserDefaults standardUserDefaults] stringForKey:@"DYYYHDRMode"] ?: @"关闭";
+              item.detail = savedMode;
+              item.cellTappedBlock = ^{
+                NSArray *options = @[ @"关闭", @"全局屏蔽HDR效果", @"全局过滤HDR作品" ];
+                [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYHDRMode"
+                                                   optionsArray:options
+                                                     headerText:@"选择 HDR 处理模式"
+                                                 onPresentingVC:topView()
+                                               selectionChanged:^(NSString *selectedValue) {
+                                                 item.detail = selectedValue;
+                                                 [item refreshCell];
+                                               }];
               };
           }
           [filterItems addObject:item];
@@ -2983,8 +2993,9 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                                        // 保存用户输入的倍速值
                                        NSString *trimmedText = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
                                        [[NSUserDefaults standardUserDefaults] setObject:trimmedText forKey:@"DYYYSpeedSettings"];
-speedSettingsItem.detail = trimmedText;
+                                       speedSettingsItem.detail = trimmedText;
                                        [speedSettingsItem refreshCell];
+                                       [FloatingSpeedButton reloadConfiguration];
                                      }
                                       onCancel:nil];
       };
@@ -3021,7 +3032,8 @@ speedSettingsItem.detail = trimmedText;
         BOOL newValue = !showXItem.isSwitchOn;
         showXItem.isSwitchOn = newValue;
         [[NSUserDefaults standardUserDefaults] setBool:newValue forKey:@"DYYYSpeedButtonShowX"];
-};
+        [FloatingSpeedButton reloadConfiguration];
+      };
       [speedButtonItems addObject:showXItem];
       // 添加按钮大小配置项
       AWESettingItemModel *buttonSizeItem = [[%c(AWESettingItemModel) alloc] init];
@@ -3036,7 +3048,7 @@ speedSettingsItem.detail = trimmedText;
       buttonSizeItem.colorStyle = 0;
       buttonSizeItem.isEnable = YES;
       buttonSizeItem.cellTappedBlock = ^{
-        NSString *currentValue = [NSString stringWithFormat:@"%.0f", currentButtonSize];
+        NSString *currentValue = buttonSizeItem.detail ?: @"32";
         [DYYYSettingsHelper showTextInputAlert:@"设置按钮大小"
                                    defaultText:currentValue
                                    placeholder:@"请输入20-60之间的数值"
@@ -3046,6 +3058,7 @@ speedSettingsItem.detail = trimmedText;
                                            [[NSUserDefaults standardUserDefaults] setFloat:size forKey:@"DYYYSpeedButtonSize"];
                                            buttonSizeItem.detail = [NSString stringWithFormat:@"%.0f", (CGFloat)size];
                                            [buttonSizeItem refreshCell];
+                                           [FloatingSpeedButton reloadConfiguration];
                                        } else {
                                            [DYYYUtils showToast:@"请输入20-60之间的有效数值"];
                                        }
@@ -3077,6 +3090,7 @@ speedSettingsItem.detail = trimmedText;
         if (originalSpeedSwitchChangedBlock) {
             originalSpeedSwitchChangedBlock();
         }
+        [FloatingSpeedButton reloadConfiguration];
         refreshSpeedDependentItems();
       };
 
@@ -3106,7 +3120,7 @@ speedSettingsItem.detail = trimmedText;
       clearButtonSizeItem.colorStyle = 0;
       clearButtonSizeItem.isEnable = YES;
       clearButtonSizeItem.cellTappedBlock = ^{
-        NSString *currentValue = [NSString stringWithFormat:@"%.0f", currentClearButtonSize];
+        NSString *currentValue = clearButtonSizeItem.detail ?: @"40";
         [DYYYSettingsHelper showTextInputAlert:@"设置清屏按钮大小"
                                    defaultText:currentValue
                                    placeholder:@"请输入20-60之间的数值"
@@ -3117,6 +3131,7 @@ speedSettingsItem.detail = trimmedText;
                                            [[NSUserDefaults standardUserDefaults] setFloat:size forKey:@"DYYYEnableFloatClearButtonSize"];
                                            clearButtonSizeItem.detail = [NSString stringWithFormat:@"%.0f", (CGFloat)size];
                                            [clearButtonSizeItem refreshCell];
+                                           reloadClearButtonConfiguration();
                                        } else {
                                            [DYYYUtils showToast:@"请输入20-60之间的有效数值"];
                                        }
@@ -3196,13 +3211,33 @@ speedSettingsItem.detail = trimmedText;
           @"imageName" : @"ic_eyeslash_outlined_16"
       }];
       [clearButtonItems addObject:hideSpeedButton];
-      // 获取清屏按钮的当前开关状态
-      BOOL isEnabled = [DYYYSettingsHelper getUserDefaults:@"DYYYEnableFloatClearButton"];
+      NSMutableArray<AWESettingItemModel *> *clearDependentItems = [NSMutableArray array];
       for (AWESettingItemModel *item in clearButtonItems) {
-          if (item == enableClearButton) {
+          if (item != enableClearButton) {
+              [clearDependentItems addObject:item];
+          }
+      }
+      void (^refreshClearDependentItems)(void) = ^{
+        for (AWESettingItemModel *item in clearDependentItems) {
+            [DYYYSettingsHelper applyDependencyRulesForItem:item];
+            [item refreshCell];
+        }
+      };
+
+      refreshClearDependentItems();
+
+      for (AWESettingItemModel *item in clearButtonItems) {
+          void (^originalClearSwitchChangedBlock)(void) = item.switchChangedBlock;
+          if (!originalClearSwitchChangedBlock) {
               continue;
           }
-          item.isEnable = isEnabled;
+          item.switchChangedBlock = ^{
+            originalClearSwitchChangedBlock();
+            reloadClearButtonConfiguration();
+            if (item == enableClearButton) {
+                refreshClearDependentItems();
+            }
+          };
       }
 
       // 创建并组织所有section

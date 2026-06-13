@@ -9,6 +9,8 @@
 #import "DYYYUtils.h"
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import <float.h>
+#import <math.h>
 #import <signal.h>
 
 void updateClearButtonVisibility(void);
@@ -48,9 +50,10 @@ static void DYYYPerformClearButtonMutation(dispatch_block_t block) {
 }
 
 
-HideUIButton *hideButton;
+HideUIButton *hideButton = nil;
 BOOL isAppInTransition = NO;
 NSArray *targetClassNames;
+static NSUInteger dyyyTargetClassConfiguration = NSUIntegerMax;
 static CGFloat DYGetGlobalAlpha(void) {
     NSString *value = [[NSUserDefaults standardUserDefaults] stringForKey:@"DYYYGlobalTransparency"];
     CGFloat a = value.length ? value.floatValue : 1.0;
@@ -65,6 +68,11 @@ static void findViewsOfClassHelper(UIView *view, Class viewClass, NSMutableArray
     }
 }
 UIWindow *getKeyWindow(void) {
+    UIWindow *activeWindow = [DYYYUtils getActiveWindow];
+    if (activeWindow) {
+        return activeWindow;
+    }
+
     UIWindow *keyWindow = nil;
     for (UIWindow *window in [UIApplication sharedApplication].windows) {
         if (window.isKeyWindow) {
@@ -143,21 +151,21 @@ void hideClearButton(void) {
 
 static void forceResetAllUIElements(void) {
     DYYYPerformClearButtonMutation(^{
-        UIWindow *window = getKeyWindow();
-        if (!window)
-            return;
+        initTargetClassNames();
         Class StackViewClass = NSClassFromString(@"AWEElementStackView");
-        for (NSString *className in targetClassNames) {
-            Class viewClass = NSClassFromString(className);
-            if (!viewClass)
-                continue;
-            NSMutableArray *views = [NSMutableArray array];
-            findViewsOfClassHelper(window, viewClass, views);
-            for (UIView *view in views) {
-                if ([view isKindOfClass:StackViewClass]) {
-                    view.alpha = 1.0; // 基础透明度交给全局透明度处理，避免重复乘
-                } else {
-                    view.alpha = 1.0; // 恢复透明度
+        for (UIWindow *window in [UIApplication sharedApplication].windows) {
+            for (NSString *className in targetClassNames) {
+                Class viewClass = NSClassFromString(className);
+                if (!viewClass)
+                    continue;
+                NSMutableArray *views = [NSMutableArray array];
+                findViewsOfClassHelper(window, viewClass, views);
+                for (UIView *view in views) {
+                    if ([view isKindOfClass:StackViewClass]) {
+                        view.alpha = 1.0; // 基础透明度交给全局透明度处理，避免重复乘
+                    } else {
+                        view.alpha = 1.0; // 恢复透明度
+                    }
                 }
             }
         }
@@ -169,32 +177,97 @@ static void reapplyHidingToAllElements(HideUIButton *button) {
     [button hideUIElements];
 }
 void initTargetClassNames(void) {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSUInteger configuration = 0;
+    configuration |= [defaults boolForKey:@"DYYYHideTabBar"] ? (1U << 0) : 0;
+    configuration |= [defaults boolForKey:@"DYYYHideDanmaku"] ? (1U << 1) : 0;
+    configuration |= [defaults boolForKey:@"DYYYHideSlider"] ? (1U << 2) : 0;
+    configuration |= [defaults boolForKey:@"DYYYHideChapter"] ? (1U << 3) : 0;
+    if (targetClassNames && dyyyTargetClassConfiguration == configuration) {
+        return;
+    }
+
     NSMutableArray<NSString *> *list = [@[
         @"AWEHPTopBarCTAContainer", @"AWEHPDiscoverFeedEntranceView", @"AWELeftSideBarEntranceView", @"DUXBadge", @"AWEBaseElementView", @"AWEElementStackView", @"AWEPlayInteractionDescriptionLabel",
         @"AWEUserNameLabel", @"ACCEditTagStickerView", @"AWEFeedTemplateAnchorView", @"AWESearchFeedTagView", @"AWEPlayInteractionSearchAnchorView", @"AFDRecommendToFriendTagView",
         @"AWELandscapeFeedEntryView", @"AWEFeedAnchorContainerView", @"AFDAIbumFolioView", @"DUXPopover", @"AWEMixVideoPanelMoreView", @"AWEHotSearchInnerBottomView", @"AWEHPSegmentControlScrollView"
     ] mutableCopy];
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideTabBar"]) {
+    if (configuration & (1U << 0)) {
         [list addObject:@"AWENormalModeTabBar"];
     }
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideDanmaku"]) {
+    if (configuration & (1U << 1)) {
         [list addObject:@"AWEVideoPlayDanmakuContainerView"];
         [list addObject:@"AWEDanmakuContainerView"];
     }
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideSlider"]) {
+    if (configuration & (1U << 2)) {
         [list addObject:@"AWEStoryProgressSlideView"];
         [list addObject:@"AWEStoryProgressContainerView"];
     }
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideChapter"]) {
+    if (configuration & (1U << 3)) {
         [list addObject:@"AWEDemaciaChapterProgressSlider"];
     }
 
     targetClassNames = [list copy];
+    dyyyTargetClassConfiguration = configuration;
+}
+
+void reloadClearButtonConfiguration(void) {
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+          reloadClearButtonConfiguration();
+        });
+        return;
+    }
+
+    initTargetClassNames();
+
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    BOOL isEnabled = [defaults boolForKey:@"DYYYEnableFloatClearButton"];
+    if (!isEnabled) {
+        if (hideButton) {
+            if (hideButton.isElementsHidden) {
+                [hideButton safeResetState];
+            }
+            [hideButton removeFromSuperview];
+            hideButton = nil;
+        }
+        return;
+    }
+
+    UIWindow *activeWindow = [DYYYUtils getActiveWindow];
+    if (!activeWindow) {
+        return;
+    }
+
+    CGFloat buttonSize = [defaults floatForKey:@"DYYYEnableFloatClearButtonSize"];
+    if (buttonSize <= 0.0) {
+        buttonSize = 40.0;
+    }
+    buttonSize = MIN(MAX(buttonSize, 20.0), 60.0);
+
+    if (!hideButton) {
+        hideButton = [[HideUIButton alloc] initWithFrame:CGRectMake(0, 0, buttonSize, buttonSize)];
+    } else if (fabs(hideButton.bounds.size.width - buttonSize) > FLT_EPSILON) {
+        hideButton.bounds = CGRectMake(0, 0, buttonSize, buttonSize);
+        hideButton.layer.cornerRadius = buttonSize / 2.0;
+    }
+
+    if (![hideButton isDescendantOfView:activeWindow]) {
+        [activeWindow addSubview:hideButton];
+        [hideButton loadSavedPosition];
+    }
+
+    [activeWindow bringSubviewToFront:hideButton];
+    if (hideButton.isElementsHidden) {
+        [hideButton hideUIElements];
+    }
+    updateClearButtonVisibility();
 }
 @implementation HideUIButton
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
+        self.accessibilityLabel = @"DYYYClearScreenButton";
         self.backgroundColor = [UIColor clearColor];
         self.layer.cornerRadius = frame.size.width / 2;
         self.layer.masksToBounds = YES;
@@ -423,6 +496,7 @@ void initTargetClassNames(void) {
         return;
     [self resetFadeTimer];
     if (!self.isElementsHidden) {
+        initTargetClassNames();
         [self hideUIElements];
         self.isElementsHidden = YES;
         self.selected = YES;
@@ -485,6 +559,7 @@ void initTargetClassNames(void) {
 }
 - (void)hideUIElements {
     DYYYPerformClearButtonMutation(^{
+        initTargetClassNames();
         [self.hiddenViewsList removeAllObjects];
         [self findAndHideViews:targetClassNames];
         [self hideAWEPlayInteractionProgressContainerView];
@@ -548,6 +623,7 @@ void initTargetClassNames(void) {
 }
 - (void)safeResetState {
     forceResetAllUIElements();
+    [self restoreAWEPlayInteractionProgressContainerView];
     self.isElementsHidden = NO;
     [self.hiddenViewsList removeAllObjects];
     self.selected = NO;
