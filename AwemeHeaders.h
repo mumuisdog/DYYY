@@ -1372,6 +1372,11 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @interface AWEPlayInteractionUserAvatarView : UIView
 @end
 
+@interface AWEPlayInteractionStaticFollowAnimationView : UIView
+@property(retain, nonatomic) UIImageView *plusImageView;
+@property(retain, nonatomic) UIImageView *tickImageView;
+@end
+
 @interface AWELeftSideBarViewController : UIViewController <UICollectionViewDelegate, UICollectionViewDataSource>
 - (UICollectionView *)collectionView;
 - (void)adjustContainerViewLayout:(UICollectionViewCell *)cell;
@@ -1409,6 +1414,7 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 
 @interface AWEPlayInteractionUserAvatarContext : NSObject
 @property(retain, nonatomic) AWEAwemeModel *model;
+@property(nonatomic, weak) UIView *avatarPicView;
 @end
 
 @interface AWEPlayInteractionUserAvatarFollowController : UIViewController
@@ -1420,6 +1426,23 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 - (void)onFollowViewClicked:(id)gesture;
 - (void)layoutElementView;
 - (void)showFollowAddView:(BOOL)show;
+@end
+
+@interface AWEPlayInteractionUserAvatarMainBusinessController : NSObject
+@property(retain, nonatomic) AWEPlayInteractionUserAvatarContext *userAvatarContext;
+@property(retain, nonatomic) UIView *avatarPicView;
+- (void)layoutElementView;
+@end
+
+@interface AWEPlayInteractionUserAvatarOptElementElement : NSObject
+@property(retain, nonatomic) AWEPlayInteractionUserAvatarContext *userAvatarContext;
+- (void)layoutElementView;
+@end
+
+@interface AWEPlayInteractionUserAvatarStoryController : NSObject
+@property(nonatomic, weak) UIView *colorRingView;
+- (void)layoutElementView;
+- (void)showStory25RingView;
 @end
 
 @interface AWECodeGenCommonAnchorBasicInfoModel : UIViewController
