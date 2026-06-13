@@ -1396,8 +1396,19 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(retain, nonatomic) AWEAwemeModel *model;
 @end
 
+@interface AWEPlayInteractionUserAvatarContext : NSObject
+@property(retain, nonatomic) AWEAwemeModel *model;
+@end
+
 @interface AWEPlayInteractionUserAvatarFollowController : UIViewController
 @property(retain, nonatomic) AWEAwemeModel *model;
+@end
+
+@interface AWEPlayInteractionUserAvatarFollowPromptController : NSObject
+@property(retain, nonatomic) AWEPlayInteractionUserAvatarContext *userAvatarContext;
+- (void)onFollowViewClicked:(id)gesture;
+- (void)layoutElementView;
+- (void)showFollowAddView:(BOOL)show;
 @end
 
 @interface AWECodeGenCommonAnchorBasicInfoModel : UIViewController
