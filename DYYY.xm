@@ -342,13 +342,17 @@ id DYYYCurrentSpeedInteractionController(void) {
 
 static void DYYYEnsureFloatSpeedButton(AWEPlayInteractionViewController *interactionController) {
     [FloatingSpeedButton reloadConfiguration];
-    if (!isFloatSpeedButtonEnabled) {
+    AWEPlayInteractionViewController *currentController = DYYYResolveCurrentSpeedInteractionController(interactionController);
+    if (!currentController) {
         updateSpeedButtonVisibility();
         return;
     }
 
-    AWEPlayInteractionViewController *currentController = DYYYResolveCurrentSpeedInteractionController(interactionController);
-    if (!currentController) {
+    dyyyActiveSpeedInteractionController = currentController;
+    dyyyCurrentSpeedAweme = currentController.model;
+    dyyyInteractionViewVisible = YES;
+
+    if (!isFloatSpeedButtonEnabled) {
         updateSpeedButtonVisibility();
         return;
     }
@@ -358,8 +362,6 @@ static void DYYYEnsureFloatSpeedButton(AWEPlayInteractionViewController *interac
         return;
     }
 
-    dyyyActiveSpeedInteractionController = currentController;
-    dyyyInteractionViewVisible = YES;
     DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(currentController.model);
 
     if (!speedButton) {
