@@ -36,7 +36,8 @@ void *kViewModelKey = &kViewModelKey;
 static id dyyyRemoteConfigChangedToken = nil;
 static char kDYYYWeatherViewGestureInstalledKey;
 static char kDYYYWeatherSubviewGestureInstalledKey;
-static NSString *const kDYYYFeedNowPlayingSVGIconName = @"ic_liveactivityplayslash_outlined_20";
+static NSString *const kDYYYFeedNowPlayingSettingTitle = @"屏蔽灵动岛抖音播放信息";
+static NSInteger const kDYYYFeedNowPlayingIconViewTag = 0x44595959;
 
 static UIImage *DYYYFeedNowPlayingSVGIcon(CGSize requestedSize) {
     CGSize targetSize = requestedSize;
@@ -112,30 +113,84 @@ static UIImage *DYYYFeedNowPlayingSVGIcon(CGSize requestedSize) {
     return image;
 }
 
+static UILabel *DYYYFindLabelWithText(UIView *view, NSString *text) {
+    if ([view isKindOfClass:[UILabel class]] && [((UILabel *)view).text isEqualToString:text]) {
+        return (UILabel *)view;
+    }
+    for (UIView *subview in view.subviews) {
+        UILabel *label = DYYYFindLabelWithText(subview, text);
+        if (label) {
+            return label;
+        }
+    }
+    return nil;
+}
+
+static void DYYYCollectImageViews(UIView *view, NSMutableArray<UIImageView *> *imageViews) {
+    for (UIView *subview in view.subviews) {
+        if ([subview isKindOfClass:[UIImageView class]]) {
+            [imageViews addObject:(UIImageView *)subview];
+        }
+        DYYYCollectImageViews(subview, imageViews);
+    }
+}
+
+static void DYYYApplyFeedNowPlayingIconToCell(UITableViewCell *cell) {
+    UIView *contentView = cell.contentView;
+    UILabel *titleLabel = DYYYFindLabelWithText(contentView, kDYYYFeedNowPlayingSettingTitle);
+    if (!titleLabel) {
+        return;
+    }
+
+    CGRect titleFrame = [titleLabel convertRect:titleLabel.bounds toView:contentView];
+    NSMutableArray<UIImageView *> *imageViews = [NSMutableArray array];
+    DYYYCollectImageViews(contentView, imageViews);
+
+    UIImageView *iconView = nil;
+    CGFloat nearestDistance = CGFLOAT_MAX;
+    for (UIImageView *candidate in imageViews) {
+        if (candidate.tag == kDYYYFeedNowPlayingIconViewTag) {
+            iconView = candidate;
+            break;
+        }
+
+        CGRect candidateFrame = [candidate convertRect:candidate.bounds toView:contentView];
+        CGFloat width = CGRectGetWidth(candidateFrame);
+        CGFloat height = CGRectGetHeight(candidateFrame);
+        if (width < 8 || height < 8 || width > 40 || height > 40 || CGRectGetMaxX(candidateFrame) > CGRectGetMinX(titleFrame)) {
+            continue;
+        }
+
+        CGFloat distance = CGRectGetMinX(titleFrame) - CGRectGetMaxX(candidateFrame);
+        if (distance < nearestDistance) {
+            nearestDistance = distance;
+            iconView = candidate;
+        }
+    }
+
+    if (!iconView) {
+        iconView = [[UIImageView alloc] initWithFrame:CGRectMake(MAX(8, CGRectGetMinX(titleFrame) - 28),
+                                                                floor((CGRectGetHeight(contentView.bounds) - 20) / 2.0),
+                                                                20,
+                                                                20)];
+        iconView.tag = kDYYYFeedNowPlayingIconViewTag;
+        iconView.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleRightMargin;
+        [contentView addSubview:iconView];
+    }
+
+    iconView.image = DYYYFeedNowPlayingSVGIcon(iconView.bounds.size);
+    iconView.contentMode = UIViewContentModeScaleAspectFit;
+    iconView.hidden = NO;
+    iconView.alpha = 1.0;
+    iconView.tintColor = titleLabel.textColor;
+}
+
 static void DYYYRemoveRemoteConfigObserver(void) {
     if (dyyyRemoteConfigChangedToken) {
         [[NSNotificationCenter defaultCenter] removeObserver:dyyyRemoteConfigChangedToken];
         dyyyRemoteConfigChangedToken = nil;
     }
 }
-
-%hook UIImage
-
-+ (UIImage *)svg_imageWithName:(NSString *)name size:(CGSize)size isFromSVGCache:(BOOL)isFromSVGCache {
-    if ([name isEqualToString:kDYYYFeedNowPlayingSVGIconName]) {
-        return DYYYFeedNowPlayingSVGIcon(size);
-    }
-    return %orig;
-}
-
-+ (UIImage *)svg_imageWithName:(NSString *)name isFromSVGCache:(BOOL)isFromSVGCache {
-    if ([name isEqualToString:kDYYYFeedNowPlayingSVGIconName]) {
-        return DYYYFeedNowPlayingSVGIcon(CGSizeMake(20, 20));
-    }
-    return %orig;
-}
-
-%end
 
 %hook AWESettingBaseViewController
 - (BOOL)useCardUIStyle {
@@ -147,6 +202,13 @@ static void DYYYRemoveRemoteConfigObserver(void) {
     if (!original)
         return objc_getAssociatedObject(self, &kViewModelKey);
     return original;
+}
+
+- (void)viewDidLayoutSubviews {
+    %orig;
+    for (UITableViewCell *cell in self.tableView.visibleCells) {
+        DYYYApplyFeedNowPlayingIconToCell(cell);
+    }
 }
 
 - (void)dealloc {
@@ -612,11 +674,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
             @"cellType" : @37,
             @"imageName" : @"ic_eyeslash_outlined_16"},
           @{@"identifier" : @"DYYYDisableFeedNowPlayingInfo",
-            @"title" : @"屏蔽灵动岛抖音播放信息",
+            @"title" : kDYYYFeedNowPlayingSettingTitle,
             @"subTitle" : @"开启后禁止信息流视频播放信息显示在灵动岛",
             @"detail" : @"",
             @"cellType" : @37,
-            @"imageName" : kDYYYFeedNowPlayingSVGIconName},
+            @"imageName" : @"ic_eyeslash_outlined_16"},
           @{@"identifier" : @"DYYYEnableVideoHighestQuality",
             @"title" : @"提高视频画质",
             @"detail" : @"",
