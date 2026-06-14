@@ -1,8 +1,64 @@
 #import "DYYYOptionsSelectionView.h"
 #import <objc/runtime.h>
 #import "AwemeHeaders.h"
+#import "DYYYUtils.h"
 
 @implementation DYYYOptionsSelectionView
+
+static UIColor *DYYYThemeColor(UIColor *darkColor, UIColor *lightColor, BOOL darkMode) {
+    return darkMode ? darkColor : lightColor;
+}
+
+static UIColor *DYYYSelectionSheetBackgroundColor(BOOL darkMode) {
+    return DYYYThemeColor([UIColor colorWithRed:30 / 255.0 green:30 / 255.0 blue:30 / 255.0 alpha:1.0], [UIColor whiteColor], darkMode);
+}
+
+static UIColor *DYYYSelectionSheetTextColor(BOOL darkMode) {
+    return DYYYThemeColor([UIColor colorWithRed:230 / 255.0 green:230 / 255.0 blue:235 / 255.0 alpha:1.0], [UIColor colorWithRed:45 / 255.0 green:47 / 255.0 blue:56 / 255.0 alpha:1.0], darkMode);
+}
+
+static UIColor *DYYYSelectionSheetSecondaryTextColor(BOOL darkMode) {
+    return DYYYThemeColor([UIColor colorWithRed:160 / 255.0 green:160 / 255.0 blue:165 / 255.0 alpha:1.0], [UIColor colorWithRed:124 / 255.0 green:124 / 255.0 blue:130 / 255.0 alpha:1.0], darkMode);
+}
+
+static UIColor *DYYYSelectionSheetSeparatorColor(BOOL darkMode) {
+    return DYYYThemeColor([UIColor colorWithRed:60 / 255.0 green:60 / 255.0 blue:60 / 255.0 alpha:1.0], [UIColor colorWithRed:230 / 255.0 green:230 / 255.0 blue:230 / 255.0 alpha:1.0], darkMode);
+}
+
+static BOOL DYYYColorGetRGBA(UIColor *color, CGFloat *red, CGFloat *green, CGFloat *blue, CGFloat *alpha) {
+    if ([color getRed:red green:green blue:blue alpha:alpha]) {
+        return YES;
+    }
+
+    CGFloat white = 0.0;
+    if ([color getWhite:&white alpha:alpha]) {
+        *red = white;
+        *green = white;
+        *blue = white;
+        return YES;
+    }
+
+    return NO;
+}
+
+static BOOL DYYYColorIsLight(UIColor *color) {
+    CGFloat red = 0.0, green = 0.0, blue = 0.0, alpha = 0.0;
+    if (!DYYYColorGetRGBA(color, &red, &green, &blue, &alpha) || alpha < 0.01) {
+        return NO;
+    }
+
+    CGFloat luminance = 0.299 * red + 0.587 * green + 0.114 * blue;
+    return luminance > 0.55;
+}
+
+static BOOL DYYYColorIsAccent(UIColor *color) {
+    CGFloat red = 0.0, green = 0.0, blue = 0.0, alpha = 0.0;
+    if (!DYYYColorGetRGBA(color, &red, &green, &blue, &alpha) || alpha < 0.01) {
+        return NO;
+    }
+
+    return red > 0.75 && green < 0.35 && blue < 0.5;
+}
 
 static CGFloat DYYYCompactHDRSheetHeight(NSArray<NSString *> *optionsArray, UIViewController *presentingVC) {
     CGFloat safeAreaBottom = presentingVC.view.safeAreaInsets.bottom;
@@ -10,6 +66,56 @@ static CGFloat DYYYCompactHDRSheetHeight(NSArray<NSString *> *optionsArray, UIVi
     CGFloat optionHeight = 53.0;
     CGFloat bottomPadding = MAX(safeAreaBottom, 20.0) + 14.0;
     return topAreaHeight + optionHeight * optionsArray.count + bottomPadding;
+}
+
+static void DYYYApplySelectionSheetThemeToView(UIView *view, BOOL darkMode) {
+    if (!view) {
+        return;
+    }
+
+    if (@available(iOS 13.0, *)) {
+        view.overrideUserInterfaceStyle = darkMode ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
+    }
+
+    UIColor *backgroundColor = DYYYSelectionSheetBackgroundColor(darkMode);
+    UIColor *textColor = DYYYSelectionSheetTextColor(darkMode);
+    UIColor *secondaryTextColor = DYYYSelectionSheetSecondaryTextColor(darkMode);
+    UIColor *separatorColor = DYYYSelectionSheetSeparatorColor(darkMode);
+
+    UIColor *currentBackgroundColor = view.backgroundColor;
+    if (currentBackgroundColor && ![currentBackgroundColor isEqual:[UIColor clearColor]]) {
+        CGFloat red = 0.0, green = 0.0, blue = 0.0, alpha = 0.0;
+        BOOL hasRGBA = DYYYColorGetRGBA(currentBackgroundColor, &red, &green, &blue, &alpha);
+        if (hasRGBA && alpha > 0.01) {
+            if (view.bounds.size.height > 0 && view.bounds.size.height <= 1.0) {
+                view.backgroundColor = separatorColor;
+            } else if ((darkMode && DYYYColorIsLight(currentBackgroundColor)) || (!darkMode && !DYYYColorIsLight(currentBackgroundColor))) {
+                view.backgroundColor = backgroundColor;
+            }
+        }
+    }
+
+    if ([view isKindOfClass:[UITableView class]] || [view isKindOfClass:[UITableViewCell class]]) {
+        view.backgroundColor = backgroundColor;
+    }
+
+    if ([view isKindOfClass:[UILabel class]]) {
+        UILabel *label = (UILabel *)view;
+        UIColor *labelColor = label.textColor;
+        if (!DYYYColorIsAccent(labelColor)) {
+            label.textColor = label.font.pointSize <= 15.0 ? secondaryTextColor : textColor;
+        }
+    } else if ([view isKindOfClass:[UIButton class]]) {
+        UIButton *button = (UIButton *)view;
+        UIColor *buttonColor = [button titleColorForState:UIControlStateNormal];
+        if (!DYYYColorIsAccent(buttonColor)) {
+            [button setTitleColor:textColor forState:UIControlStateNormal];
+        }
+    }
+
+    for (UIView *subview in view.subviews) {
+        DYYYApplySelectionSheetThemeToView(subview, darkMode);
+    }
 }
 
 + (NSString *)showWithPreferenceKey:(NSString *)preferenceKey optionsArray:(NSArray<NSString *> *)optionsArray headerText:(NSString *)headerText onPresentingVC:(UIViewController *)presentingVC {
@@ -78,17 +184,22 @@ static CGFloat DYYYCompactHDRSheetHeight(NSArray<NSString *> *optionsArray, UIVi
     id actionSheet = [AWEPrivacySettingActionSheetClass sheetWithConfig:config];
 
     UIViewController *containerVC = [[UIViewController alloc] init];
-    UIColor *sheetBackgroundColor = [UIColor systemBackgroundColor];
+    BOOL isDarkMode = [DYYYUtils isDarkMode];
+    UIColor *sheetBackgroundColor = DYYYSelectionSheetBackgroundColor(isDarkMode);
+    if (@available(iOS 13.0, *)) {
+        containerVC.overrideUserInterfaceStyle = isDarkMode ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
+    }
     containerVC.view.backgroundColor = sheetBackgroundColor;
     [containerVC.view addSubview:actionSheet];
 
     UIView *sheetView = (UIView *)actionSheet;
-    sheetView.backgroundColor = [UIColor clearColor];
+    sheetView.backgroundColor = sheetBackgroundColor;
     sheetView.translatesAutoresizingMaskIntoConstraints = NO;
     [NSLayoutConstraint activateConstraints:@[
         [sheetView.leadingAnchor constraintEqualToAnchor:containerVC.view.leadingAnchor], [sheetView.trailingAnchor constraintEqualToAnchor:containerVC.view.trailingAnchor],
         [sheetView.topAnchor constraintEqualToAnchor:containerVC.view.topAnchor], [sheetView.bottomAnchor constraintEqualToAnchor:containerVC.view.bottomAnchor]
     ]];
+    DYYYApplySelectionSheetThemeToView(containerVC.view, isDarkMode);
 
     if ([preferenceKey isEqualToString:@"DYYYHDRMode"]) {
         CGFloat compactHeight = DYYYCompactHDRSheetHeight(optionsArray, presentingVC);
@@ -105,6 +216,13 @@ static CGFloat DYYYCompactHDRSheetHeight(NSArray<NSString *> *optionsArray, UIVi
     }];
 
     [contentSheet showOnViewController:presentingVC completion:nil];
+    dispatch_async(dispatch_get_main_queue(), ^{
+      BOOL currentDarkMode = [DYYYUtils isDarkMode];
+      DYYYApplySelectionSheetThemeToView(containerVC.view, currentDarkMode);
+      if ([contentSheet respondsToSelector:@selector(setContentColor:)]) {
+          [contentSheet setContentColor:DYYYSelectionSheetBackgroundColor(currentDarkMode)];
+      }
+    });
 
     return savedPreference;
 }
