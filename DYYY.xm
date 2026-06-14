@@ -8436,24 +8436,19 @@ static Class tabBarButtonClass = nil;
     }
 
     if (!useFullHeight && [currentReferString isEqualToString:@"chat"]) {
-        static NSNumber *shouldRestoreChat = nil;
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-          BOOL includeChat = NO;
-          Class managerClass = %c(AWEVersionUpdateManager);
-          if (managerClass && [managerClass respondsToSelector:@selector(sharedInstance)]) {
-              AWEVersionUpdateManager *manager = [managerClass sharedInstance];
-              if ([manager respondsToSelector:@selector(currentVersion)]) {
-                  NSString *currentVersion = manager.currentVersion;
-                  if (currentVersion.length > 0) {
-                      includeChat = ([DYYYUtils compareVersion:currentVersion toVersion:@"35.5.0"] == NSOrderedAscending);
-                  }
-              }
-          }
-          shouldRestoreChat = @(includeChat);
-        });
+        NSString *currentVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+        if (currentVersion.length == 0) {
+            Class managerClass = %c(AWEVersionUpdateManager);
+            if (managerClass && [managerClass respondsToSelector:@selector(sharedInstance)]) {
+                AWEVersionUpdateManager *manager = [managerClass sharedInstance];
+                if ([manager respondsToSelector:@selector(currentVersion)]) {
+                    currentVersion = manager.currentVersion;
+                }
+            }
+        }
 
-        if (shouldRestoreChat.boolValue) {
+        // 39.1.0 及更早版本的私信播放页以完整高度布局信息区，否则底部约束会整体上移。
+        if (currentVersion.length > 0 && [DYYYUtils compareVersion:currentVersion toVersion:@"39.1.0"] != NSOrderedDescending) {
             useFullHeight = YES;
         }
     }
