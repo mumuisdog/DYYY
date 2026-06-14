@@ -37,7 +37,8 @@ static id dyyyRemoteConfigChangedToken = nil;
 static char kDYYYWeatherViewGestureInstalledKey;
 static char kDYYYWeatherSubviewGestureInstalledKey;
 static NSString *const kDYYYFeedNowPlayingSettingTitle = @"屏蔽灵动岛抖音播放信息";
-static NSInteger const kDYYYFeedNowPlayingIconViewTag = 0x44595959;
+static NSString *const kDYYYFeedNowPlayingSettingIdentifier = @"DYYYDisableFeedNowPlayingInfo";
+static NSString *const kDYYYFeedNowPlayingSVGIconName = @"ic_liveactivityplayslash_outlined_20";
 
 static UIImage *DYYYFeedNowPlayingSVGIcon(CGSize requestedSize) {
     CGSize targetSize = requestedSize;
@@ -113,76 +114,30 @@ static UIImage *DYYYFeedNowPlayingSVGIcon(CGSize requestedSize) {
     return image;
 }
 
-static UILabel *DYYYFindLabelWithText(UIView *view, NSString *text) {
-    if ([view isKindOfClass:[UILabel class]] && [((UILabel *)view).text isEqualToString:text]) {
-        return (UILabel *)view;
-    }
-    for (UIView *subview in view.subviews) {
-        UILabel *label = DYYYFindLabelWithText(subview, text);
-        if (label) {
-            return label;
-        }
-    }
-    return nil;
-}
+@interface AWESettingsTableViewCell : UITableViewCell
+@property(nonatomic, strong) AWESettingItemModel *itemModel;
+@property(nonatomic, strong) UILabel *titleLabel;
+@property(nonatomic, strong) UIImageView *iconImageView;
+- (void)updateSubviews;
+- (void)updateSubviewsAfterLayout;
+@end
 
-static void DYYYCollectImageViews(UIView *view, NSMutableArray<UIImageView *> *imageViews) {
-    for (UIView *subview in view.subviews) {
-        if ([subview isKindOfClass:[UIImageView class]]) {
-            [imageViews addObject:(UIImageView *)subview];
-        }
-        DYYYCollectImageViews(subview, imageViews);
-    }
-}
-
-static void DYYYApplyFeedNowPlayingIconToCell(UITableViewCell *cell) {
-    UIView *contentView = cell.contentView;
-    UILabel *titleLabel = DYYYFindLabelWithText(contentView, kDYYYFeedNowPlayingSettingTitle);
-    if (!titleLabel) {
+static void DYYYApplyFeedNowPlayingIconToCell(AWESettingsTableViewCell *cell) {
+    AWESettingItemModel *itemModel = cell.itemModel;
+    if (![itemModel.identifier isEqualToString:kDYYYFeedNowPlayingSettingIdentifier]) {
         return;
     }
 
-    CGRect titleFrame = [titleLabel convertRect:titleLabel.bounds toView:contentView];
-    NSMutableArray<UIImageView *> *imageViews = [NSMutableArray array];
-    DYYYCollectImageViews(contentView, imageViews);
-
-    UIImageView *iconView = nil;
-    CGFloat nearestDistance = CGFLOAT_MAX;
-    for (UIImageView *candidate in imageViews) {
-        if (candidate.tag == kDYYYFeedNowPlayingIconViewTag) {
-            iconView = candidate;
-            break;
-        }
-
-        CGRect candidateFrame = [candidate convertRect:candidate.bounds toView:contentView];
-        CGFloat width = CGRectGetWidth(candidateFrame);
-        CGFloat height = CGRectGetHeight(candidateFrame);
-        if (width < 8 || height < 8 || width > 40 || height > 40 || CGRectGetMaxX(candidateFrame) > CGRectGetMinX(titleFrame)) {
-            continue;
-        }
-
-        CGFloat distance = CGRectGetMinX(titleFrame) - CGRectGetMaxX(candidateFrame);
-        if (distance < nearestDistance) {
-            nearestDistance = distance;
-            iconView = candidate;
-        }
-    }
-
+    UIImageView *iconView = cell.iconImageView;
     if (!iconView) {
-        iconView = [[UIImageView alloc] initWithFrame:CGRectMake(MAX(8, CGRectGetMinX(titleFrame) - 28),
-                                                                floor((CGRectGetHeight(contentView.bounds) - 20) / 2.0),
-                                                                20,
-                                                                20)];
-        iconView.tag = kDYYYFeedNowPlayingIconViewTag;
-        iconView.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleRightMargin;
-        [contentView addSubview:iconView];
+        return;
     }
 
     iconView.image = DYYYFeedNowPlayingSVGIcon(iconView.bounds.size);
     iconView.contentMode = UIViewContentModeScaleAspectFit;
     iconView.hidden = NO;
     iconView.alpha = 1.0;
-    iconView.tintColor = titleLabel.textColor;
+    iconView.tintColor = cell.titleLabel.textColor;
 }
 
 static void DYYYRemoveRemoteConfigObserver(void) {
@@ -206,8 +161,10 @@ static void DYYYRemoveRemoteConfigObserver(void) {
 
 - (void)viewDidLayoutSubviews {
     %orig;
-    for (UITableViewCell *cell in self.tableView.visibleCells) {
-        DYYYApplyFeedNowPlayingIconToCell(cell);
+    for (AWESettingsTableViewCell *cell in self.tableView.visibleCells) {
+        if ([cell isKindOfClass:%c(AWESettingsTableViewCell)]) {
+            DYYYApplyFeedNowPlayingIconToCell(cell);
+        }
     }
 }
 
@@ -215,6 +172,25 @@ static void DYYYRemoveRemoteConfigObserver(void) {
     DYYYRemoveRemoteConfigObserver();
     %orig;
 }
+%end
+
+%hook AWESettingsTableViewCell
+
+- (void)setItemModel:(AWESettingItemModel *)itemModel {
+    %orig;
+    DYYYApplyFeedNowPlayingIconToCell(self);
+}
+
+- (void)updateSubviews {
+    %orig;
+    DYYYApplyFeedNowPlayingIconToCell(self);
+}
+
+- (void)updateSubviewsAfterLayout {
+    %orig;
+    DYYYApplyFeedNowPlayingIconToCell(self);
+}
+
 %end
 
 // 隐藏掉天气Label
@@ -678,7 +654,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
             @"subTitle" : @"开启后禁止信息流视频播放信息显示在灵动岛",
             @"detail" : @"",
             @"cellType" : @37,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
+            @"imageName" : kDYYYFeedNowPlayingSVGIconName},
           @{@"identifier" : @"DYYYEnableVideoHighestQuality",
             @"title" : @"提高视频画质",
             @"detail" : @"",
