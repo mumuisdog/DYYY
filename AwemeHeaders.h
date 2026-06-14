@@ -1042,8 +1042,10 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @interface DUXContentSheet : UIViewController
 - (void)showOnViewController:(id)arg1 completion:(id)arg2;
 - (instancetype)initWithRootViewController:(UIViewController *)controller withTopType:(NSInteger)topType withSheetAligment:(NSInteger)alignment;
+- (instancetype)initWithRootViewController:(UIViewController *)controller withTopType:(NSInteger)topType withHeight:(CGFloat)height;
 - (void)setAutoAlignmentCenter:(BOOL)center;
 - (void)setSheetCornerRadius:(CGFloat)radius;
+@property(nonatomic, strong) UIColor *contentColor;
 @property(retain, nonatomic) UIView *fullScreenView;
 @end
 

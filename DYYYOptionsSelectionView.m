@@ -4,6 +4,14 @@
 
 @implementation DYYYOptionsSelectionView
 
+static CGFloat DYYYCompactHDRSheetHeight(NSArray<NSString *> *optionsArray, UIViewController *presentingVC) {
+    CGFloat safeAreaBottom = presentingVC.view.safeAreaInsets.bottom;
+    CGFloat topAreaHeight = 58.0;
+    CGFloat optionHeight = 53.0;
+    CGFloat bottomPadding = MAX(safeAreaBottom, 20.0) + 14.0;
+    return topAreaHeight + optionHeight * optionsArray.count + bottomPadding;
+}
+
 + (NSString *)showWithPreferenceKey:(NSString *)preferenceKey optionsArray:(NSArray<NSString *> *)optionsArray headerText:(NSString *)headerText onPresentingVC:(UIViewController *)presentingVC {
     return [self showWithPreferenceKey:preferenceKey optionsArray:optionsArray headerText:headerText onPresentingVC:presentingVC selectionChanged:nil];
 }
@@ -70,16 +78,25 @@
     id actionSheet = [AWEPrivacySettingActionSheetClass sheetWithConfig:config];
 
     UIViewController *containerVC = [[UIViewController alloc] init];
+    UIColor *sheetBackgroundColor = [UIColor systemBackgroundColor];
+    containerVC.view.backgroundColor = sheetBackgroundColor;
     [containerVC.view addSubview:actionSheet];
 
     UIView *sheetView = (UIView *)actionSheet;
+    sheetView.backgroundColor = [UIColor clearColor];
     sheetView.translatesAutoresizingMaskIntoConstraints = NO;
     [NSLayoutConstraint activateConstraints:@[
         [sheetView.leadingAnchor constraintEqualToAnchor:containerVC.view.leadingAnchor], [sheetView.trailingAnchor constraintEqualToAnchor:containerVC.view.trailingAnchor],
         [sheetView.topAnchor constraintEqualToAnchor:containerVC.view.topAnchor], [sheetView.bottomAnchor constraintEqualToAnchor:containerVC.view.bottomAnchor]
     ]];
 
-    contentSheet = [[DUXContentSheetClass alloc] initWithRootViewController:containerVC withTopType:0 withSheetAligment:0];
+    if ([preferenceKey isEqualToString:@"DYYYHDRMode"]) {
+        CGFloat compactHeight = DYYYCompactHDRSheetHeight(optionsArray, presentingVC);
+        contentSheet = [[DUXContentSheetClass alloc] initWithRootViewController:containerVC withTopType:0 withHeight:compactHeight];
+    } else {
+        contentSheet = [[DUXContentSheetClass alloc] initWithRootViewController:containerVC withTopType:0 withSheetAligment:0];
+    }
+    [contentSheet setContentColor:sheetBackgroundColor];
     [contentSheet setAutoAlignmentCenter:YES];
     [contentSheet setSheetCornerRadius:10.0];
 
