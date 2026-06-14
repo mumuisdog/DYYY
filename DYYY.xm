@@ -10,6 +10,7 @@
 #import <dlfcn.h>
 #import <float.h>
 #import <math.h>
+#import <objc/message.h>
 #import <objc/runtime.h>
 #import <substrate.h>
 #import <syslog.h>
@@ -800,6 +801,46 @@ static void DYYYHandleCurrentSpeedAwemeChanged(id aweme) {
 @property(nonatomic, weak) id playingPlayer;
 @end
 
+static BOOL dyyyClearingFeedNowPlayingSystemInfo = NO;
+static CFTimeInterval dyyyLastFeedNowPlayingSystemClearTime = 0.0;
+
+static void DYYYClearFeedNowPlayingSystemInfoThrottled(void) {
+    if (!DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") || dyyyClearingFeedNowPlayingSystemInfo) {
+        return;
+    }
+
+    CFTimeInterval currentTime = CFAbsoluteTimeGetCurrent();
+    if (currentTime - dyyyLastFeedNowPlayingSystemClearTime < 0.25) {
+        return;
+    }
+    dyyyLastFeedNowPlayingSystemClearTime = currentTime;
+
+    Class nowPlayingInfoCenterClass = NSClassFromString(@"MPNowPlayingInfoCenter");
+    if (!nowPlayingInfoCenterClass || ![nowPlayingInfoCenterClass respondsToSelector:@selector(defaultCenter)]) {
+        return;
+    }
+
+    id center = ((id (*)(Class, SEL))objc_msgSend)(nowPlayingInfoCenterClass, @selector(defaultCenter));
+    if (!center) {
+        return;
+    }
+
+    dyyyClearingFeedNowPlayingSystemInfo = YES;
+    @try {
+        if ([center respondsToSelector:@selector(setNowPlayingInfo:)]) {
+            ((void (*)(id, SEL, id))objc_msgSend)(center, @selector(setNowPlayingInfo:), nil);
+        }
+
+        SEL setPlaybackStateSelector = NSSelectorFromString(@"setPlaybackState:");
+        if ([center respondsToSelector:setPlaybackStateSelector]) {
+            ((void (*)(id, SEL, NSInteger))objc_msgSend)(center, setPlaybackStateSelector, 0);
+        }
+    } @catch (__unused NSException *exception) {
+    } @finally {
+        dyyyClearingFeedNowPlayingSystemInfo = NO;
+    }
+}
+
 static BOOL DYYYShouldBlockFeedNowPlayingPlayer(id player) {
     if (!DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") || !player) {
         return NO;
@@ -813,6 +854,7 @@ static BOOL DYYYShouldBlockFeedNowPlayingPlayer(id player) {
 
 - (id)nowPlayingInfo {
     if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
+        DYYYClearFeedNowPlayingSystemInfoThrottled();
         return nil;
     }
 
@@ -821,6 +863,7 @@ static BOOL DYYYShouldBlockFeedNowPlayingPlayer(id player) {
 
 - (void)refreshNowPlayingInfoIfNeeded {
     if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
+        DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
 
@@ -829,6 +872,7 @@ static BOOL DYYYShouldBlockFeedNowPlayingPlayer(id player) {
 
 - (void)updateNowPlayingInfoPlayback {
     if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
+        DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
 
@@ -842,6 +886,7 @@ static BOOL DYYYShouldBlockFeedNowPlayingPlayer(id player) {
 
 - (void)becomePlayingPlayer:(id)player {
     if (DYYYShouldBlockFeedNowPlayingPlayer(player)) {
+        DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
 
@@ -851,6 +896,16 @@ static BOOL DYYYShouldBlockFeedNowPlayingPlayer(id player) {
 - (void)setNowPlayingInfo:(id)nowPlayingInfo {
     if (DYYYShouldBlockFeedNowPlayingPlayer(self.playingPlayer)) {
         %orig(nil);
+        DYYYClearFeedNowPlayingSystemInfoThrottled();
+        return;
+    }
+
+    %orig;
+}
+
+- (void)refreshNowPlayingInfo {
+    if (DYYYShouldBlockFeedNowPlayingPlayer(self.playingPlayer)) {
+        DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
 
