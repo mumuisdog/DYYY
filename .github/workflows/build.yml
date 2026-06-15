@@ -16,15 +16,19 @@ on:
           - rootful
           - rootless
           - roothide
-          
+
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v4 #.2.2
+      - uses: actions/checkout@v6
         with:
           submodules: true
+          fetch-depth: 0
 
       - name: Check cache
         run: |
@@ -32,10 +36,24 @@ jobs:
 
       - name: Use cache
         id: cache
-        uses: actions/cache@v4 #.2.1
+        uses: actions/cache@v5
         with:
           path: ${{ github.workspace }}/theos
           key: ${{ runner.os }}-${{ env.upstream_heads }}
+
+      - name: Remove unused Homebrew taps
+        env:
+          HOMEBREW_NO_REQUIRE_TAP_TRUST: "1"
+          HOMEBREW_NO_AUTOREMOVE: "1"
+        run: |
+          if brew list --formula | grep -Fxq "bicep"; then
+            brew uninstall --formula --ignore-dependencies bicep
+          fi
+          for tap in aws/tap azure/bicep; do
+            if brew tap | grep -Fxq "$tap"; then
+              brew untap "$tap"
+            fi
+          done
 
       - name: Prepare Theos
         uses: huami1314/theos-action@main
@@ -69,16 +87,62 @@ jobs:
             [ -f "$f" ] && [[ "$f" != *"-root"*".deb" ]] && mv "$f" "${f%.deb}-roothide.deb"
           done
           
-      # 【新增】生成时间戳并写入环境变量
-      - name: Generate Timestamp
-        id: timestamp
+      - name: Prepare release metadata
+        id: release
         run: |
-          ts=$(TZ=Asia/Shanghai date +%Y%m%d%H%M%S)
-          echo "value=$ts" >> $GITHUB_OUTPUT
-          echo "⏰ 构建时间: $ts (Asia/Shanghai)"
-          
+          timestamp=$(TZ=Asia/Shanghai date +%Y%m%d%H%M%S)
+          version=$(awk -F': ' '$1 == "Version" { print $2; exit }' control)
+          if [ -z "$version" ]; then
+            echo "Unable to read package version from control" >&2
+            exit 1
+          fi
+          echo "timestamp=$timestamp" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=DYYY_${version}-build.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "title=DYYY_${version}#${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify Deb packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          deb_files=(packages/*.deb)
+          if [ "${#deb_files[@]}" -ne 3 ]; then
+            echo "Expected 3 Deb packages, found ${#deb_files[@]}:" >&2
+            printf '  %s\n' "${deb_files[@]}" >&2
+            exit 1
+          fi
+
+          for scheme in rootful rootless roothide; do
+            scheme_files=(packages/*-"${scheme}".deb)
+            if [ "${#scheme_files[@]}" -ne 1 ]; then
+              echo "Expected exactly one ${scheme} package, found ${#scheme_files[@]}" >&2
+              exit 1
+            fi
+          done
+
+          printf 'Release asset: %s\n' "${deb_files[@]}"
+
+      - name: Generate release notes
+        env:
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: .github/scripts/generate-release-notes.sh
+
       - name: Upload specific Deb packages
-        uses: actions/upload-artifact@v4 #.6.0
+        uses: actions/upload-artifact@v7
         with:
-          name: DYYY-${{ steps.timestamp.outputs.value }}
+          name: DYYY-${{ steps.release.outputs.timestamp }}
           path: ${{ github.workspace }}/packages/*.deb
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          RELEASE_TITLE: ${{ steps.release.outputs.title }}
+        run: |
+          gh release create "$RELEASE_TAG" packages/*.deb \
+            --target "$GITHUB_SHA" \
+            --title "$RELEASE_TITLE" \
+            --notes-file release-notes.md \
+            --latest
