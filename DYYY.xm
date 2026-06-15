@@ -1161,6 +1161,33 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 
 %end
 
+%hook AWEDPlayerBrightnessContainer
+
+- (BOOL)awe_isCurrentVideoHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEVideoPlayerScreenBrightnessManager
+
+- (BOOL)isHDRVideo {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setIsHDRVideo:(BOOL)isHDRVideo {
+    // 播放器复用时会重新写入当前作品的 HDR 状态，需同时清除写入值和读取结果。
+    %orig(DYYYShouldDisableAllHDR() ? NO : isHDRVideo);
+}
+
+%end
+
 %hook AWEIMModuleService
 
 - (BOOL)im_forceHDRToSDR {
