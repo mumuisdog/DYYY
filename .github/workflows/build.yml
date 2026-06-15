@@ -22,7 +22,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v4 #.2.2
+      - uses: actions/checkout@v6
         with:
           submodules: true
 
@@ -32,10 +32,20 @@ jobs:
 
       - name: Use cache
         id: cache
-        uses: actions/cache@v4 #.2.1
+        uses: actions/cache@v5
         with:
           path: ${{ github.workspace }}/theos
           key: ${{ runner.os }}-${{ env.upstream_heads }}
+
+      - name: Remove unused Homebrew taps
+        env:
+          HOMEBREW_NO_REQUIRE_TAP_TRUST: "1"
+        run: |
+          for tap in aws/tap azure/bicep; do
+            if brew tap | grep -Fxq "$tap"; then
+              brew untap --force "$tap"
+            fi
+          done
 
       - name: Prepare Theos
         uses: huami1314/theos-action@main
@@ -78,7 +88,7 @@ jobs:
           echo "⏰ 构建时间: $ts (Asia/Shanghai)"
           
       - name: Upload specific Deb packages
-        uses: actions/upload-artifact@v4 #.6.0
+        uses: actions/upload-artifact@v7
         with:
           name: DYYY-${{ steps.timestamp.outputs.value }}
           path: ${{ github.workspace }}/packages/*.deb
