@@ -90,11 +90,13 @@ jobs:
       - name: Prepare release metadata
         id: release
         run: |
+          timestamp=$(TZ=Asia/Shanghai date +%Y%m%d%H%M%S)
           version=$(awk -F': ' '$1 == "Version" { print $2; exit }' control)
           if [ -z "$version" ]; then
             echo "Unable to read package version from control" >&2
             exit 1
           fi
+          echo "timestamp=$timestamp" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=DYYY_${version}-build.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
           echo "title=DYYY_${version}#${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
@@ -130,7 +132,7 @@ jobs:
       - name: Upload specific Deb packages
         uses: actions/upload-artifact@v7
         with:
-          name: DYYY-${{ steps.release.outputs.version }}-${{ github.run_number }}
+          name: DYYY-${{ steps.release.outputs.timestamp }}
           path: ${{ github.workspace }}/packages/*.deb
 
       - name: Publish GitHub Release
