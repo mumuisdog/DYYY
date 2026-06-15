@@ -37,16 +37,19 @@ jobs:
           path: ${{ github.workspace }}/theos
           key: ${{ runner.os }}-${{ env.upstream_heads }}
 
-      - name: Configure Homebrew tap trust
+      - name: Remove unused Homebrew taps
         env:
           HOMEBREW_NO_REQUIRE_TAP_TRUST: "1"
+          HOMEBREW_NO_AUTOREMOVE: "1"
         run: |
-          if brew tap | grep -Fxq "aws/tap"; then
-            brew untap aws/tap
+          if brew list --formula | grep -Fxq "bicep"; then
+            brew uninstall --formula --ignore-dependencies bicep
           fi
-          if brew tap | grep -Fxq "azure/bicep"; then
-            brew trust --formula azure/bicep/bicep
-          fi
+          for tap in aws/tap azure/bicep; do
+            if brew tap | grep -Fxq "$tap"; then
+              brew untap "$tap"
+            fi
+          done
 
       - name: Prepare Theos
         uses: huami1314/theos-action@main
