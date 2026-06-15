@@ -28,6 +28,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: true
+          fetch-depth: 0
 
       - name: Check cache
         run: |
@@ -121,6 +122,11 @@ jobs:
 
           printf 'Release asset: %s\n' "${deb_files[@]}"
 
+      - name: Generate release notes
+        env:
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: .github/scripts/generate-release-notes.sh
+
       - name: Upload specific Deb packages
         uses: actions/upload-artifact@v7
         with:
@@ -136,5 +142,5 @@ jobs:
           gh release create "$RELEASE_TAG" packages/*.deb \
             --target "$GITHUB_SHA" \
             --title "$RELEASE_TITLE" \
-            --notes "自动构建版本，包含 Rootful、Rootless 和 Roothide 三个 Deb 安装包。" \
+            --notes-file release-notes.md \
             --latest
