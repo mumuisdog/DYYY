@@ -305,6 +305,11 @@ void updateSpeedButtonVisibility() {
                            }];
         }];
 
+    id currentController = DYYYCurrentSpeedInteractionController();
+    if (currentController) {
+        self.interactionController = currentController;
+    }
+
     if (self.interactionController) {
         @try {
             [self.interactionController speedButtonTapped:self];
@@ -504,21 +509,7 @@ void updateSpeedButtonVisibility() {
     }
 
     if (!self.interactionController) {
-        UIWindow *win = [DYYYUtils getActiveWindow];
-        UIViewController *topVC = win.rootViewController;
-        while (topVC && topVC.presentedViewController) {
-            topVC = topVC.presentedViewController;
-        }
-
-        if (topVC) {
-            Class PlayVCClass = NSClassFromString(@"AWEPlayInteractionViewController");
-            for (UIViewController *vc in findViewControllersInHierarchy(topVC)) {
-                if (PlayVCClass && [vc isKindOfClass:PlayVCClass]) {
-                    self.interactionController = vc;
-                    break;
-                }
-            }
-        }
+        self.interactionController = DYYYCurrentSpeedInteractionController();
     }
 }
 

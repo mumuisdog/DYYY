@@ -36,6 +36,109 @@ void *kViewModelKey = &kViewModelKey;
 static id dyyyRemoteConfigChangedToken = nil;
 static char kDYYYWeatherViewGestureInstalledKey;
 static char kDYYYWeatherSubviewGestureInstalledKey;
+static NSString *const kDYYYFeedNowPlayingSettingTitle = @"屏蔽灵动岛抖音播放信息";
+static NSString *const kDYYYFeedNowPlayingSettingIdentifier = @"DYYYDisableFeedNowPlayingInfo";
+static NSString *const kDYYYFeedNowPlayingSVGIconName = @"ic_liveactivityplayslash_outlined_20";
+
+static UIImage *DYYYFeedNowPlayingSVGIcon(CGSize requestedSize) {
+    CGSize targetSize = requestedSize;
+    if (targetSize.width <= 0 || targetSize.height <= 0) {
+        targetSize = CGSizeMake(20, 20);
+    }
+
+    static NSCache<NSString *, UIImage *> *imageCache;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+      imageCache = [[NSCache alloc] init];
+    });
+
+    NSString *cacheKey = NSStringFromCGSize(targetSize);
+    UIImage *cachedImage = [imageCache objectForKey:cacheKey];
+    if (cachedImage) {
+        return cachedImage;
+    }
+
+    UIGraphicsBeginImageContextWithOptions(targetSize, NO, 0);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    if (!context) {
+        UIGraphicsEndImageContext();
+        return nil;
+    }
+
+    CGContextScaleCTM(context, targetSize.width / 20.0, targetSize.height / 20.0);
+    UIColor *iconColor = [UIColor colorWithRed:22.0 / 255.0 green:24.0 / 255.0 blue:35.0 / 255.0 alpha:1.0];
+    [iconColor setFill];
+    [iconColor setStroke];
+
+    UIBezierPath *capsule = [UIBezierPath bezierPathWithRoundedRect:CGRectMake(1.25, 5.25, 17.5, 9.5) cornerRadius:4.7];
+    [capsule appendPath:[UIBezierPath bezierPathWithRoundedRect:CGRectMake(2.75, 6.75, 14.5, 6.5) cornerRadius:3.2]];
+    capsule.usesEvenOddFillRule = YES;
+    [capsule fill];
+
+    UIBezierPath *play = [UIBezierPath bezierPath];
+    [play moveToPoint:CGPointMake(8.05, 7.438)];
+    [play addCurveToPoint:CGPointMake(8.95682, 6.93014)
+            controlPoint1:CGPointMake(8.05, 6.97219)
+            controlPoint2:CGPointMake(8.55983, 6.68648)];
+    [play addLineToPoint:CGPointMake(13.2548, 9.56814)];
+    [play addCurveToPoint:CGPointMake(13.2548, 10.4319)
+            controlPoint1:CGPointMake(13.6332, 9.80046)
+            controlPoint2:CGPointMake(13.6332, 10.1995)];
+    [play addLineToPoint:CGPointMake(8.95682, 13.0699)];
+    [play addCurveToPoint:CGPointMake(8.05, 12.562)
+            controlPoint1:CGPointMake(8.55983, 13.3135)
+            controlPoint2:CGPointMake(8.05, 13.0278)];
+    [play closePath];
+    [play fill];
+
+    CGContextSetBlendMode(context, kCGBlendModeClear);
+    CGContextSetLineCap(context, kCGLineCapRound);
+    CGContextSetLineWidth(context, 2.35);
+    CGContextMoveToPoint(context, 3.6, 2.65);
+    CGContextAddLineToPoint(context, 16.4, 17.35);
+    CGContextStrokePath(context);
+
+    CGContextSetBlendMode(context, kCGBlendModeNormal);
+    CGContextSetStrokeColorWithColor(context, iconColor.CGColor);
+    CGContextSetLineWidth(context, 1.5);
+    CGContextMoveToPoint(context, 3.6, 2.65);
+    CGContextAddLineToPoint(context, 16.4, 17.35);
+    CGContextStrokePath(context);
+
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    if (image) {
+        [imageCache setObject:image forKey:cacheKey];
+    }
+    return image;
+}
+
+@interface AWESettingsTableViewCell : UITableViewCell
+@property(nonatomic, strong) AWESettingItemModel *itemModel;
+@property(nonatomic, strong) UILabel *titleLabel;
+@property(nonatomic, strong) UIImageView *iconImageView;
+- (void)updateSubviews;
+- (void)updateSubviewsAfterLayout;
+@end
+
+static void DYYYApplyFeedNowPlayingIconToCell(AWESettingsTableViewCell *cell) {
+    AWESettingItemModel *itemModel = cell.itemModel;
+    if (![itemModel.identifier isEqualToString:kDYYYFeedNowPlayingSettingIdentifier]) {
+        return;
+    }
+
+    UIImageView *iconView = cell.iconImageView;
+    if (!iconView) {
+        return;
+    }
+
+    iconView.image = DYYYFeedNowPlayingSVGIcon(iconView.bounds.size);
+    iconView.contentMode = UIViewContentModeScaleAspectFit;
+    iconView.hidden = NO;
+    iconView.alpha = 1.0;
+    iconView.tintColor = cell.titleLabel.textColor;
+}
 
 static void DYYYRemoveRemoteConfigObserver(void) {
     if (dyyyRemoteConfigChangedToken) {
@@ -43,6 +146,7 @@ static void DYYYRemoveRemoteConfigObserver(void) {
         dyyyRemoteConfigChangedToken = nil;
     }
 }
+
 %hook AWESettingBaseViewController
 - (BOOL)useCardUIStyle {
     return YES;
@@ -55,10 +159,38 @@ static void DYYYRemoveRemoteConfigObserver(void) {
     return original;
 }
 
+- (void)viewDidLayoutSubviews {
+    %orig;
+    for (AWESettingsTableViewCell *cell in self.tableView.visibleCells) {
+        if ([cell isKindOfClass:%c(AWESettingsTableViewCell)]) {
+            DYYYApplyFeedNowPlayingIconToCell(cell);
+        }
+    }
+}
+
 - (void)dealloc {
     DYYYRemoveRemoteConfigObserver();
     %orig;
 }
+%end
+
+%hook AWESettingsTableViewCell
+
+- (void)setItemModel:(AWESettingItemModel *)itemModel {
+    %orig;
+    DYYYApplyFeedNowPlayingIconToCell(self);
+}
+
+- (void)updateSubviews {
+    %orig;
+    DYYYApplyFeedNowPlayingIconToCell(self);
+}
+
+- (void)updateSubviewsAfterLayout {
+    %orig;
+    DYYYApplyFeedNowPlayingIconToCell(self);
+}
+
 %end
 
 // 隐藏掉天气Label
@@ -517,6 +649,12 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
             @"detail" : @"",
             @"cellType" : @37,
             @"imageName" : @"ic_eyeslash_outlined_16"},
+          @{@"identifier" : @"DYYYDisableFeedNowPlayingInfo",
+            @"title" : kDYYYFeedNowPlayingSettingTitle,
+            @"subTitle" : @"开启后禁止信息流视频播放信息显示在灵动岛",
+            @"detail" : @"",
+            @"cellType" : @37,
+            @"imageName" : kDYYYFeedNowPlayingSVGIconName},
           @{@"identifier" : @"DYYYEnableVideoHighestQuality",
             @"title" : @"提高视频画质",
             @"detail" : @"",

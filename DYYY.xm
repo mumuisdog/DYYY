@@ -10,6 +10,7 @@
 #import <dlfcn.h>
 #import <float.h>
 #import <math.h>
+#import <objc/message.h>
 #import <objc/runtime.h>
 #import <substrate.h>
 #import <syslog.h>
@@ -220,10 +221,138 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
 }
 
 static __weak AWEPlayInteractionViewController *dyyyActiveSpeedInteractionController = nil;
+static __weak AWEAwemeModel *dyyyCurrentSpeedAweme = nil;
+static NSString *dyyyLastAutoRestoredSpeedAwemeIdentifier = nil;
+
+static CGFloat DYYYViewControllerVisibilityScore(UIViewController *viewController) {
+    if (!viewController || !viewController.isViewLoaded) {
+        return -1.0;
+    }
+
+    UIView *view = viewController.view;
+    UIWindow *window = view.window;
+    if (!window || view.hidden || view.alpha <= 0.01 || CGRectIsEmpty(view.bounds)) {
+        return -1.0;
+    }
+
+    CGRect frameInWindow = [view convertRect:view.bounds toView:window];
+    CGRect visibleFrame = CGRectIntersection(frameInWindow, window.bounds);
+    if (CGRectIsNull(visibleFrame) || CGRectIsEmpty(visibleFrame)) {
+        return -1.0;
+    }
+
+    CGFloat visibleArea = CGRectGetWidth(visibleFrame) * CGRectGetHeight(visibleFrame);
+    CGFloat totalArea = CGRectGetWidth(frameInWindow) * CGRectGetHeight(frameInWindow);
+    CGFloat visibleRatio = totalArea > 0.0 ? visibleArea / totalArea : 0.0;
+    CGPoint windowCenter = CGPointMake(CGRectGetMidX(window.bounds), CGRectGetMidY(window.bounds));
+    CGFloat centerBonus = CGRectContainsPoint(visibleFrame, windowCenter) ? 1000000000.0 : 0.0;
+    return centerBonus + visibleRatio * 1000000.0 + visibleArea;
+}
+
+static BOOL DYYYAwemeModelsMatch(AWEAwemeModel *lhs, AWEAwemeModel *rhs) {
+    if (!lhs || !rhs) {
+        return NO;
+    }
+    if (lhs == rhs) {
+        return YES;
+    }
+
+    NSString *lhsItemID = lhs.itemID;
+    NSString *rhsItemID = rhs.itemID;
+    return lhsItemID.length > 0 && rhsItemID.length > 0 && [lhsItemID isEqualToString:rhsItemID];
+}
+
+static NSString *DYYYSpeedAwemeIdentifier(AWEAwemeModel *aweme) {
+    if (!aweme) {
+        return nil;
+    }
+    if (aweme.itemID.length > 0) {
+        return aweme.itemID;
+    }
+    return [NSString stringWithFormat:@"%p", aweme];
+}
+
+static void DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(AWEAwemeModel *aweme) {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    BOOL shouldAutoRestore = [defaults boolForKey:@"DYYYEnableFloatSpeedButton"] && [defaults boolForKey:@"DYYYAutoRestoreSpeed"];
+    if (!shouldAutoRestore) {
+        dyyyLastAutoRestoredSpeedAwemeIdentifier = nil;
+        return;
+    }
+
+    NSString *awemeIdentifier = DYYYSpeedAwemeIdentifier(aweme);
+    if (awemeIdentifier.length == 0 || [awemeIdentifier isEqualToString:dyyyLastAutoRestoredSpeedAwemeIdentifier]) {
+        return;
+    }
+
+    dyyyLastAutoRestoredSpeedAwemeIdentifier = [awemeIdentifier copy];
+    setCurrentSpeedIndex(0);
+    updateSpeedButtonUI();
+}
+
+static NSArray<AWEPlayInteractionViewController *> *DYYYSpeedInteractionControllers(AWEPlayInteractionViewController *preferredController) {
+    NSMutableArray<AWEPlayInteractionViewController *> *controllers = [NSMutableArray array];
+    Class interactionControllerClass = NSClassFromString(@"AWEPlayInteractionViewController");
+    UIWindow *window = [DYYYUtils getActiveWindow];
+    UIViewController *rootViewController = window.rootViewController;
+    while (rootViewController.presentedViewController) {
+        rootViewController = rootViewController.presentedViewController;
+    }
+
+    for (UIViewController *viewController in rootViewController ? findViewControllersInHierarchy(rootViewController) : @[]) {
+        if (interactionControllerClass && [viewController isKindOfClass:interactionControllerClass]) {
+            [controllers addObject:(AWEPlayInteractionViewController *)viewController];
+        }
+    }
+
+    if (preferredController && ![controllers containsObject:preferredController]) {
+        [controllers addObject:preferredController];
+    }
+    return controllers;
+}
+
+static AWEPlayInteractionViewController *DYYYResolveCurrentSpeedInteractionController(AWEPlayInteractionViewController *preferredController) {
+    AWEPlayInteractionViewController *bestModelMatch = nil;
+    AWEPlayInteractionViewController *bestVisibleController = nil;
+    CGFloat bestModelMatchScore = -1.0;
+    CGFloat bestVisibleScore = -1.0;
+
+    for (AWEPlayInteractionViewController *controller in DYYYSpeedInteractionControllers(preferredController)) {
+        CGFloat visibilityScore = DYYYViewControllerVisibilityScore(controller);
+        if (visibilityScore < 0.0) {
+            continue;
+        }
+
+        if (visibilityScore > bestVisibleScore) {
+            bestVisibleScore = visibilityScore;
+            bestVisibleController = controller;
+        }
+        if (DYYYAwemeModelsMatch(controller.model, dyyyCurrentSpeedAweme) && visibilityScore > bestModelMatchScore) {
+            bestModelMatchScore = visibilityScore;
+            bestModelMatch = controller;
+        }
+    }
+
+    return bestModelMatch ?: bestVisibleController;
+}
+
+id DYYYCurrentSpeedInteractionController(void) {
+    return DYYYResolveCurrentSpeedInteractionController(dyyyActiveSpeedInteractionController);
+}
 
 static void DYYYEnsureFloatSpeedButton(AWEPlayInteractionViewController *interactionController) {
     [FloatingSpeedButton reloadConfiguration];
-    if (!isFloatSpeedButtonEnabled || !interactionController) {
+    AWEPlayInteractionViewController *currentController = DYYYResolveCurrentSpeedInteractionController(interactionController);
+    if (!currentController) {
+        updateSpeedButtonVisibility();
+        return;
+    }
+
+    dyyyActiveSpeedInteractionController = currentController;
+    dyyyCurrentSpeedAweme = currentController.model;
+    dyyyInteractionViewVisible = YES;
+
+    if (!isFloatSpeedButtonEnabled) {
         updateSpeedButtonVisibility();
         return;
     }
@@ -233,14 +362,16 @@ static void DYYYEnsureFloatSpeedButton(AWEPlayInteractionViewController *interac
         return;
     }
 
+    DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(currentController.model);
+
     if (!speedButton) {
         CGRect windowBounds = keyWindow.bounds;
         CGRect initialFrame = CGRectMake((windowBounds.size.width - speedButtonSize) / 2.0, (windowBounds.size.height - speedButtonSize) / 2.0, speedButtonSize, speedButtonSize);
         speedButton = [[FloatingSpeedButton alloc] initWithFrame:initialFrame];
-        speedButton.interactionController = interactionController;
+        speedButton.interactionController = currentController;
         updateSpeedButtonUI();
-    } else if (speedButton.interactionController != interactionController) {
-        speedButton.interactionController = interactionController;
+    } else if (speedButton.interactionController != currentController) {
+        speedButton.interactionController = currentController;
         [speedButton resetButtonState];
     }
 
@@ -268,6 +399,11 @@ static BOOL DYYYSetPlaybackRateOnTarget(id target, double speed) {
 }
 
 static BOOL DYYYApplyPlaybackSpeed(AWEPlayInteractionViewController *interactionController, double speed) {
+    interactionController = DYYYResolveCurrentSpeedInteractionController(interactionController);
+    if (!interactionController) {
+        return NO;
+    }
+
     Protocol *speedControllerProtocol = NSProtocolFromString(@"AWEFastSpeedControllerProtocol");
     if (speedControllerProtocol && [interactionController respondsToSelector:@selector(controllerByProtocol:)]) {
         @try {
@@ -292,17 +428,105 @@ static BOOL DYYYApplyPlaybackSpeed(AWEPlayInteractionViewController *interaction
         rootViewController = rootViewController.presentedViewController;
     }
 
+    UIViewController *bestPlayerViewController = nil;
+    CGFloat bestPlayerVisibilityScore = -1.0;
     for (UIViewController *viewController in rootViewController ? findViewControllersInHierarchy(rootViewController) : @[]) {
         if ([viewController isKindOfClass:NSClassFromString(@"AWEAwemePlayVideoViewController")] ||
             [viewController isKindOfClass:NSClassFromString(@"AWEDPlayerFeedPlayerViewController")] ||
             [viewController isKindOfClass:NSClassFromString(@"AWEDPlayerViewController_Merge")]) {
-            if (DYYYSetPlaybackRateOnTarget(viewController, speed)) {
-                return YES;
+            CGFloat visibilityScore = DYYYViewControllerVisibilityScore(viewController);
+            if (visibilityScore > bestPlayerVisibilityScore) {
+                bestPlayerVisibilityScore = visibilityScore;
+                bestPlayerViewController = viewController;
             }
         }
     }
 
-    return NO;
+    return DYYYSetPlaybackRateOnTarget(bestPlayerViewController, speed);
+}
+
+static double DYYYConfiguredPlaybackSpeed(void) {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    if ([defaults boolForKey:@"DYYYEnableFloatSpeedButton"]) {
+        return getCurrentSpeed();
+    }
+
+    if ([defaults boolForKey:@"DYYYUserAgreementAccepted"]) {
+        double defaultSpeed = [defaults doubleForKey:@"DYYYDefaultSpeed"];
+        if (isfinite(defaultSpeed) && defaultSpeed > 0.0) {
+            return defaultSpeed;
+        }
+    }
+    return 1.0;
+}
+
+static double DYYYPreparedPlaybackSpeed(void) {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    if ([defaults boolForKey:@"DYYYEnableFloatSpeedButton"] && [defaults boolForKey:@"DYYYAutoRestoreSpeed"]) {
+        NSArray *speeds = getSpeedOptions();
+        if (speeds.count > 0) {
+            double defaultSpeed = [speeds.firstObject doubleValue];
+            if (isfinite(defaultSpeed) && defaultSpeed > 0.0) {
+                return defaultSpeed;
+            }
+        }
+        return 1.0;
+    }
+    return DYYYConfiguredPlaybackSpeed();
+}
+
+static void DYYYApplyPreparedPlaybackSpeedToPlayer(id playerViewController) {
+    if (!DYYYShouldHandleSpeedFeatures() || !playerViewController) {
+        return;
+    }
+
+    double speed = DYYYPreparedPlaybackSpeed();
+    void (^applyBlock)(void) = ^{
+      DYYYSetPlaybackRateOnTarget(playerViewController, speed);
+    };
+    if ([NSThread isMainThread]) {
+        applyBlock();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), applyBlock);
+    }
+}
+
+static void DYYYBindAndApplyCurrentPlaybackSpeed(void) {
+    if (!DYYYShouldHandleSpeedFeatures()) {
+        return;
+    }
+
+    AWEPlayInteractionViewController *currentController = DYYYResolveCurrentSpeedInteractionController(nil);
+    if (!currentController) {
+        return;
+    }
+
+    DYYYEnsureFloatSpeedButton(currentController);
+    DYYYApplyPlaybackSpeed(currentController, DYYYConfiguredPlaybackSpeed());
+}
+
+static void DYYYHandleCurrentSpeedAwemeChanged(id aweme) {
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+          DYYYHandleCurrentSpeedAwemeChanged(aweme);
+        });
+        return;
+    }
+
+    Class awemeClass = NSClassFromString(@"AWEAwemeModel");
+    if (awemeClass && [aweme isKindOfClass:awemeClass]) {
+        dyyyCurrentSpeedAweme = (AWEAwemeModel *)aweme;
+    }
+    if (!DYYYShouldHandleSpeedFeatures()) {
+        return;
+    }
+
+    DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(dyyyCurrentSpeedAweme);
+
+    DYYYBindAndApplyCurrentPlaybackSpeed();
+    dispatch_async(dispatch_get_main_queue(), ^{
+      DYYYBindAndApplyCurrentPlaybackSpeed();
+    });
 }
 
 @interface AWEFeedProgressSlider (DYYYProgressLabel)
@@ -575,6 +799,123 @@ static BOOL DYYYApplyPlaybackSpeed(AWEPlayInteractionViewController *interaction
 
 %end
 
+@interface AWENowPlayingInfoCenter : NSObject
+@property(nonatomic, weak) id playingPlayer;
+@end
+
+static BOOL dyyyClearingFeedNowPlayingSystemInfo = NO;
+static CFTimeInterval dyyyLastFeedNowPlayingSystemClearTime = 0.0;
+
+static void DYYYClearFeedNowPlayingSystemInfoThrottled(void) {
+    if (!DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") || dyyyClearingFeedNowPlayingSystemInfo) {
+        return;
+    }
+
+    CFTimeInterval currentTime = CFAbsoluteTimeGetCurrent();
+    if (currentTime - dyyyLastFeedNowPlayingSystemClearTime < 0.25) {
+        return;
+    }
+    dyyyLastFeedNowPlayingSystemClearTime = currentTime;
+
+    Class nowPlayingInfoCenterClass = NSClassFromString(@"MPNowPlayingInfoCenter");
+    if (!nowPlayingInfoCenterClass || ![nowPlayingInfoCenterClass respondsToSelector:@selector(defaultCenter)]) {
+        return;
+    }
+
+    id center = ((id (*)(Class, SEL))objc_msgSend)(nowPlayingInfoCenterClass, @selector(defaultCenter));
+    if (!center) {
+        return;
+    }
+
+    dyyyClearingFeedNowPlayingSystemInfo = YES;
+    @try {
+        if ([center respondsToSelector:@selector(setNowPlayingInfo:)]) {
+            ((void (*)(id, SEL, id))objc_msgSend)(center, @selector(setNowPlayingInfo:), nil);
+        }
+
+        SEL setPlaybackStateSelector = NSSelectorFromString(@"setPlaybackState:");
+        if ([center respondsToSelector:setPlaybackStateSelector]) {
+            ((void (*)(id, SEL, NSInteger))objc_msgSend)(center, setPlaybackStateSelector, 0);
+        }
+    } @catch (__unused NSException *exception) {
+    } @finally {
+        dyyyClearingFeedNowPlayingSystemInfo = NO;
+    }
+}
+
+static BOOL DYYYShouldBlockFeedNowPlayingPlayer(id player) {
+    if (!DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") || !player) {
+        return NO;
+    }
+
+    Class feedBackgroundPlayClass = NSClassFromString(@"AWEAwemeBackgroundPlayModule");
+    return feedBackgroundPlayClass && [player isKindOfClass:feedBackgroundPlayClass];
+}
+
+%hook AWEAwemeBackgroundPlayModule
+
+- (id)nowPlayingInfo {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
+        DYYYClearFeedNowPlayingSystemInfoThrottled();
+        return nil;
+    }
+
+    return %orig;
+}
+
+- (void)refreshNowPlayingInfoIfNeeded {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
+        DYYYClearFeedNowPlayingSystemInfoThrottled();
+        return;
+    }
+
+    %orig;
+}
+
+- (void)updateNowPlayingInfoPlayback {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
+        DYYYClearFeedNowPlayingSystemInfoThrottled();
+        return;
+    }
+
+    %orig;
+}
+
+%end
+
+// 再从播放中心入口兜底，保留听抖音和音乐服务的系统播放信息。
+%hook AWENowPlayingInfoCenter
+
+- (void)becomePlayingPlayer:(id)player {
+    if (DYYYShouldBlockFeedNowPlayingPlayer(player)) {
+        DYYYClearFeedNowPlayingSystemInfoThrottled();
+        return;
+    }
+
+    %orig;
+}
+
+- (void)setNowPlayingInfo:(id)nowPlayingInfo {
+    if (DYYYShouldBlockFeedNowPlayingPlayer(self.playingPlayer)) {
+        %orig(nil);
+        DYYYClearFeedNowPlayingSystemInfoThrottled();
+        return;
+    }
+
+    %orig;
+}
+
+- (void)refreshNowPlayingInfo {
+    if (DYYYShouldBlockFeedNowPlayingPlayer(self.playingPlayer)) {
+        DYYYClearFeedNowPlayingSystemInfoThrottled();
+        return;
+    }
+
+    %orig;
+}
+
+%end
+
 // 默认视频流最高画质
 %hook AWEVideoModel
 
@@ -816,6 +1157,33 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
         return 0.0;
     }
     return %orig;
+}
+
+%end
+
+%hook AWEDPlayerBrightnessContainer
+
+- (BOOL)awe_isCurrentVideoHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEVideoPlayerScreenBrightnessManager
+
+- (BOOL)isHDRVideo {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setIsHDRVideo:(BOOL)isHDRVideo {
+    // 播放器复用时会重新写入当前作品的 HDR 状态，需同时清除写入值和读取结果。
+    %orig(DYYYShouldDisableAllHDR() ? NO : isHDRVideo);
 }
 
 %end
@@ -1823,6 +2191,7 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %hook AWEPlayInteractionProgressContainerView
 - (void)layoutSubviews {
     %orig;
+    DYYYApplyFloatClearProgressStateToView(self);
 
     if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYEnableFullScreen"]) {
         return;
@@ -1849,6 +2218,11 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 %end
 
 %hook AWEFeedProgressSlider
+
+- (void)layoutSubviews {
+    %orig;
+    DYYYApplyFloatClearProgressStateToView(self);
+}
 
 - (void)setAlpha:(CGFloat)alpha {
     if (DYYYGetBool(@"DYYYShowScheduleDisplay")) {
@@ -8024,8 +8398,8 @@ static Class tabBarButtonClass = nil;
 - (void)viewWillAppear:(BOOL)animated {
     %orig;
     isInPlayInteractionVC = YES;
-    dyyyActiveSpeedInteractionController = self;
-    dyyyInteractionViewVisible = YES;
+    dyyyCurrentSpeedAweme = self.model;
+    DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(self.model);
     DYYYEnsureFloatSpeedButton(self);
     reloadClearButtonConfiguration();
 }
@@ -8034,8 +8408,6 @@ static Class tabBarButtonClass = nil;
     %orig;
 
     if (self.view.window && !self.view.hidden) {
-        dyyyActiveSpeedInteractionController = self;
-        dyyyInteractionViewVisible = YES;
         DYYYEnsureFloatSpeedButton(self);
         reloadClearButtonConfiguration();
     } else {
@@ -8091,24 +8463,19 @@ static Class tabBarButtonClass = nil;
     }
 
     if (!useFullHeight && [currentReferString isEqualToString:@"chat"]) {
-        static NSNumber *shouldRestoreChat = nil;
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-          BOOL includeChat = NO;
-          Class managerClass = %c(AWEVersionUpdateManager);
-          if (managerClass && [managerClass respondsToSelector:@selector(sharedInstance)]) {
-              AWEVersionUpdateManager *manager = [managerClass sharedInstance];
-              if ([manager respondsToSelector:@selector(currentVersion)]) {
-                  NSString *currentVersion = manager.currentVersion;
-                  if (currentVersion.length > 0) {
-                      includeChat = ([DYYYUtils compareVersion:currentVersion toVersion:@"35.5.0"] == NSOrderedAscending);
-                  }
-              }
-          }
-          shouldRestoreChat = @(includeChat);
-        });
+        NSString *currentVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+        if (currentVersion.length == 0) {
+            Class managerClass = %c(AWEVersionUpdateManager);
+            if (managerClass && [managerClass respondsToSelector:@selector(sharedInstance)]) {
+                AWEVersionUpdateManager *manager = [managerClass sharedInstance];
+                if ([manager respondsToSelector:@selector(currentVersion)]) {
+                    currentVersion = manager.currentVersion;
+                }
+            }
+        }
 
-        if (shouldRestoreChat.boolValue) {
+        // 39.1.0 及更早版本的私信播放页以完整高度布局信息区，否则底部约束会整体上移。
+        if (currentVersion.length > 0 && [DYYYUtils compareVersion:currentVersion toVersion:@"39.1.0"] != NSOrderedDescending) {
             useFullHeight = YES;
         }
     }
@@ -8127,10 +8494,18 @@ static Class tabBarButtonClass = nil;
 - (void)viewDidDisappear:(BOOL)animated {
     %orig;
     if (dyyyActiveSpeedInteractionController == self) {
-        dyyyActiveSpeedInteractionController = nil;
-        dyyyInteractionViewVisible = NO;
-        dyyyCommentViewVisible = self.isCommentVCShowing;
-        updateSpeedButtonVisibility();
+        AWEPlayInteractionViewController *replacementController = DYYYResolveCurrentSpeedInteractionController(nil);
+        if (replacementController && replacementController != self) {
+            DYYYEnsureFloatSpeedButton(replacementController);
+        } else {
+            dyyyActiveSpeedInteractionController = nil;
+            dyyyInteractionViewVisible = NO;
+            dyyyCommentViewVisible = self.isCommentVCShowing;
+            updateSpeedButtonVisibility();
+            dispatch_async(dispatch_get_main_queue(), ^{
+              DYYYEnsureFloatSpeedButton(nil);
+            });
+        }
         updateClearButtonVisibility();
     }
 }
@@ -8166,7 +8541,11 @@ static Class tabBarButtonClass = nil;
                            completion:nil];
         }];
 
-    if (!DYYYApplyPlaybackSpeed(self, newSpeed)) {
+    AWEPlayInteractionViewController *currentController = DYYYResolveCurrentSpeedInteractionController(self);
+    if (currentController) {
+        speedButton.interactionController = currentController;
+    }
+    if (!DYYYApplyPlaybackSpeed(currentController, newSpeed)) {
         [DYYYUtils showToast:@"无法找到视频控制器"];
     }
 }
@@ -8195,25 +8574,7 @@ static Class tabBarButtonClass = nil;
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
     %orig(arg0);
-    if (!DYYYShouldHandleSpeedFeatures()) {
-        return;
-    }
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-      if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"]) {
-          float defaultSpeed = [[NSUserDefaults standardUserDefaults] floatForKey:@"DYYYDefaultSpeed"];
-          if (defaultSpeed > 0 && defaultSpeed != 1) {
-              dispatch_async(dispatch_get_main_queue(), ^{
-                [self setVideoControllerPlaybackRate:defaultSpeed];
-              });
-          }
-      }
-      float speed = getCurrentSpeed();
-      if (speed != 1.0) {
-          dispatch_async(dispatch_get_main_queue(), ^{
-            [self adjustPlaybackSpeed:speed];
-          });
-      }
-    });
+    DYYYApplyPreparedPlaybackSpeedToPlayer(self);
 }
 
 - (void)prepareForDisplay {
@@ -8222,14 +8583,7 @@ static Class tabBarButtonClass = nil;
         return;
     }
 
-    BOOL autoRestoreSpeed = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"];
-    if (autoRestoreSpeed) {
-        setCurrentSpeedIndex(0);
-    }
-    float speed = getCurrentSpeed();
-    if (speed != 1.0) {
-        [self adjustPlaybackSpeed:speed];
-    }
+    DYYYApplyPreparedPlaybackSpeedToPlayer(self);
     updateSpeedButtonUI();
 }
 
@@ -8263,25 +8617,7 @@ static Class tabBarButtonClass = nil;
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
     %orig(arg0);
-    if (!DYYYShouldHandleSpeedFeatures()) {
-        return;
-    }
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-      if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"]) {
-          float defaultSpeed = [[NSUserDefaults standardUserDefaults] floatForKey:@"DYYYDefaultSpeed"];
-          if (defaultSpeed > 0 && defaultSpeed != 1) {
-              dispatch_async(dispatch_get_main_queue(), ^{
-                [self setVideoControllerPlaybackRate:defaultSpeed];
-              });
-          }
-      }
-      float speed = getCurrentSpeed();
-      if (speed != 1.0) {
-          dispatch_async(dispatch_get_main_queue(), ^{
-            [self adjustPlaybackSpeed:speed];
-          });
-      }
-    });
+    DYYYApplyPreparedPlaybackSpeedToPlayer(self);
 }
 
 - (void)prepareForDisplay {
@@ -8289,14 +8625,7 @@ static Class tabBarButtonClass = nil;
     if (!DYYYShouldHandleSpeedFeatures()) {
         return;
     }
-    BOOL autoRestoreSpeed = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"];
-    if (autoRestoreSpeed) {
-        setCurrentSpeedIndex(0);
-    }
-    float speed = getCurrentSpeed();
-    if (speed != 1.0) {
-        [self adjustPlaybackSpeed:speed];
-    }
+    DYYYApplyPreparedPlaybackSpeedToPlayer(self);
     updateSpeedButtonUI();
 }
 
@@ -8330,25 +8659,7 @@ static Class tabBarButtonClass = nil;
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
     %orig(arg0);
-    if (!DYYYShouldHandleSpeedFeatures()) {
-        return;
-    }
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-      if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"]) {
-          float defaultSpeed = [[NSUserDefaults standardUserDefaults] floatForKey:@"DYYYDefaultSpeed"];
-          if (defaultSpeed > 0 && defaultSpeed != 1) {
-              dispatch_async(dispatch_get_main_queue(), ^{
-                [self setVideoControllerPlaybackRate:defaultSpeed];
-              });
-          }
-      }
-      float speed = getCurrentSpeed();
-      if (speed != 1.0) {
-          dispatch_async(dispatch_get_main_queue(), ^{
-            [self adjustPlaybackSpeed:speed];
-          });
-      }
-    });
+    DYYYApplyPreparedPlaybackSpeedToPlayer(self);
 }
 
 - (void)prepareForDisplay {
@@ -8356,14 +8667,7 @@ static Class tabBarButtonClass = nil;
     if (!DYYYShouldHandleSpeedFeatures()) {
         return;
     }
-    BOOL autoRestoreSpeed = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"];
-    if (autoRestoreSpeed) {
-        setCurrentSpeedIndex(0);
-    }
-    float speed = getCurrentSpeed();
-    if (speed != 1.0) {
-        [self adjustPlaybackSpeed:speed];
-    }
+    DYYYApplyPreparedPlaybackSpeedToPlayer(self);
     updateSpeedButtonUI();
 }
 
@@ -8475,6 +8779,7 @@ static Class tabBarButtonClass = nil;
         [hideButton hideUIElements];
     }
     %orig;
+    DYYYHandleCurrentSpeedAwemeChanged(arg1);
 }
 
 - (void)viewWillLayoutSubviews {
@@ -9580,6 +9885,7 @@ static NSString *const kHideRecentUsersKey = @"DYYYHideSidebarRecentUsers";
 
 - (void)layoutSubviews {
     %orig;
+    DYYYApplyFloatClearProgressStateToView(self);
 
     if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYEnableFullScreen"]) {
         return;
@@ -9639,6 +9945,10 @@ static void findTargetViewInView(UIView *view) {
 }
 
 %ctor {
+    [[NSUserDefaults standardUserDefaults] registerDefaults:@{
+        @"DYYYDisableFeedNowPlayingInfo" : @YES
+    }];
+
     DYYYMigrateCombinedHDRModeIfNeeded();
 
     Class interactionBaseLabelClass = objc_getClass("AWECommentSwiftBizUI.CommentInteractionBaseLabel");

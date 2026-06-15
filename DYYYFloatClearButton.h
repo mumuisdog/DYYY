@@ -24,6 +24,7 @@ void showClearButton(void);
 void hideClearButton(void);
 void initTargetClassNames(void);
 void reloadClearButtonConfiguration(void);
+void DYYYApplyFloatClearProgressStateToView(UIView *view);
 
 #ifdef __cplusplus
 }

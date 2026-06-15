@@ -1,14 +1,11 @@
 name: build deb
 
 on:
-  #push:
-  #  branches-ignore:
-  #    - dev
-  #pull_request:
-  #  branches-ignore:
-  #    - dev
-  workflow_dispatch:  # 仅保留这一行，移除 push/PR 触发
-    inputs:           # 可选：添加触发参数，方便自定义
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
       scheme:
         description: '打包方案（留空则全打）'
         required: false
