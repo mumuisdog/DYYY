@@ -223,6 +223,7 @@ static BOOL DYYYShouldHandleSpeedFeatures(void) {
 static __weak AWEPlayInteractionViewController *dyyyActiveSpeedInteractionController = nil;
 static __weak AWEAwemeModel *dyyyCurrentSpeedAweme = nil;
 static NSString *dyyyLastAutoRestoredSpeedAwemeIdentifier = nil;
+static BOOL dyyyLongPressFastSpeedActive = NO;
 
 static CGFloat DYYYViewControllerVisibilityScore(UIViewController *viewController) {
     if (!viewController || !viewController.isViewLoaded) {
@@ -476,7 +477,7 @@ static double DYYYPreparedPlaybackSpeed(void) {
 }
 
 static void DYYYApplyPreparedPlaybackSpeedToPlayer(id playerViewController) {
-    if (!DYYYShouldHandleSpeedFeatures() || !playerViewController) {
+    if (!DYYYShouldHandleSpeedFeatures() || !playerViewController || dyyyLongPressFastSpeedActive) {
         return;
     }
 
@@ -492,7 +493,7 @@ static void DYYYApplyPreparedPlaybackSpeedToPlayer(id playerViewController) {
 }
 
 static void DYYYBindAndApplyCurrentPlaybackSpeed(void) {
-    if (!DYYYShouldHandleSpeedFeatures()) {
+    if (!DYYYShouldHandleSpeedFeatures() || dyyyLongPressFastSpeedActive) {
         return;
     }
 
@@ -3419,7 +3420,6 @@ static NSArray<NSString *> *dyyy_qualityRank = nil;
 
 %hook AWEPlayInteractionSpeedController
 
-static BOOL hasChangedSpeed = NO;
 static CGFloat currentLongPressSpeed = 0;
 static CGFloat initialTouchX = 0;
 static BOOL isGestureActive = NO;
@@ -3440,38 +3440,45 @@ static BOOL isGestureActive = NO;
         return;
     }
 
-    if (speed == 2.0) {
-        if (!hasChangedSpeed) {
-            if (longPressSpeed != 0 && longPressSpeed != 2.0) {
-                hasChangedSpeed = YES;
-                %orig(longPressSpeed);
-                return;
-            }
-        } else {
-            hasChangedSpeed = NO;
-            %orig(1.0);
-            return;
-        }
-    }
-
-    if (longPressSpeed == 0 || longPressSpeed == 2) {
-        %orig(speed);
+    if (speed == 2.0 && longPressSpeed != 0 && longPressSpeed != 2.0) {
+        %orig(longPressSpeed);
         return;
     }
+
+    %orig(speed);
 }
 
 - (void)handleLongPressFastSpeed:(UILongPressGestureRecognizer *)gesture {
+    BOOL enableSpeedGesture = DYYYGetBool(@"DYYYEnableLongPressSpeedGesture");
+    CGPoint location = [gesture locationInView:gesture.view];
+    static CGFloat initialTouchY = 0;
+    BOOL isBeginning = gesture.state == UIGestureRecognizerStateBegan;
+    BOOL isEnding = gesture.state == UIGestureRecognizerStateEnded ||
+                    gesture.state == UIGestureRecognizerStateCancelled ||
+                    gesture.state == UIGestureRecognizerStateFailed;
+
+    if (isBeginning) {
+        dyyyLongPressFastSpeedActive = YES;
+    } else if (isEnding) {
+        isGestureActive = NO;
+        currentLongPressSpeed = 0;
+        initialTouchY = 0;
+        dyyyLongPressFastSpeedActive = NO;
+    }
+
     %orig;
 
-    if (!DYYYGetBool(@"DYYYEnableLongPressSpeedGesture")) {
+    if (isEnding) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+          DYYYBindAndApplyCurrentPlaybackSpeed();
+        });
+    }
+
+    if (!enableSpeedGesture) {
         return;
     }
 
-    CGPoint location = [gesture locationInView:gesture.view];
-
-    static CGFloat initialTouchY = 0;
-
-    if (gesture.state == UIGestureRecognizerStateBegan) {
+    if (isBeginning) {
         initialTouchY = location.y;
         isGestureActive = YES;
 
@@ -3499,12 +3506,24 @@ static BOOL isGestureActive = NO;
             }
         }
     }
-    else if (gesture.state == UIGestureRecognizerStateEnded ||
-             gesture.state == UIGestureRecognizerStateCancelled) {
-        isGestureActive = NO;
-        currentLongPressSpeed = 0;
-        initialTouchY = 0;
-    }
+}
+
+- (void)handleLongPressLockedSpeedBegan {
+    dyyyLongPressFastSpeedActive = YES;
+    %orig;
+}
+
+- (void)handleLongPressLockedDoubleSpeedChanged:(id)arg1 gesture:(UIGestureRecognizer *)gesture {
+    dyyyLongPressFastSpeedActive = YES;
+    %orig(arg1, gesture);
+}
+
+- (void)handleLongPressLockedDoubleSpeedEnded:(id)arg1 gesture:(UIGestureRecognizer *)gesture {
+    %orig(arg1, gesture);
+    dyyyLongPressFastSpeedActive = NO;
+    dispatch_async(dispatch_get_main_queue(), ^{
+      DYYYBindAndApplyCurrentPlaybackSpeed();
+    });
 }
 %end
 
