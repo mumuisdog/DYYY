@@ -4088,8 +4088,7 @@ static void DYYYHideAvatarVisualForSelector(id object, SEL selector) {
     }
 }
 
-static void DYYYRemoveAvatarViewForSelector(id object, SEL selector) {
-    UIView *view = DYYYAvatarViewForSelector(object, selector);
+static void DYYYRemoveAvatarView(UIView *view) {
     if (!view) {
         return;
     }
@@ -4097,11 +4096,27 @@ static void DYYYRemoveAvatarViewForSelector(id object, SEL selector) {
     view.userInteractionEnabled = NO;
 }
 
+static void DYYYRemoveAvatarViewForSelector(id object, SEL selector) {
+    UIView *view = DYYYAvatarViewForSelector(object, selector);
+    DYYYRemoveAvatarView(view);
+}
+
 static void DYYYHideAvatarFollowLayerContents(UIView *view) {
     view.layer.contents = nil;
     for (CALayer *sublayer in view.layer.sublayers) {
         sublayer.hidden = YES;
     }
+}
+
+static BOOL DYYYIsLegacyAvatarFollowAnimationView(UIView *view) {
+    Class promptClass = NSClassFromString(@"AWEPlayInteractionFollowPromptView");
+    UIView *ancestor = view.superview;
+    for (NSInteger depth = 0; ancestor && depth < 6; depth++, ancestor = ancestor.superview) {
+        if (promptClass && [ancestor isKindOfClass:promptClass]) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 static BOOL DYYYHideAvatarFollowIconInView(UIView *view) {
@@ -4137,6 +4152,74 @@ static BOOL DYYYHideAvatarFollowIconInView(UIView *view) {
     return foundIcon;
 }
 
+static BOOL DYYYIsAvatarFollowContainerView(UIView *view) {
+    NSString *className = NSStringFromClass(view.class);
+    return [className containsString:@"Follow"] || [className containsString:@"follow"] || [className containsString:@"Prompt"] || [className containsString:@"Add"];
+}
+
+static BOOL DYYYIsSmallAvatarFollowBadgeView(UIView *view) {
+    CGFloat width = CGRectGetWidth(view.bounds);
+    CGFloat height = CGRectGetHeight(view.bounds);
+    return width > 0.0 && height > 0.0 && width <= 52.0 && height <= 52.0;
+}
+
+static UIView *DYYYAvatarFollowRemovalTargetForView(UIView *view, UIView *rootView) {
+    UIView *target = view;
+    UIView *ancestor = view.superview;
+    while (ancestor && ancestor != rootView) {
+        if (DYYYIsAvatarFollowContainerView(ancestor) || DYYYIsSmallAvatarFollowBadgeView(ancestor)) {
+            target = ancestor;
+            ancestor = ancestor.superview;
+            continue;
+        }
+        break;
+    }
+    return target;
+}
+
+static BOOL DYYYApplyAvatarFollowSettingsInView(UIView *view, UIView *rootView) {
+    if (!view) {
+        return NO;
+    }
+
+    BOOL hidePlus = DYYYGetBool(@"DYYYHideLOTAnimationView");
+    BOOL removePlus = DYYYGetBool(@"DYYYHideFollowPromptView");
+    if (!hidePlus && !removePlus) {
+        return NO;
+    }
+
+    NSString *className = NSStringFromClass(view.class);
+    BOOL isStaticFollowView = [className isEqualToString:@"AWEPlayInteractionStaticFollowAnimationView"];
+    BOOL isLegacyFollowAnimation = [className isEqualToString:@"LOTAnimationView"] && DYYYIsLegacyAvatarFollowAnimationView(view);
+    BOOL isLegacyPromptContainer = [className isEqualToString:@"AWEPlayInteractionFollowPromptView"];
+    BOOL handled = NO;
+
+    if (isStaticFollowView || isLegacyFollowAnimation) {
+        if (removePlus) {
+            DYYYRemoveAvatarView(DYYYAvatarFollowRemovalTargetForView(view, rootView));
+        } else {
+            DYYYHideAvatarFollowIconInView(view);
+        }
+        handled = YES;
+    } else if (removePlus && isLegacyPromptContainer) {
+        view.hidden = YES;
+        view.userInteractionEnabled = NO;
+        handled = YES;
+    }
+
+    for (UIView *subview in [view.subviews copy]) {
+        handled = DYYYApplyAvatarFollowSettingsInView(subview, rootView) || handled;
+    }
+    return handled;
+}
+
+static void DYYYApplyAvatarFollowSettingsForContext(id context) {
+    UIView *elementView = DYYYAvatarViewForSelector(context, NSSelectorFromString(@"elementView"));
+    if (elementView) {
+        DYYYApplyAvatarFollowSettingsInView(elementView, elementView);
+    }
+}
+
 static void DYYYApplyAvatarFollowPromptSettings(id owner) {
     BOOL hidePlus = DYYYGetBool(@"DYYYHideLOTAnimationView");
     BOOL removePlus = DYYYGetBool(@"DYYYHideFollowPromptView");
@@ -4159,17 +4242,11 @@ static void DYYYApplyAvatarFollowPromptSettings(id owner) {
         DYYYRemoveAvatarViewForSelector(owner, NSSelectorFromString(@"followAddView"));
         DYYYRemoveAvatarViewForSelector(owner, NSSelectorFromString(@"followPromptView"));
     }
-}
 
-static BOOL DYYYIsLegacyAvatarFollowAnimationView(UIView *view) {
-    Class promptClass = NSClassFromString(@"AWEPlayInteractionFollowPromptView");
-    UIView *ancestor = view.superview;
-    for (NSInteger depth = 0; ancestor && depth < 6; depth++, ancestor = ancestor.superview) {
-        if (promptClass && [ancestor isKindOfClass:promptClass]) {
-            return YES;
-        }
+    if ([owner isKindOfClass:[UIView class]]) {
+        DYYYApplyAvatarFollowSettingsInView((UIView *)owner, (UIView *)owner);
     }
-    return NO;
+    DYYYApplyAvatarFollowSettingsForContext(DYYYAvatarObjectForSelector(owner, NSSelectorFromString(@"userAvatarContext")));
 }
 
 // 隐藏头像加号和透明
@@ -7126,6 +7203,23 @@ static NSHashTable *processedParentViews = nil;
     if (DYYYGetBool(@"DYYYHideAvatarRing")) {
         DYYYHideAvatarVisualForSelector(self, NSSelectorFromString(@"colorRingView"));
     }
+}
+%end
+
+%hook AWEPlayInteractionUserAvatarDecorationController
+- (void)layoutElementView {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettings(self);
+}
+
+- (void)viewController_willDisplay {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettings(self);
+}
+
+- (void)setDecorationStyle:(long long)style {
+    %orig(style);
+    DYYYApplyAvatarFollowPromptSettings(self);
 }
 %end
 

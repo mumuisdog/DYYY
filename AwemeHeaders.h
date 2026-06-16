@@ -1416,7 +1416,10 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 
 @interface AWEPlayInteractionUserAvatarContext : NSObject
 @property(retain, nonatomic) AWEAwemeModel *model;
+@property(nonatomic, weak) UIView *elementView;
+@property(nonatomic, weak) UIView *avatarPicContainerView;
 @property(nonatomic, weak) UIView *avatarPicView;
+@property(nonatomic, weak) UIView *avatarPicAvatarButton;
 @end
 
 @interface AWEPlayInteractionUserAvatarFollowController : UIViewController
@@ -1445,6 +1448,14 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(nonatomic, weak) UIView *colorRingView;
 - (void)layoutElementView;
 - (void)showStory25RingView;
+@end
+
+@interface AWEPlayInteractionUserAvatarDecorationController : NSObject
+@property(retain, nonatomic) AWEPlayInteractionUserAvatarContext *userAvatarContext;
+@property(retain, nonatomic) UIImageView *decorationView;
+- (void)layoutElementView;
+- (void)viewController_willDisplay;
+- (void)setDecorationStyle:(long long)style;
 @end
 
 @interface AWECodeGenCommonAnchorBasicInfoModel : UIViewController
