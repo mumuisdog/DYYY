@@ -224,6 +224,12 @@ static __weak AWEPlayInteractionViewController *dyyyActiveSpeedInteractionContro
 static __weak AWEAwemeModel *dyyyCurrentSpeedAweme = nil;
 static NSString *dyyyLastAutoRestoredSpeedAwemeIdentifier = nil;
 static BOOL dyyyLongPressFastSpeedActive = NO;
+static BOOL dyyyLongPressLockedSpeedActive = NO;
+
+static void DYYYClearLongPressSpeedState(void) {
+    dyyyLongPressFastSpeedActive = NO;
+    dyyyLongPressLockedSpeedActive = NO;
+}
 
 static CGFloat DYYYViewControllerVisibilityScore(UIViewController *viewController) {
     if (!viewController || !viewController.isViewLoaded) {
@@ -347,6 +353,12 @@ static void DYYYEnsureFloatSpeedButton(AWEPlayInteractionViewController *interac
     if (!currentController) {
         updateSpeedButtonVisibility();
         return;
+    }
+
+    if ((dyyyLongPressFastSpeedActive || dyyyLongPressLockedSpeedActive) &&
+        currentController.model &&
+        !DYYYAwemeModelsMatch(dyyyCurrentSpeedAweme, currentController.model)) {
+        DYYYClearLongPressSpeedState();
     }
 
     dyyyActiveSpeedInteractionController = currentController;
@@ -477,7 +489,7 @@ static double DYYYPreparedPlaybackSpeed(void) {
 }
 
 static void DYYYApplyPreparedPlaybackSpeedToPlayer(id playerViewController) {
-    if (!DYYYShouldHandleSpeedFeatures() || !playerViewController || dyyyLongPressFastSpeedActive) {
+    if (!DYYYShouldHandleSpeedFeatures() || !playerViewController || dyyyLongPressFastSpeedActive || dyyyLongPressLockedSpeedActive) {
         return;
     }
 
@@ -493,7 +505,7 @@ static void DYYYApplyPreparedPlaybackSpeedToPlayer(id playerViewController) {
 }
 
 static void DYYYBindAndApplyCurrentPlaybackSpeed(void) {
-    if (!DYYYShouldHandleSpeedFeatures() || dyyyLongPressFastSpeedActive) {
+    if (!DYYYShouldHandleSpeedFeatures() || dyyyLongPressFastSpeedActive || dyyyLongPressLockedSpeedActive) {
         return;
     }
 
@@ -504,6 +516,20 @@ static void DYYYBindAndApplyCurrentPlaybackSpeed(void) {
 
     DYYYEnsureFloatSpeedButton(currentController);
     DYYYApplyPlaybackSpeed(currentController, DYYYConfiguredPlaybackSpeed());
+}
+
+static void DYYYScheduleConfiguredPlaybackSpeedRestore(void) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      DYYYBindAndApplyCurrentPlaybackSpeed();
+    });
+}
+
+static void DYYYEndLockedLongPressSpeedAndRestoreIfNeeded(void) {
+    if (!dyyyLongPressLockedSpeedActive) {
+        return;
+    }
+    dyyyLongPressLockedSpeedActive = NO;
+    DYYYScheduleConfiguredPlaybackSpeedRestore();
 }
 
 static void DYYYHandleCurrentSpeedAwemeChanged(id aweme) {
@@ -522,12 +548,11 @@ static void DYYYHandleCurrentSpeedAwemeChanged(id aweme) {
         return;
     }
 
+    DYYYClearLongPressSpeedState();
     DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(dyyyCurrentSpeedAweme);
 
     DYYYBindAndApplyCurrentPlaybackSpeed();
-    dispatch_async(dispatch_get_main_queue(), ^{
-      DYYYBindAndApplyCurrentPlaybackSpeed();
-    });
+    DYYYScheduleConfiguredPlaybackSpeedRestore();
 }
 
 @interface AWEFeedProgressSlider (DYYYProgressLabel)
@@ -3445,6 +3470,10 @@ static BOOL isGestureActive = NO;
         return;
     }
 
+    if (speed <= 1.0 && dyyyLongPressLockedSpeedActive) {
+        DYYYEndLockedLongPressSpeedAndRestoreIfNeeded();
+    }
+
     %orig(speed);
 }
 
@@ -3459,6 +3488,7 @@ static BOOL isGestureActive = NO;
 
     if (isBeginning) {
         dyyyLongPressFastSpeedActive = YES;
+        dyyyLongPressLockedSpeedActive = NO;
     } else if (isEnding) {
         isGestureActive = NO;
         currentLongPressSpeed = 0;
@@ -3469,9 +3499,7 @@ static BOOL isGestureActive = NO;
     %orig;
 
     if (isEnding) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-          DYYYBindAndApplyCurrentPlaybackSpeed();
-        });
+        DYYYScheduleConfiguredPlaybackSpeedRestore();
     }
 
     if (!enableSpeedGesture) {
@@ -3510,20 +3538,27 @@ static BOOL isGestureActive = NO;
 
 - (void)handleLongPressLockedSpeedBegan {
     dyyyLongPressFastSpeedActive = YES;
+    dyyyLongPressLockedSpeedActive = NO;
     %orig;
 }
 
 - (void)handleLongPressLockedDoubleSpeedChanged:(id)arg1 gesture:(UIGestureRecognizer *)gesture {
     dyyyLongPressFastSpeedActive = YES;
+    dyyyLongPressLockedSpeedActive = NO;
     %orig(arg1, gesture);
 }
 
 - (void)handleLongPressLockedDoubleSpeedEnded:(id)arg1 gesture:(UIGestureRecognizer *)gesture {
     %orig(arg1, gesture);
     dyyyLongPressFastSpeedActive = NO;
-    dispatch_async(dispatch_get_main_queue(), ^{
-      DYYYBindAndApplyCurrentPlaybackSpeed();
-    });
+    dyyyLongPressLockedSpeedActive = YES;
+}
+
+- (void)longPressSpeedControlDidChangeSpeed:(double)speed {
+    %orig(speed);
+    if (speed <= 1.0 && dyyyLongPressLockedSpeedActive) {
+        DYYYEndLockedLongPressSpeedAndRestoreIfNeeded();
+    }
 }
 %end
 
@@ -8543,6 +8578,7 @@ static Class tabBarButtonClass = nil;
 
     float newSpeed = [speeds[newIndex] floatValue];
     updateSpeedButtonUI();
+    DYYYClearLongPressSpeedState();
 
     [UIView animateWithDuration:0.1
         delay:0
