@@ -3349,6 +3349,16 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
           @"imageName" : @"ic_eyeslash_outlined_16"
       }];
       [clearButtonItems addObject:hideSpeedButton];
+      // 清屏后隐藏清屏按钮自身（仍可点击恢复）
+      AWESettingItemModel *hideClearButtonOnTap = [DYYYSettingsHelper createSettingItem:@{
+          @"identifier" : @"DYYYHideClearButtonOnTap",
+          @"title" : @"清屏隐藏清屏",
+          @"subTitle" : @"清屏后隐藏清屏按钮自身，原位置仍可点击恢复",
+          @"detail" : @"",
+          @"cellType" : @37,
+          @"imageName" : @"ic_eyeslash_outlined_16"
+      }];
+      [clearButtonItems addObject:hideClearButtonOnTap];
       NSMutableArray<AWESettingItemModel *> *clearDependentItems = [NSMutableArray array];
       for (AWESettingItemModel *item in clearButtonItems) {
           if (item != enableClearButton) {

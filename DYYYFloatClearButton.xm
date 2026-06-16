@@ -557,14 +557,23 @@ void reloadClearButtonConfiguration(void) {
 }
 
 - (void)handleTouchDown {
+    if ([self dyyy_isInSelfHiddenState]) {
+        return;
+    }
     [self resetFadeTimer];
 }
 
 - (void)handleTouchUpInside {
+    if ([self dyyy_isInSelfHiddenState]) {
+        return;
+    }
     [self resetFadeTimer];
 }
 
 - (void)handleTouchUpOutside {
+    if ([self dyyy_isInSelfHiddenState]) {
+        return;
+    }
     [self resetFadeTimer];
 }
 
@@ -598,10 +607,34 @@ void reloadClearButtonConfiguration(void) {
     }
 }
 
+- (BOOL)dyyy_shouldSelfHideOnClear {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideClearButtonOnTap"];
+}
+
+- (BOOL)dyyy_isInSelfHiddenState {
+    return self.isElementsHidden && [self dyyy_shouldSelfHideOnClear];
+}
+
+- (void)dyyy_applySelfHiddenAlpha {
+    if (self.fadeTimer) {
+        [self.fadeTimer invalidate];
+        self.fadeTimer = nil;
+    }
+    // alpha 必须 > 0.01 才能继续接收 hit-test，0.02 在动态背景下几乎不可见
+    self.alpha = 0.02;
+}
+
 - (void)handleTap {
     if (isAppInTransition)
         return;
-    [self resetFadeTimer];
+
+    BOOL selfHide = [self dyyy_shouldSelfHideOnClear];
+    BOOL willEnterHidden = !self.isElementsHidden;
+    // 仅在不会进入“按钮自隐藏”状态时才重置淡出动画
+    if (!(selfHide && willEnterHidden)) {
+        [self resetFadeTimer];
+    }
+
     if (!self.isElementsHidden) {
         initTargetClassNames();
         [self hideUIElements];
@@ -611,6 +644,10 @@ void reloadClearButtonConfiguration(void) {
         BOOL hideSpeed = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideSpeed"];
         if (hideSpeed) {
             hideSpeedButton();
+        }
+
+        if (selfHide) {
+            [self dyyy_applySelfHiddenAlpha];
         }
     } else {
         self.isElementsHidden = NO;
@@ -623,6 +660,10 @@ void reloadClearButtonConfiguration(void) {
         if (hideSpeed) {
             showSpeedButton();
         }
+
+        // 退出清屏，恢复正常透明度并重启淡出
+        self.alpha = self.originalAlpha;
+        [self resetFadeTimer];
     }
 }
 
@@ -727,6 +768,12 @@ void reloadClearButtonConfiguration(void) {
     BOOL hideSpeed = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideSpeed"];
     if (hideSpeed) {
         showSpeedButton();
+    }
+
+    // 切场景/重置状态时，确保按钮自隐藏 alpha 也被恢复，避免按钮一直处于近乎透明的状态
+    if (self.alpha < 0.1) {
+        self.alpha = self.originalAlpha;
+        [self resetFadeTimer];
     }
 }
 - (void)dealloc {
