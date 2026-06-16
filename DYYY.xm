@@ -858,11 +858,6 @@ static void DYYYClearFeedNowPlayingSystemInfoThrottled(void) {
         if ([center respondsToSelector:@selector(setNowPlayingInfo:)]) {
             ((void (*)(id, SEL, id))objc_msgSend)(center, @selector(setNowPlayingInfo:), nil);
         }
-
-        SEL setPlaybackStateSelector = NSSelectorFromString(@"setPlaybackState:");
-        if ([center respondsToSelector:setPlaybackStateSelector]) {
-            ((void (*)(id, SEL, NSInteger))objc_msgSend)(center, setPlaybackStateSelector, 0);
-        }
     } @catch (__unused NSException *exception) {
     } @finally {
         dyyyClearingFeedNowPlayingSystemInfo = NO;
@@ -883,7 +878,6 @@ static BOOL DYYYShouldBlockFeedNowPlayingPlayer(id player) {
 - (id)nowPlayingInfo {
     if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
-        return nil;
     }
 
     return %orig;
@@ -891,6 +885,7 @@ static BOOL DYYYShouldBlockFeedNowPlayingPlayer(id player) {
 
 - (void)refreshNowPlayingInfoIfNeeded {
     if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
+        %orig;
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -900,6 +895,7 @@ static BOOL DYYYShouldBlockFeedNowPlayingPlayer(id player) {
 
 - (void)updateNowPlayingInfoPlayback {
     if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
+        %orig;
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -913,12 +909,11 @@ static BOOL DYYYShouldBlockFeedNowPlayingPlayer(id player) {
 %hook AWENowPlayingInfoCenter
 
 - (void)becomePlayingPlayer:(id)player {
+    %orig;
+
     if (DYYYShouldBlockFeedNowPlayingPlayer(player)) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
-        return;
     }
-
-    %orig;
 }
 
 - (void)setNowPlayingInfo:(id)nowPlayingInfo {
@@ -4081,6 +4076,12 @@ static UIView *DYYYAvatarViewForSelector(id object, SEL selector) {
     return [value isKindOfClass:[UIView class]] ? value : nil;
 }
 
+static char kDYYYAvatarFollowDeferredApplyKey;
+
+static BOOL DYYYAvatarFollowOptionsEnabled(void) {
+    return DYYYGetBool(@"DYYYHideLOTAnimationView") || DYYYGetBool(@"DYYYHideFollowPromptView");
+}
+
 static void DYYYHideAvatarVisualForSelector(id object, SEL selector) {
     UIView *view = DYYYAvatarViewForSelector(object, selector);
     if (view) {
@@ -4229,24 +4230,56 @@ static void DYYYApplyAvatarFollowPromptSettings(id owner) {
 
     for (NSString *selectorName in @[ @"followAnimationView", @"unfollowAnimationView", @"staticFollowAnimationView" ]) {
         UIView *animationView = DYYYAvatarViewForSelector(owner, NSSelectorFromString(selectorName));
-        DYYYHideAvatarFollowIconInView(animationView);
+        if (!animationView) {
+            continue;
+        }
+        if (removePlus) {
+            DYYYRemoveAvatarView(DYYYAvatarFollowRemovalTargetForView(animationView, nil));
+        } else {
+            DYYYHideAvatarFollowIconInView(animationView);
+        }
     }
 
     UIView *followAddView = DYYYAvatarViewForSelector(owner, NSSelectorFromString(@"followAddView"));
-    BOOL foundIcon = DYYYHideAvatarFollowIconInView(followAddView);
-    if (hidePlus && followAddView && !foundIcon) {
-        DYYYHideAvatarFollowLayerContents(followAddView);
+    if (removePlus) {
+        DYYYRemoveAvatarView(followAddView);
+    } else {
+        BOOL foundIcon = DYYYHideAvatarFollowIconInView(followAddView);
+        if (hidePlus && followAddView && !foundIcon) {
+            DYYYHideAvatarFollowLayerContents(followAddView);
+        }
     }
 
+    UIView *followPromptView = DYYYAvatarViewForSelector(owner, NSSelectorFromString(@"followPromptView"));
     if (removePlus) {
-        DYYYRemoveAvatarViewForSelector(owner, NSSelectorFromString(@"followAddView"));
-        DYYYRemoveAvatarViewForSelector(owner, NSSelectorFromString(@"followPromptView"));
+        DYYYRemoveAvatarView(followPromptView);
+    } else {
+        DYYYApplyAvatarFollowSettingsInView(followPromptView, followPromptView);
     }
 
     if ([owner isKindOfClass:[UIView class]]) {
         DYYYApplyAvatarFollowSettingsInView((UIView *)owner, (UIView *)owner);
+    } else if ([owner isKindOfClass:[UIViewController class]]) {
+        DYYYApplyAvatarFollowSettingsInView(((UIViewController *)owner).view, ((UIViewController *)owner).view);
     }
     DYYYApplyAvatarFollowSettingsForContext(DYYYAvatarObjectForSelector(owner, NSSelectorFromString(@"userAvatarContext")));
+}
+
+static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
+    DYYYApplyAvatarFollowPromptSettings(owner);
+    if (!owner || !DYYYAvatarFollowOptionsEnabled() || objc_getAssociatedObject(owner, &kDYYYAvatarFollowDeferredApplyKey)) {
+        return;
+    }
+
+    objc_setAssociatedObject(owner, &kDYYYAvatarFollowDeferredApplyKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    id target = owner;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DYYYApplyAvatarFollowPromptSettings(target);
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            DYYYApplyAvatarFollowPromptSettings(target);
+            objc_setAssociatedObject(target, &kDYYYAvatarFollowDeferredApplyKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        });
+    });
 }
 
 // 隐藏头像加号和透明
@@ -4256,8 +4289,13 @@ static void DYYYApplyAvatarFollowPromptSettings(id owner) {
     // 旧版加号动画可能被额外容器包裹，沿父视图向上识别关注提示视图。
     if (DYYYIsLegacyAvatarFollowAnimationView(self)) {
         // 检查是否需要隐藏加号
-        if (DYYYGetBool(@"DYYYHideLOTAnimationView") || DYYYGetBool(@"DYYYHideFollowPromptView")) {
-            DYYYHideAvatarFollowLayerContents(self);
+        if (DYYYAvatarFollowOptionsEnabled()) {
+            if (DYYYGetBool(@"DYYYHideFollowPromptView")) {
+                DYYYRemoveAvatarView(DYYYAvatarFollowRemovalTargetForView(self, nil));
+            } else {
+                DYYYHideAvatarFollowLayerContents(self);
+            }
+            DYYYApplyAvatarFollowPromptSettingsWithRetry(self.superview ?: self);
             return;
         }
         // 应用透明度设置
@@ -4273,8 +4311,9 @@ static void DYYYApplyAvatarFollowPromptSettings(id owner) {
 %hook AWEPlayInteractionStaticFollowAnimationView
 - (void)layoutSubviews {
     %orig;
-    if (DYYYGetBool(@"DYYYHideLOTAnimationView") || DYYYGetBool(@"DYYYHideFollowPromptView")) {
-        DYYYHideAvatarFollowIconInView((UIView *)self);
+    if (DYYYAvatarFollowOptionsEnabled()) {
+        DYYYApplyAvatarFollowSettingsInView((UIView *)self, nil);
+        DYYYApplyAvatarFollowPromptSettingsWithRetry(self.superview ?: self);
     }
 }
 %end
@@ -4795,9 +4834,27 @@ static void DYYYApplyAvatarFollowPromptSettings(id owner) {
 - (void)layoutSubviews {
     %orig;
 
-    if (DYYYGetBool(@"DYYYHideFollowPromptView")) {
-        self.userInteractionEnabled = NO;
-        self.hidden = YES;
+    if (DYYYAvatarFollowOptionsEnabled()) {
+        DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+        if (DYYYGetBool(@"DYYYHideFollowPromptView")) {
+            return;
+        }
+    }
+}
+
+- (void)didMoveToWindow {
+    %orig;
+
+    if (DYYYAvatarFollowOptionsEnabled()) {
+        DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+    }
+}
+
+- (void)didMoveToSuperview {
+    %orig;
+
+    if (DYYYAvatarFollowOptionsEnabled()) {
+        DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
         return;
     }
 }
@@ -7102,7 +7159,37 @@ static NSHashTable *processedParentViews = nil;
         DYYYHideAvatarVisualForSelector(self, NSSelectorFromString(@"userAvatarView"));
     }
 
-    DYYYApplyAvatarFollowPromptSettings(self);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)didMoveToWindow {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)didMoveToSuperview {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)updateRightContainerElement {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)p_resetFollowAnimation {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)playFollowAnimation:(id)completion {
+    %orig(completion);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)playUnFollowAnimation {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
 }
 %end
 
@@ -7160,12 +7247,52 @@ static NSHashTable *processedParentViews = nil;
 
 - (void)layoutElementView {
     %orig;
-    DYYYApplyAvatarFollowPromptSettings(self);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
 }
 
 - (void)showFollowAddView:(BOOL)show {
     %orig(show);
-    DYYYApplyAvatarFollowPromptSettings(self);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)viewController_willDisplay {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)viewController_viewDidAppear {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)updateFollowStatus {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)followStatusChanged:(id)arg1 {
+    %orig(arg1);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)playFollowAnimation {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)playFollowAnimation:(id)completion {
+    %orig(completion);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)playUnFollowAnimation {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)_ensureStaticFollowAnimationView {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
 }
 %end
 
@@ -7177,6 +7304,7 @@ static NSHashTable *processedParentViews = nil;
         id context = DYYYAvatarObjectForSelector(self, NSSelectorFromString(@"userAvatarContext"));
         DYYYHideAvatarVisualForSelector(context, NSSelectorFromString(@"avatarPicView"));
     }
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
 }
 %end
 
@@ -7187,6 +7315,22 @@ static NSHashTable *processedParentViews = nil;
         id context = DYYYAvatarObjectForSelector(self, NSSelectorFromString(@"userAvatarContext"));
         DYYYHideAvatarVisualForSelector(context, NSSelectorFromString(@"avatarPicView"));
     }
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)viewController_willDisplay {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)viewController_viewDidAppear {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)setAppear:(BOOL)appear {
+    %orig(appear);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
 }
 %end
 
@@ -7209,21 +7353,31 @@ static NSHashTable *processedParentViews = nil;
 %hook AWEPlayInteractionUserAvatarDecorationController
 - (void)layoutElementView {
     %orig;
-    DYYYApplyAvatarFollowPromptSettings(self);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
 }
 
 - (void)viewController_willDisplay {
     %orig;
-    DYYYApplyAvatarFollowPromptSettings(self);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
 }
 
 - (void)setDecorationStyle:(long long)style {
     %orig(style);
-    DYYYApplyAvatarFollowPromptSettings(self);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
 }
 %end
 
 %hook AWEPlayInteractionViewController
+
+- (void)performCommentAction {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)setIsCommentVCShowing:(BOOL)showing {
+    %orig(showing);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
 
 - (void)onPlayer:(id)arg0 didDoubleClick:(id)arg1 {
     BOOL isPopupEnabled = DYYYGetBool(@"DYYYEnableDoubleTapMenu");

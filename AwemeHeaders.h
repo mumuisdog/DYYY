@@ -1372,6 +1372,14 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @end
 
 @interface AWEPlayInteractionUserAvatarView : UIView
+@property(retain, nonatomic) UIView *followPromptView;
+@property(retain, nonatomic) UIView *followAnimationView;
+@property(retain, nonatomic) UIView *unfollowAnimationView;
+@property(retain, nonatomic) UIView *staticFollowAnimationView;
+- (void)updateRightContainerElement;
+- (void)p_resetFollowAnimation;
+- (void)playFollowAnimation:(id)completion;
+- (void)playUnFollowAnimation;
 @end
 
 @interface AWEPlayInteractionStaticFollowAnimationView : UIView
@@ -1428,9 +1436,22 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 
 @interface AWEPlayInteractionUserAvatarFollowPromptController : NSObject
 @property(retain, nonatomic) AWEPlayInteractionUserAvatarContext *userAvatarContext;
+@property(retain, nonatomic) UIView *followPromptView;
+@property(retain, nonatomic) UIView *followAddView;
+@property(retain, nonatomic) UIView *followAnimationView;
+@property(retain, nonatomic) UIView *unfollowAnimationView;
+@property(retain, nonatomic) AWEPlayInteractionStaticFollowAnimationView *staticFollowAnimationView;
 - (void)onFollowViewClicked:(id)gesture;
 - (void)layoutElementView;
 - (void)showFollowAddView:(BOOL)show;
+- (void)viewController_willDisplay;
+- (void)viewController_viewDidAppear;
+- (void)updateFollowStatus;
+- (void)followStatusChanged:(id)arg1;
+- (void)playFollowAnimation;
+- (void)playFollowAnimation:(id)completion;
+- (void)playUnFollowAnimation;
+- (void)_ensureStaticFollowAnimationView;
 @end
 
 @interface AWEPlayInteractionUserAvatarMainBusinessController : NSObject
@@ -1442,6 +1463,9 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @interface AWEPlayInteractionUserAvatarOptElementElement : NSObject
 @property(retain, nonatomic) AWEPlayInteractionUserAvatarContext *userAvatarContext;
 - (void)layoutElementView;
+- (void)viewController_willDisplay;
+- (void)viewController_viewDidAppear;
+- (void)setAppear:(BOOL)appear;
 @end
 
 @interface AWEPlayInteractionUserAvatarStoryController : NSObject
