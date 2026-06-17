@@ -318,7 +318,7 @@ static NSArray<AWEPlayInteractionViewController *> *DYYYSpeedInteractionControll
     return controllers;
 }
 
-static AWEPlayInteractionViewController *DYYYResolveCurrentSpeedInteractionController(AWEPlayInteractionViewController *preferredController) {
+static AWEPlayInteractionViewController *DYYYResolveSpeedInteractionController(AWEPlayInteractionViewController *preferredController, AWEAwemeModel *targetAweme, BOOL allowVisibleFallback) {
     AWEPlayInteractionViewController *bestModelMatch = nil;
     AWEPlayInteractionViewController *bestVisibleController = nil;
     CGFloat bestModelMatchScore = -1.0;
@@ -334,13 +334,17 @@ static AWEPlayInteractionViewController *DYYYResolveCurrentSpeedInteractionContr
             bestVisibleScore = visibilityScore;
             bestVisibleController = controller;
         }
-        if (DYYYAwemeModelsMatch(controller.model, dyyyCurrentSpeedAweme) && visibilityScore > bestModelMatchScore) {
+        if (targetAweme && DYYYAwemeModelsMatch(controller.model, targetAweme) && visibilityScore > bestModelMatchScore) {
             bestModelMatchScore = visibilityScore;
             bestModelMatch = controller;
         }
     }
 
-    return bestModelMatch ?: bestVisibleController;
+    return bestModelMatch ?: (allowVisibleFallback ? bestVisibleController : nil);
+}
+
+static AWEPlayInteractionViewController *DYYYResolveCurrentSpeedInteractionController(AWEPlayInteractionViewController *preferredController) {
+    return DYYYResolveSpeedInteractionController(preferredController, dyyyCurrentSpeedAweme, YES);
 }
 
 id DYYYCurrentSpeedInteractionController(void) {
@@ -349,7 +353,9 @@ id DYYYCurrentSpeedInteractionController(void) {
 
 static void DYYYEnsureFloatSpeedButton(AWEPlayInteractionViewController *interactionController) {
     [FloatingSpeedButton reloadConfiguration];
-    AWEPlayInteractionViewController *currentController = DYYYResolveCurrentSpeedInteractionController(interactionController);
+    AWEAwemeModel *targetAweme = dyyyCurrentSpeedAweme;
+    BOOL allowVisibleFallback = !targetAweme || (interactionController && DYYYAwemeModelsMatch(interactionController.model, targetAweme));
+    AWEPlayInteractionViewController *currentController = DYYYResolveSpeedInteractionController(interactionController, targetAweme, allowVisibleFallback);
     if (!currentController) {
         updateSpeedButtonVisibility();
         return;
@@ -509,7 +515,8 @@ static void DYYYBindAndApplyCurrentPlaybackSpeed(void) {
         return;
     }
 
-    AWEPlayInteractionViewController *currentController = DYYYResolveCurrentSpeedInteractionController(nil);
+    AWEAwemeModel *targetAweme = dyyyCurrentSpeedAweme;
+    AWEPlayInteractionViewController *currentController = DYYYResolveSpeedInteractionController(nil, targetAweme, targetAweme == nil);
     if (!currentController) {
         return;
     }
@@ -518,10 +525,20 @@ static void DYYYBindAndApplyCurrentPlaybackSpeed(void) {
     DYYYApplyPlaybackSpeed(currentController, DYYYConfiguredPlaybackSpeed());
 }
 
-static void DYYYScheduleConfiguredPlaybackSpeedRestore(void) {
-    dispatch_async(dispatch_get_main_queue(), ^{
+static void DYYYScheduleConfiguredPlaybackSpeedRestoreAfterDelay(NSTimeInterval delay) {
+    dispatch_block_t restoreBlock = ^{
       DYYYBindAndApplyCurrentPlaybackSpeed();
-    });
+    };
+    if (delay <= 0.0) {
+        dispatch_async(dispatch_get_main_queue(), restoreBlock);
+    } else {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), restoreBlock);
+    }
+}
+
+static void DYYYScheduleConfiguredPlaybackSpeedRestore(void) {
+    DYYYScheduleConfiguredPlaybackSpeedRestoreAfterDelay(0.0);
+    DYYYScheduleConfiguredPlaybackSpeedRestoreAfterDelay(0.2);
 }
 
 static void DYYYEndLockedLongPressSpeedAndRestoreIfNeeded(void) {
