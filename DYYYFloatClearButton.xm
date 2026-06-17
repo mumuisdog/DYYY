@@ -290,6 +290,7 @@ void initTargetClassNames(void) {
     configuration |= [defaults boolForKey:@"DYYYHideDanmaku"] ? (1U << 1) : 0;
     configuration |= [defaults boolForKey:@"DYYYHideSlider"] ? (1U << 2) : 0;
     configuration |= [defaults boolForKey:@"DYYYHideChapter"] ? (1U << 3) : 0;
+    configuration |= [defaults boolForKey:@"DYYYHidePauseVideoIcon"] ? (1U << 4) : 0;
     if (targetClassNames && dyyyTargetClassConfiguration == configuration) {
         return;
     }
@@ -312,6 +313,10 @@ void initTargetClassNames(void) {
     }
     if (configuration & (1U << 3)) {
         [list addObject:@"AWEDemaciaChapterProgressSlider"];
+    }
+    if (configuration & (1U << 4)) {
+        // 视频中央的播放/暂停图标
+        [list addObject:@"AWEAwemePlayVideoPauseIcon"];
     }
 
     targetClassNames = [list copy];
@@ -636,9 +641,6 @@ void reloadClearButtonConfiguration(void) {
     }
 
     if (!self.isElementsHidden) {
-        // 调试：进入清屏前快照完整视图树，用于定位未知视图类名（如暂停按钮等）
-        [DYYYUtils dumpAllWindowsViewTreeToFile:@"/var/mobile/douyin_view_tree.txt"];
-
         initTargetClassNames();
         [self hideUIElements];
         self.isElementsHidden = YES;
