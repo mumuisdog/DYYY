@@ -66,6 +66,7 @@ static char dyyyProgressModeKey;
 static char dyyyProgressOriginalHiddenKey;
 static char dyyyProgressOriginalInteractionKey;
 static char dyyyProgressOriginalLayerOpacityKey;
+static char dyyyClearOriginalAlphaKey;
 
 static DYYYClearProgressMode DYYYCurrentClearProgressMode(void) {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -259,7 +260,6 @@ void hideClearButton(void) {
 static void forceResetAllUIElements(void) {
     DYYYPerformClearButtonMutation(^{
         initTargetClassNames();
-        Class StackViewClass = NSClassFromString(@"AWEElementStackView");
         for (UIWindow *window in [UIApplication sharedApplication].windows) {
             for (NSString *className in targetClassNames) {
                 Class viewClass = NSClassFromString(className);
@@ -268,10 +268,11 @@ static void forceResetAllUIElements(void) {
                 NSMutableArray *views = [NSMutableArray array];
                 findViewsOfClassHelper(window, viewClass, views);
                 for (UIView *view in views) {
-                    if ([view isKindOfClass:StackViewClass]) {
-                        view.alpha = 1.0; // 基础透明度交给全局透明度处理，避免重复乘
-                    } else {
-                        view.alpha = 1.0; // 恢复透明度
+                    // 优先使用进入清屏前记录的原 alpha，避免覆盖业务层动态 alpha（如播放中 alpha=0 的暂停图标）
+                    NSNumber *originalAlpha = objc_getAssociatedObject(view, &dyyyClearOriginalAlphaKey);
+                    view.alpha = originalAlpha ? originalAlpha.floatValue : 1.0;
+                    if (originalAlpha) {
+                        objc_setAssociatedObject(view, &dyyyClearOriginalAlphaKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
                     }
                 }
             }
@@ -755,6 +756,10 @@ void reloadClearButtonConfiguration(void) {
                         if (![controller isKindOfClass:NSClassFromString(@"AWEFeedContainerViewController")]) {
                             continue;
                         }
+                    }
+                    // 记录进入清屏前的原始 alpha，仅首次记录（避免周期性检查重复调用时被覆盖为 0）
+                    if (!objc_getAssociatedObject(view, &dyyyClearOriginalAlphaKey)) {
+                        objc_setAssociatedObject(view, &dyyyClearOriginalAlphaKey, @(view.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
                     }
                     [self.hiddenViewsList addObject:view];
                     view.alpha = 0.0;
