@@ -120,7 +120,7 @@ cat >> "$notes_file" <<'EOF'
 
 ---
 
-本 Release 包含 Rootful、Rootless 和 Roothide 三个 Deb 安装包。
+本 Release 包含 Rootful、Rootless 和 Roothide 三个 Deb 安装包，并提供从 arm64e Deb 中提取的 dylib 文件。
 EOF
 
 cat "$notes_file"
