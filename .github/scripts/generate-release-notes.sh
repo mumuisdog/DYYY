@@ -2,16 +2,25 @@
 
 set -euo pipefail
 
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+source "${script_dir}/build-relevance.sh"
+
 notes_file="${1:-release-notes.md}"
 head_sha="${GITHUB_SHA:-HEAD}"
 repository="${GITHUB_REPOSITORY:-$(git config --get remote.origin.url | sed -E 's#(git@github.com:|https://github.com/)##; s#\.git$##')}"
 server_url="${GITHUB_SERVER_URL:-https://github.com}"
-zero_sha="0000000000000000000000000000000000000000"
 
 features_file=$(mktemp)
 improvements_file=$(mktemp)
 fixes_file=$(mktemp)
-trap 'rm -f "$features_file" "$improvements_file" "$fixes_file"' EXIT
+package_file=$(mktemp)
+trap 'rm -f "$features_file" "$improvements_file" "$fixes_file" "$package_file"' EXIT
+
+commit_touches_control() {
+    local hash=$1
+
+    commit_touches_path "$hash" "control"
+}
 
 if [[ -n "${PUSH_BEFORE:-}" && "$PUSH_BEFORE" != "$zero_sha" ]] &&
    git cat-file -e "${PUSH_BEFORE}^{commit}" 2>/dev/null; then
@@ -27,19 +36,53 @@ else
     fi
 fi
 
-commit_count=$(git rev-list --count "$commit_range")
+relevant_count=0
 
 while IFS=$'\t' read -r hash subject; do
     [[ -n "$hash" ]] || continue
 
+    parent_count=$(git rev-list --parents -n 1 "$hash" | awk '{ print NF - 1 }')
+    if (( parent_count > 1 )) || ! commit_affects_build "$hash"; then
+        continue
+    fi
+
+    relevant_count=$((relevant_count + 1))
     short_hash=${hash:0:8}
     entry="- **${subject}** ([\`${short_hash}\`](${server_url}/${repository}/commit/${hash}))"
 
+    if commit_touches_control "$hash"; then
+        previous_version=$(
+            git show "${hash}^:control" 2>/dev/null |
+                awk -F': ' '$1 == "Version" { print $2; exit }' || true
+        )
+        current_version=$(
+            git show "${hash}:control" 2>/dev/null |
+                awk -F': ' '$1 == "Version" { print $2; exit }' || true
+        )
+
+        if [[ -n "$current_version" && "$previous_version" != "$current_version" ]]; then
+            if [[ -n "$previous_version" ]]; then
+                entry="- **版本更新：\`${previous_version}\` → \`${current_version}\`** ([\`${short_hash}\`](${server_url}/${repository}/commit/${hash}))"
+            else
+                entry="- **版本设置为 \`${current_version}\`** ([\`${short_hash}\`](${server_url}/${repository}/commit/${hash}))"
+            fi
+        fi
+
+        printf '%s\n' "$entry" >> "$package_file"
+        continue
+    fi
+
+    if commit_touches_path "$hash" "Makefile" &&
+       ! commit_touches_direct_build_path "$hash"; then
+        printf '%s\n' "$entry" >> "$package_file"
+        continue
+    fi
+
     case "$subject" in
-        新增*|增加*|添加*|支持*|引入*|实现*)
+        新增*|增加*|添加*|支持*|引入*|实现*|feat:*|feat\(*|Feature*|Add*)
             printf '%s\n' "$entry" >> "$features_file"
             ;;
-        修复*|解决*|恢复*|纠正*)
+        修复*|解决*|恢复*|纠正*|fix:*|fix\(*|Fix*|Bugfix*)
             printf '%s\n' "$entry" >> "$fixes_file"
             ;;
         *)
@@ -51,7 +94,7 @@ done < <(git log --reverse --format=$'%H\t%s' "$commit_range")
 cat > "$notes_file" <<EOF
 # 更新日志
 
-本次构建包含本次推送中的 ${commit_count} 项变更，以下为详细更新内容：
+本次构建包含 ${relevant_count} 项插件、版本或构建配置变更，以下为详细更新内容：
 EOF
 
 append_section() {
@@ -67,6 +110,11 @@ append_section() {
 append_section "新增功能" "$features_file"
 append_section "体验优化与调整" "$improvements_file"
 append_section "问题修复" "$fixes_file"
+append_section "版本与构建信息" "$package_file"
+
+if (( relevant_count == 0 )); then
+    printf '\n本次手动构建未检测到新的插件、版本或构建配置变更。\n' >> "$notes_file"
+fi
 
 cat >> "$notes_file" <<'EOF'
 
