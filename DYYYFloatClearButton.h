@@ -39,6 +39,7 @@ void DYYYApplyFloatClearProgressStateToView(UIView *view);
 @property(nonatomic, assign) CGFloat originalAlpha;
 @property(nonatomic, strong) NSTimer *checkTimer;
 @property(nonatomic, strong) NSTimer *fadeTimer;
+@property(nonatomic, strong) UIView *edgeIndicatorView;
 - (void)resetFadeTimer;
 - (void)loadSavedPosition;
 - (void)hideUIElements;

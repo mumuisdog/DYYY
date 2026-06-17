@@ -628,6 +628,42 @@ void reloadClearButtonConfiguration(void) {
     }
     // alpha 必须 > 0.01 才能继续接收 hit-test，0.02 在动态背景下几乎不可见
     self.alpha = 0.02;
+    [self dyyy_showEdgeIndicator];
+}
+
+- (void)dyyy_showEdgeIndicator {
+    if (!self.superview) {
+        return;
+    }
+
+    CGFloat indicatorHeight = self.bounds.size.height;
+    CGFloat indicatorWidth = 1.0; // 1pt 宽度
+    CGFloat screenWidth = self.superview.bounds.size.width;
+    CGFloat centerY = self.center.y;
+
+    if (!self.edgeIndicatorView) {
+        self.edgeIndicatorView = [[UIView alloc] init];
+        self.edgeIndicatorView.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.6];
+        self.edgeIndicatorView.layer.cornerRadius = 0.5;
+        self.edgeIndicatorView.userInteractionEnabled = NO;
+    }
+
+    self.edgeIndicatorView.frame = CGRectMake(screenWidth - indicatorWidth,
+                                              centerY - indicatorHeight / 2.0,
+                                              indicatorWidth,
+                                              indicatorHeight);
+    self.edgeIndicatorView.alpha = 1.0;
+    self.edgeIndicatorView.hidden = NO;
+
+    if (![self.edgeIndicatorView isDescendantOfView:self.superview]) {
+        [self.superview addSubview:self.edgeIndicatorView];
+    }
+}
+
+- (void)dyyy_hideEdgeIndicator {
+    if (self.edgeIndicatorView) {
+        self.edgeIndicatorView.hidden = YES;
+    }
 }
 
 - (void)handleTap {
@@ -674,6 +710,7 @@ void reloadClearButtonConfiguration(void) {
         // 退出清屏，恢复正常透明度并重启淡出
         self.alpha = self.originalAlpha;
         [self resetFadeTimer];
+        [self dyyy_hideEdgeIndicator];
     }
 }
 
@@ -789,8 +826,10 @@ void reloadClearButtonConfiguration(void) {
         self.alpha = self.originalAlpha;
         [self resetFadeTimer];
     }
+    [self dyyy_hideEdgeIndicator];
 }
 - (void)dealloc {
     [self stopTimers];
+    [self.edgeIndicatorView removeFromSuperview];
 }
 @end
