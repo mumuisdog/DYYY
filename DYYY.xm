@@ -835,52 +835,12 @@ static void DYYYHandleCurrentSpeedAwemeChanged(id aweme) {
 @end
 
 static BOOL dyyyClearingFeedNowPlayingSystemInfo = NO;
-static BOOL dyyyFeedNowPlayingPictureInPictureActive = NO;
 static CFTimeInterval dyyyLastFeedNowPlayingSystemClearTime = 0.0;
-static CFTimeInterval dyyyFeedNowPlayingSystemBlockUntil = 0.0;
-static CFTimeInterval dyyyFeedNowPlayingPictureInPictureBlockUntil = 0.0;
-
-static void DYYYClearFeedNowPlayingSystemInfoThrottled(void);
-
-static BOOL DYYYIsAppActiveForFeedNowPlayingBlock(void) {
-    return [UIApplication sharedApplication].applicationState == UIApplicationStateActive;
-}
-
-static void DYYYExtendFeedNowPlayingSystemBlockWindow(void) {
-    dyyyFeedNowPlayingSystemBlockUntil = MAX(dyyyFeedNowPlayingSystemBlockUntil, CFAbsoluteTimeGetCurrent() + 0.75);
-}
-
-static void DYYYExtendFeedNowPlayingPictureInPictureBlockWindow(void) {
-    CFTimeInterval currentTime = CFAbsoluteTimeGetCurrent();
-    dyyyFeedNowPlayingPictureInPictureBlockUntil = MAX(dyyyFeedNowPlayingPictureInPictureBlockUntil, currentTime + 8.0);
-    dyyyFeedNowPlayingSystemBlockUntil = MAX(dyyyFeedNowPlayingSystemBlockUntil, currentTime + 1.5);
-}
-
-static void DYYYSetFeedNowPlayingPictureInPictureActive(BOOL active) {
-    dyyyFeedNowPlayingPictureInPictureActive = active;
-    if (active) {
-        DYYYExtendFeedNowPlayingPictureInPictureBlockWindow();
-        DYYYClearFeedNowPlayingSystemInfoThrottled();
-    } else {
-        dyyyFeedNowPlayingPictureInPictureBlockUntil = 0.0;
-    }
-}
-
-static BOOL DYYYIsFeedNowPlayingPictureInPictureBlockActive(void) {
-    return dyyyFeedNowPlayingPictureInPictureActive ||
-           CFAbsoluteTimeGetCurrent() <= dyyyFeedNowPlayingPictureInPictureBlockUntil;
-}
-
-static BOOL DYYYShouldBlockFeedNowPlayingScene(void) {
-    return DYYYIsAppActiveForFeedNowPlayingBlock() || DYYYIsFeedNowPlayingPictureInPictureBlockActive();
-}
 
 static void DYYYClearFeedNowPlayingSystemInfoThrottled(void) {
     if (!DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") || dyyyClearingFeedNowPlayingSystemInfo) {
         return;
     }
-
-    DYYYExtendFeedNowPlayingSystemBlockWindow();
 
     CFTimeInterval currentTime = CFAbsoluteTimeGetCurrent();
     if (currentTime - dyyyLastFeedNowPlayingSystemClearTime < 0.25) {
@@ -914,105 +874,14 @@ static void DYYYClearFeedNowPlayingSystemInfoThrottled(void) {
     }
 }
 
-static BOOL DYYYObjectIsKindOfClassNamed(id object, NSString *className) {
-    if (!object || className.length == 0) {
-        return NO;
-    }
-
-    Class targetClass = NSClassFromString(className);
-    return targetClass && [object isKindOfClass:targetClass];
-}
-
-static BOOL DYYYObjectBoolValueForSelector(id object, SEL selector) {
-    if (!object || ![object respondsToSelector:selector]) {
-        return NO;
-    }
-
-    return ((BOOL (*)(id, SEL))objc_msgSend)(object, selector);
-}
-
-static BOOL DYYYPlayerViewSupportsPictureInPicture(id playerView) {
-    return DYYYObjectBoolValueForSelector(playerView, NSSelectorFromString(@"isSupportPictureInPictureMode")) ||
-           DYYYObjectBoolValueForSelector(playerView, NSSelectorFromString(@"supportPictureInPictureMode"));
-}
-
-static BOOL DYYYFeedBackgroundPlayManagerIsUserAudioMode(id player) {
-    if (!DYYYObjectIsKindOfClassNamed(player, @"AWEFeedBackgroundPlayManager")) {
-        return NO;
-    }
-
-    return DYYYObjectBoolValueForSelector(player, @selector(backgroundPlayerIsOn)) ||
-           DYYYObjectBoolValueForSelector(player, @selector(isBackgroundPlayerOn)) ||
-           DYYYObjectBoolValueForSelector(player, @selector(enableListenFeed));
-}
-
-static BOOL DYYYShouldBlockFeedNowPlayingPlayer(id player) {
-    if (!DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") || !player) {
-        return NO;
-    }
-
-    if (DYYYObjectIsKindOfClassNamed(player, @"AWEAwemeBackgroundPlayModule")) {
-        return DYYYShouldBlockFeedNowPlayingScene();
-    }
-
-    if (DYYYObjectIsKindOfClassNamed(player, @"AWEFeedBackgroundPlayManager")) {
-        return DYYYShouldBlockFeedNowPlayingScene() && !DYYYFeedBackgroundPlayManagerIsUserAudioMode(player);
-    }
-
-    return NO;
-}
-
 static BOOL DYYYShouldBlockFeedNowPlayingSystemInfoWrite(void) {
-    return DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") &&
-           !dyyyClearingFeedNowPlayingSystemInfo &&
-           DYYYShouldBlockFeedNowPlayingScene() &&
-           (CFAbsoluteTimeGetCurrent() <= dyyyFeedNowPlayingSystemBlockUntil ||
-            DYYYIsFeedNowPlayingPictureInPictureBlockActive());
-}
-
-static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-      NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-      NSArray<NSString *> *startNotifications = @[
-          @"AVPictureInPictureControllerWillStartPictureInPictureNotification",
-          @"AVPictureInPictureControllerDidStartPictureInPictureNotification",
-          @"AVPictureInPictureControllerPictureInPictureWillStartNotification",
-          @"AVPictureInPictureControllerPictureInPictureDidStartNotification"
-      ];
-      NSArray<NSString *> *stopNotifications = @[
-          @"AVPictureInPictureControllerWillStopPictureInPictureNotification",
-          @"AVPictureInPictureControllerDidStopPictureInPictureNotification",
-          @"AVPictureInPictureControllerPictureInPictureWillStopNotification",
-          @"AVPictureInPictureControllerPictureInPictureDidStopNotification"
-      ];
-
-      for (NSString *name in startNotifications) {
-          [center addObserverForName:name
-                              object:nil
-                               queue:[NSOperationQueue mainQueue]
-                          usingBlock:^(__unused NSNotification *notification) {
-                            if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
-                                DYYYSetFeedNowPlayingPictureInPictureActive(YES);
-                            }
-                          }];
-      }
-
-      for (NSString *name in stopNotifications) {
-          [center addObserverForName:name
-                              object:nil
-                               queue:[NSOperationQueue mainQueue]
-                          usingBlock:^(__unused NSNotification *notification) {
-                            DYYYSetFeedNowPlayingPictureInPictureActive(NO);
-                          }];
-      }
-    });
+    return DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") && !dyyyClearingFeedNowPlayingSystemInfo;
 }
 
 %hook AWEAwemeBackgroundPlayModule
 
 - (id)nowPlayingInfo {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return nil;
     }
@@ -1021,7 +890,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)refreshNowPlayingInfoIfNeeded {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1030,7 +899,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)updateNowPlayingInfoPlayback {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1043,7 +912,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 %hook AWEFeedBackgroundPlayManager
 
 - (id)nowPlayingInfo {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return nil;
     }
@@ -1052,8 +921,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)setNowPlayingInfo:(id)nowPlayingInfo {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
-        %orig(nil);
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1062,7 +930,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)resetNowPlayingInfo:(id)model {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1071,7 +939,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)refreshNowPlayingInfo {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1080,7 +948,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)refreshNowPlayingInfoIsForce:(BOOL)isForce {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1089,7 +957,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)updateNowPlayingInfoPlayback {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1099,11 +967,11 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 
 %end
 
-// 再从抖音播放中心入口兜底，阻断前台信息流视频上岛。
+// 采用 HideNowPlayingInfo 的强屏蔽思路：播放中心写入时直接清空系统 Now Playing，不再走原实现。
 %hook AWENowPlayingInfoCenter
 
 - (void)becomePlayingPlayer:(id)player {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(player)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1112,8 +980,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)setNowPlayingInfo:(id)nowPlayingInfo {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self.playingPlayer)) {
-        %orig(nil);
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1122,7 +989,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)refreshNowPlayingInfo {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self.playingPlayer)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -9897,33 +9764,11 @@ static Class TagViewClass = nil;
 
 %hook TTPlayerView
 
-- (void)checkPictureInPictureMode {
-    %orig;
-
-    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") && DYYYPlayerViewSupportsPictureInPicture(self)) {
-        DYYYExtendFeedNowPlayingPictureInPictureBlockWindow();
-        DYYYClearFeedNowPlayingSystemInfoThrottled();
-    }
-}
-
 - (void)layoutSubviews {
     %orig;
     UIView *parent = self.superview;
     if (parent) {
         parent.backgroundColor = self.backgroundColor;
-    }
-}
-
-%end
-
-%hook TTPlayerView2
-
-- (void)checkPictureInPictureMode {
-    %orig;
-
-    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") && DYYYPlayerViewSupportsPictureInPicture(self)) {
-        DYYYExtendFeedNowPlayingPictureInPictureBlockWindow();
-        DYYYClearFeedNowPlayingSystemInfoThrottled();
     }
 }
 
@@ -10491,8 +10336,6 @@ static void findTargetViewInView(UIView *view) {
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{
         @"DYYYDisableFeedNowPlayingInfo" : @YES
     }];
-
-    DYYYRegisterFeedNowPlayingPictureInPictureObservers();
 
     DYYYMigrateCombinedHDRModeIfNeeded();
 
