@@ -61,10 +61,26 @@ static BOOL DYYYShouldHideSpeedButton(void) {
     return NO;
 }
 
+static NSString *DYYYFormatSpeedOption(double speed) {
+    NSString *speedString = [NSString stringWithFormat:@"%.2f", speed];
+    while ([speedString containsString:@"."] && [speedString hasSuffix:@"0"]) {
+        speedString = [speedString substringToIndex:speedString.length - 1];
+    }
+    if ([speedString hasSuffix:@"."]) {
+        speedString = [speedString substringToIndex:speedString.length - 1];
+    }
+    return speedString;
+}
+
 NSArray *getSpeedOptions() {
     NSString *speedConfig = [[NSUserDefaults standardUserDefaults] stringForKey:@"DYYYSpeedSettings"] ?: @"1.0,1.25,1.5,2.0";
     NSMutableArray<NSString *> *validSpeeds = [NSMutableArray array];
     NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    double configuredDefaultSpeed = [defaults objectForKey:@"DYYYDefaultSpeed"] ? [defaults doubleForKey:@"DYYYDefaultSpeed"] : 1.0;
+    BOOL shouldIncludeDefaultSpeed = [defaults boolForKey:@"DYYYEnableFloatSpeedButton"] && [defaults boolForKey:@"DYYYAutoRestoreSpeed"] && isfinite(configuredDefaultSpeed) && configuredDefaultSpeed > 0.0;
+    BOOL containsDefaultSpeed = NO;
+    NSArray<NSString *> *fallbackSpeeds = @[ @"1.0", @"1.25", @"1.5", @"2.0" ];
 
     for (NSString *component in [speedConfig componentsSeparatedByString:@","]) {
         NSString *trimmedValue = [component stringByTrimmingCharactersInSet:whitespace];
@@ -76,10 +92,29 @@ NSArray *getSpeedOptions() {
         double speed = 0.0;
         if ([scanner scanDouble:&speed] && scanner.isAtEnd && isfinite(speed) && speed > 0.0) {
             [validSpeeds addObject:trimmedValue];
+            if (shouldIncludeDefaultSpeed && fabs(speed - configuredDefaultSpeed) <= 0.001) {
+                containsDefaultSpeed = YES;
+            }
         }
     }
 
-    return validSpeeds.count > 0 ? validSpeeds : @[ @"1.0", @"1.25", @"1.5", @"2.0" ];
+    if (validSpeeds.count == 0) {
+        [validSpeeds addObjectsFromArray:fallbackSpeeds];
+        if (shouldIncludeDefaultSpeed) {
+            for (NSString *speedString in fallbackSpeeds) {
+                if (fabs([speedString doubleValue] - configuredDefaultSpeed) <= 0.001) {
+                    containsDefaultSpeed = YES;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (shouldIncludeDefaultSpeed && !containsDefaultSpeed) {
+        [validSpeeds addObject:DYYYFormatSpeedOption(configuredDefaultSpeed)];
+    }
+
+    return validSpeeds;
 }
 
 NSInteger getCurrentSpeedIndex() {
@@ -115,6 +150,21 @@ void setCurrentSpeedIndex(NSInteger index) {
     }
 
     [[NSUserDefaults standardUserDefaults] setInteger:index forKey:@"DYYYCurrentSpeedIndex"];
+}
+
+BOOL setCurrentSpeedValue(float speed) {
+    if (!isfinite(speed) || speed <= 0.0f) {
+        return NO;
+    }
+
+    NSArray *speeds = getSpeedOptions();
+    for (NSInteger index = 0; index < speeds.count; index++) {
+        if (fabs([speeds[index] floatValue] - speed) <= 0.001f) {
+            setCurrentSpeedIndex(index);
+            return YES;
+        }
+    }
+    return NO;
 }
 
 void updateSpeedButtonUI() {

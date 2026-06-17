@@ -279,6 +279,14 @@ static NSString *DYYYSpeedAwemeIdentifier(AWEAwemeModel *aweme) {
     return [NSString stringWithFormat:@"%p", aweme];
 }
 
+static double DYYYDefaultPlaybackSpeed(void) {
+    double defaultSpeed = [[NSUserDefaults standardUserDefaults] doubleForKey:@"DYYYDefaultSpeed"];
+    if (isfinite(defaultSpeed) && defaultSpeed > 0.0) {
+        return defaultSpeed;
+    }
+    return 1.0;
+}
+
 static void DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(AWEAwemeModel *aweme) {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     BOOL shouldAutoRestore = [defaults boolForKey:@"DYYYEnableFloatSpeedButton"] && [defaults boolForKey:@"DYYYAutoRestoreSpeed"];
@@ -293,7 +301,9 @@ static void DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(AWEAwemeModel *aweme) {
     }
 
     dyyyLastAutoRestoredSpeedAwemeIdentifier = [awemeIdentifier copy];
-    setCurrentSpeedIndex(0);
+    if (!setCurrentSpeedValue((float)DYYYDefaultPlaybackSpeed())) {
+        setCurrentSpeedIndex(0);
+    }
     updateSpeedButtonUI();
 }
 
@@ -471,10 +481,7 @@ static double DYYYConfiguredPlaybackSpeed(void) {
     }
 
     if ([defaults boolForKey:@"DYYYUserAgreementAccepted"]) {
-        double defaultSpeed = [defaults doubleForKey:@"DYYYDefaultSpeed"];
-        if (isfinite(defaultSpeed) && defaultSpeed > 0.0) {
-            return defaultSpeed;
-        }
+        return DYYYDefaultPlaybackSpeed();
     }
     return 1.0;
 }
@@ -482,14 +489,7 @@ static double DYYYConfiguredPlaybackSpeed(void) {
 static double DYYYPreparedPlaybackSpeed(void) {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     if ([defaults boolForKey:@"DYYYEnableFloatSpeedButton"] && [defaults boolForKey:@"DYYYAutoRestoreSpeed"]) {
-        NSArray *speeds = getSpeedOptions();
-        if (speeds.count > 0) {
-            double defaultSpeed = [speeds.firstObject doubleValue];
-            if (isfinite(defaultSpeed) && defaultSpeed > 0.0) {
-                return defaultSpeed;
-            }
-        }
-        return 1.0;
+        return DYYYDefaultPlaybackSpeed();
     }
     return DYYYConfiguredPlaybackSpeed();
 }
