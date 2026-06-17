@@ -385,6 +385,20 @@ static void DYYYEnsureFloatSpeedButton(AWEPlayInteractionViewController *interac
     updateSpeedButtonVisibility();
 }
 
+// 提供给跨文件调用的刷新入口：根据当前可见 PlayInteractionVC 重新评估并恢复倍速按钮，
+// 用于清屏退出等场景，避免清屏期间 viewDidDisappear 把 dyyyInteractionViewVisible 置 NO 后状态卡住。
+void DYYYRefreshFloatSpeedButton(void) {
+    void (^applyBlock)(void) = ^{
+        AWEPlayInteractionViewController *currentController = (AWEPlayInteractionViewController *)DYYYCurrentSpeedInteractionController();
+        DYYYEnsureFloatSpeedButton(currentController);
+    };
+    if ([NSThread isMainThread]) {
+        applyBlock();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), applyBlock);
+    }
+}
+
 static BOOL DYYYSetPlaybackRateOnTarget(id target, double speed) {
     if (!target || ![target respondsToSelector:@selector(setVideoControllerPlaybackRate:)]) {
         return NO;

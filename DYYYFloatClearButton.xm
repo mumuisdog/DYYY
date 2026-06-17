@@ -659,6 +659,10 @@ void reloadClearButtonConfiguration(void) {
         BOOL hideSpeed = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideSpeed"];
         if (hideSpeed) {
             showSpeedButton();
+            // 退出清屏时主动刷新一次：清屏期间可能发生过 PlayInteractionVC 的 viewDidDisappear，
+            // 导致 dyyyInteractionViewVisible 被置 NO，此时仅靠 showSpeedButton() 无法让倍速按钮重新出现，
+            // 必须重新从当前可见 controller 备份状态。
+            DYYYRefreshFloatSpeedButton();
         }
 
         // 退出清屏，恢复正常透明度并重启淡出

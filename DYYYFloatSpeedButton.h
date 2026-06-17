@@ -43,6 +43,7 @@ extern void setCurrentSpeedIndex(NSInteger index);
 extern void updateSpeedButtonUI(void);
 extern void updateSpeedButtonVisibility(void);
 extern id DYYYCurrentSpeedInteractionController(void);
+extern void DYYYRefreshFloatSpeedButton(void);
 
 #ifdef __cplusplus
 }
