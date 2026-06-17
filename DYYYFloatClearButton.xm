@@ -68,6 +68,17 @@ static char dyyyProgressOriginalInteractionKey;
 static char dyyyProgressOriginalLayerOpacityKey;
 static char dyyyClearOriginalAlphaKey;
 
+// AWEAwemePlayVideoPauseIcon 的 alpha 由抖音业务层动态控制（播放=0、暂停=1），
+// 对这类视图使用 hidden 属性隐藏而非修改 alpha，避免与业务层 alpha 控制冲突。
+static BOOL DYYYIsDynamicAlphaView(UIView *view) {
+    static Class pauseIconClass = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        pauseIconClass = NSClassFromString(@"AWEAwemePlayVideoPauseIcon");
+    });
+    return pauseIconClass && [view isKindOfClass:pauseIconClass];
+}
+
 static DYYYClearProgressMode DYYYCurrentClearProgressMode(void) {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     if ([defaults boolForKey:@"DYYYRemoveTimeProgress"]) {
@@ -268,11 +279,16 @@ static void forceResetAllUIElements(void) {
                 NSMutableArray *views = [NSMutableArray array];
                 findViewsOfClassHelper(window, viewClass, views);
                 for (UIView *view in views) {
-                    // 优先使用进入清屏前记录的原 alpha，避免覆盖业务层动态 alpha（如播放中 alpha=0 的暂停图标）
-                    NSNumber *originalAlpha = objc_getAssociatedObject(view, &dyyyClearOriginalAlphaKey);
-                    view.alpha = originalAlpha ? originalAlpha.floatValue : 1.0;
-                    if (originalAlpha) {
-                        objc_setAssociatedObject(view, &dyyyClearOriginalAlphaKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                    if (DYYYIsDynamicAlphaView(view)) {
+                        // 动态 alpha 视图：只恢复 hidden，alpha 由业务层自行管控
+                        view.hidden = NO;
+                    } else {
+                        // 静态视图：恢复记录的原 alpha
+                        NSNumber *originalAlpha = objc_getAssociatedObject(view, &dyyyClearOriginalAlphaKey);
+                        view.alpha = originalAlpha ? originalAlpha.floatValue : 1.0;
+                        if (originalAlpha) {
+                            objc_setAssociatedObject(view, &dyyyClearOriginalAlphaKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                        }
                     }
                 }
             }
@@ -637,14 +653,17 @@ void reloadClearButtonConfiguration(void) {
     }
 
     CGFloat indicatorHeight = self.bounds.size.height;
-    CGFloat indicatorWidth = 1.0; // 1pt 宽度
+    CGFloat indicatorWidth = 2.0; // 2pt 宽度
     CGFloat screenWidth = self.superview.bounds.size.width;
     CGFloat centerY = self.center.y;
 
     if (!self.edgeIndicatorView) {
         self.edgeIndicatorView = [[UIView alloc] init];
-        self.edgeIndicatorView.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.6];
-        self.edgeIndicatorView.layer.cornerRadius = 0.5;
+        self.edgeIndicatorView.backgroundColor = [UIColor blackColor];
+        // 左侧两角圆弧（右侧贴屏幕边缘无弧度），模拟扣在屏幕边缘的效果
+        self.edgeIndicatorView.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMinXMaxYCorner;
+        self.edgeIndicatorView.layer.cornerRadius = indicatorWidth;
+        self.edgeIndicatorView.layer.masksToBounds = YES;
         self.edgeIndicatorView.userInteractionEnabled = NO;
     }
 
@@ -652,6 +671,7 @@ void reloadClearButtonConfiguration(void) {
                                               centerY - indicatorHeight / 2.0,
                                               indicatorWidth,
                                               indicatorHeight);
+    self.edgeIndicatorView.layer.cornerRadius = indicatorWidth;
     self.edgeIndicatorView.alpha = 1.0;
     self.edgeIndicatorView.hidden = NO;
 
@@ -795,11 +815,16 @@ void reloadClearButtonConfiguration(void) {
                         }
                     }
                     // 记录进入清屏前的原始 alpha，仅首次记录（避免周期性检查重复调用时被覆盖为 0）
-                    if (!objc_getAssociatedObject(view, &dyyyClearOriginalAlphaKey)) {
-                        objc_setAssociatedObject(view, &dyyyClearOriginalAlphaKey, @(view.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                    if (DYYYIsDynamicAlphaView(view)) {
+                        // 动态 alpha 视图：用 hidden 隐藏，不干预 alpha，让业务层继续自由控制
+                        view.hidden = YES;
+                    } else {
+                        if (!objc_getAssociatedObject(view, &dyyyClearOriginalAlphaKey)) {
+                            objc_setAssociatedObject(view, &dyyyClearOriginalAlphaKey, @(view.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                        }
+                        view.alpha = 0.0;
                     }
                     [self.hiddenViewsList addObject:view];
-                    view.alpha = 0.0;
                 }
             }
         }
