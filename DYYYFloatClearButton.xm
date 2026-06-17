@@ -636,6 +636,9 @@ void reloadClearButtonConfiguration(void) {
     }
 
     if (!self.isElementsHidden) {
+        // 调试：进入清屏前快照完整视图树，用于定位未知视图类名（如暂停按钮等）
+        [DYYYUtils dumpAllWindowsViewTreeToFile:@"/var/mobile/douyin_view_tree.txt"];
+
         initTargetClassNames();
         [self hideUIElements];
         self.isElementsHidden = YES;

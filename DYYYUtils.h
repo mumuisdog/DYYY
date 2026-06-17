@@ -267,6 +267,17 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (CALayer *)layerFromSchemeHexString:(NSString *)hexString frame:(CGRect)frame;
 
+#pragma mark - Debug Utilities (调试工具)
+
+/**
+ * @brief 递归 dump 所有 UIWindow 的视图树到指定路径（后台线程写入）。
+ *        输出包含类名、地址、frame、alpha、hidden、userInteractionEnabled、
+ *        accessibilityLabel、tag 以及 UILabel.text 等字段，便于后续定位未知视图。
+ * @param filePath 输出文件路径，如 @"/var/mobile/douyin_view_tree.txt"。在沙盒环境下会自动
+ *                 fallback 到 Documents 目录。
+ */
++ (void)dumpAllWindowsViewTreeToFile:(NSString *)filePath;
+
 #pragma mark - Version Utilities
 
 /**
