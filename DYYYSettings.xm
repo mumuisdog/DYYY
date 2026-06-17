@@ -3340,15 +3340,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                 @"cellType" : @6,
                 @"imageName" : @"ic_eyeslash_outlined_16"}];
       [clearButtonItems addObject:hideTabButton];
-      AWESettingItemModel *hidePauseVideoIcon = [DYYYSettingsHelper createSettingItem:@{
-          @"identifier" : @"DYYYHidePauseVideoIcon",
-          @"title" : @"清屏隐藏暂停图标",
-          @"subTitle" : @"清屏状态下隐藏视频中央的播放/暂停图标",
-          @"detail" : @"",
-          @"cellType" : @37,
-          @"imageName" : @"ic_eyeslash_outlined_16"
-      }];
-      [clearButtonItems addObject:hidePauseVideoIcon];
       AWESettingItemModel *hideSpeedButton = [DYYYSettingsHelper createSettingItem:@{
           @"identifier" : @"DYYYHideSpeed",
           @"title" : @"清屏隐藏倍速",
@@ -3368,6 +3359,15 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
           @"imageName" : @"ic_eyeslash_outlined_16"
       }];
       [clearButtonItems addObject:hideClearButtonOnTap];
+      AWESettingItemModel *hidePauseVideoIcon = [DYYYSettingsHelper createSettingItem:@{
+          @"identifier" : @"DYYYHidePauseVideoIcon",
+          @"title" : @"清屏隐藏暂停图标",
+          @"subTitle" : @"清屏状态下隐藏视频中央的播放/暂停图标",
+          @"detail" : @"",
+          @"cellType" : @37,
+          @"imageName" : @"ic_eyeslash_outlined_16"
+      }];
+      [clearButtonItems addObject:hidePauseVideoIcon];
       NSMutableArray<AWESettingItemModel *> *clearDependentItems = [NSMutableArray array];
       for (AWESettingItemModel *item in clearButtonItems) {
           if (item != enableClearButton) {
