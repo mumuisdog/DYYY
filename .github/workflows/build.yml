@@ -34,6 +34,7 @@ on:
           - roothide
 
 permissions:
+  actions: read
   contents: write
 
 jobs:
@@ -166,18 +167,25 @@ jobs:
 
           printf 'Release asset: %s\n' "${deb_files[@]}"
 
-      - name: Generate release notes
-        env:
-          PUSH_BEFORE: ${{ github.event.before }}
-        run: .github/scripts/generate-release-notes.sh
-
       - name: Upload specific Deb packages
         uses: actions/upload-artifact@v7
         with:
           name: DYYY-${{ steps.release.outputs.timestamp }}
           path: ${{ github.workspace }}/packages/*.deb
 
+      - name: Coordinate Release publication
+        id: release_gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW_FILE: build.yml
+        run: .github/scripts/release-coordinator.sh
+
+      - name: Generate release notes
+        if: steps.release_gate.outputs.should_publish == 'true'
+        run: .github/scripts/generate-release-notes.sh
+
       - name: Publish GitHub Release
+        if: steps.release_gate.outputs.should_publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
