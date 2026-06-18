@@ -5227,13 +5227,15 @@ static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
 - (BOOL)prefersStatusBarHidden {
     if (DYYYGetBool(@"DYYYHideStatusbar")) {
         return YES;
-    } else {
-        if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
-            class_getInstanceMethod([%c(AFDPureModePageContainerViewController) class], @selector(prefersStatusBarHidden))) {
-            return %orig;
-        }
-        return NO;
     }
+    if (DYYYGetBool(@"DYYYHideStatusBarOnClear") && hideButton && hideButton.isElementsHidden) {
+        return YES;
+    }
+    if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
+        class_getInstanceMethod([%c(AFDPureModePageContainerViewController) class], @selector(prefersStatusBarHidden))) {
+        return %orig;
+    }
+    return NO;
 }
 %end
 

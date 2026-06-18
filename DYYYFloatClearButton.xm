@@ -711,6 +711,13 @@ void reloadClearButtonConfiguration(void) {
         if (selfHide) {
             [self dyyy_applySelfHiddenAlpha];
         }
+
+        // 清屏隐藏状态栏：触发系统重新评估状态栏显隐
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideStatusBarOnClear"] &&
+            ![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideStatusbar"]) {
+            UIWindow *keyWindow = [DYYYUtils getActiveWindow];
+            [keyWindow.rootViewController setNeedsStatusBarAppearanceUpdate];
+        }
     } else {
         self.isElementsHidden = NO;
         forceResetAllUIElements();
@@ -731,6 +738,13 @@ void reloadClearButtonConfiguration(void) {
         self.alpha = self.originalAlpha;
         [self resetFadeTimer];
         [self dyyy_hideEdgeIndicator];
+
+        // 清屏隐藏状态栏：触发系统重新评估状态栏显隐
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideStatusBarOnClear"] &&
+            ![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideStatusbar"]) {
+            UIWindow *keyWindow = [DYYYUtils getActiveWindow];
+            [keyWindow.rootViewController setNeedsStatusBarAppearanceUpdate];
+        }
     }
 }
 
@@ -852,6 +866,13 @@ void reloadClearButtonConfiguration(void) {
         [self resetFadeTimer];
     }
     [self dyyy_hideEdgeIndicator];
+
+    // 清屏隐藏状态栏：触发系统重新评估状态栏显隐
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideStatusBarOnClear"] &&
+        ![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideStatusbar"]) {
+        UIWindow *keyWindow = [DYYYUtils getActiveWindow];
+        [keyWindow.rootViewController setNeedsStatusBarAppearanceUpdate];
+    }
 }
 - (void)dealloc {
     [self stopTimers];
