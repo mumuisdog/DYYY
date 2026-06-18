@@ -4237,9 +4237,68 @@ static void DYYYRemoveAvatarViewForSelector(id object, SEL selector) {
 }
 
 static void DYYYHideAvatarFollowLayerContents(UIView *view) {
+    view.backgroundColor = UIColor.clearColor;
+    view.opaque = NO;
     view.layer.contents = nil;
+    view.layer.opaque = NO;
+    view.layer.backgroundColor = UIColor.clearColor.CGColor;
+    view.layer.borderWidth = 0.0;
+    view.layer.borderColor = UIColor.clearColor.CGColor;
+    view.layer.shadowOpacity = 0.0;
+    view.layer.shadowColor = UIColor.clearColor.CGColor;
     for (CALayer *sublayer in view.layer.sublayers) {
         sublayer.hidden = YES;
+    }
+}
+
+static void DYYYClearAvatarActionLayerChrome(CALayer *layer) {
+    if (!layer) {
+        return;
+    }
+
+    layer.contents = nil;
+    layer.opaque = NO;
+    layer.backgroundColor = UIColor.clearColor.CGColor;
+    layer.borderWidth = 0.0;
+    layer.borderColor = UIColor.clearColor.CGColor;
+    layer.shadowOpacity = 0.0;
+    layer.shadowColor = UIColor.clearColor.CGColor;
+    if ([layer isKindOfClass:[CAShapeLayer class]]) {
+        CAShapeLayer *shapeLayer = (CAShapeLayer *)layer;
+        shapeLayer.fillColor = UIColor.clearColor.CGColor;
+        shapeLayer.strokeColor = UIColor.clearColor.CGColor;
+    }
+
+    for (CALayer *sublayer in [layer.sublayers copy]) {
+        DYYYClearAvatarActionLayerChrome(sublayer);
+    }
+}
+
+static void DYYYClearAvatarActionSubviewChrome(UIView *view) {
+    if (!view) {
+        return;
+    }
+
+    view.backgroundColor = UIColor.clearColor;
+    view.opaque = NO;
+    DYYYClearAvatarActionLayerChrome(view.layer);
+
+    for (UIView *subview in [view.subviews copy]) {
+        DYYYClearAvatarActionSubviewChrome(subview);
+    }
+}
+
+static void DYYYClearAvatarActionViewChrome(UIView *view) {
+    if (!view) {
+        return;
+    }
+
+    view.backgroundColor = UIColor.clearColor;
+    view.opaque = NO;
+    DYYYClearAvatarActionLayerChrome(view.layer);
+
+    for (UIView *subview in [view.subviews copy]) {
+        DYYYClearAvatarActionSubviewChrome(subview);
     }
 }
 
@@ -4383,6 +4442,7 @@ static BOOL DYYYApplyAvatarAuxiliaryActionSettingsForOwner(id owner) {
             handled = YES;
         }
         if (containerView) {
+            DYYYClearAvatarActionViewChrome(containerView);
             BOOL foundVisual = DYYYHideAvatarAuxiliaryActionVisualsInView(containerView);
             if (!foundVisual && visualViews.count == 0) {
                 DYYYHideAvatarFollowLayerContents(containerView);
@@ -4465,8 +4525,11 @@ static void DYYYApplyAvatarFollowPromptSettings(id owner) {
         DYYYRemoveAvatarView(followAddView);
     } else {
         BOOL foundIcon = DYYYHideAvatarFollowIconInView(followAddView);
-        if (hidePlus && followAddView && !foundIcon) {
-            DYYYHideAvatarFollowLayerContents(followAddView);
+        if (hidePlus && followAddView) {
+            DYYYClearAvatarActionViewChrome(followAddView);
+            if (!foundIcon) {
+                DYYYHideAvatarFollowLayerContents(followAddView);
+            }
         }
     }
 
