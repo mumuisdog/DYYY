@@ -9483,12 +9483,7 @@ static Class tabBarButtonClass = nil;
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
     %orig(arg0);
-    // 自动恢复默认倍速：同步重置悬浮按钮的 index 和显示文字
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
-        setCurrentSpeedIndex(0);
-    }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
-    updateSpeedButtonUI();
 }
 
 - (void)prepareForDisplay {
@@ -9497,10 +9492,6 @@ static Class tabBarButtonClass = nil;
         return;
     }
 
-    // 自动恢复默认倍速：先重置 index，再应用速度并更新 UI
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
-        setCurrentSpeedIndex(0);
-    }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
     updateSpeedButtonUI();
 }
@@ -9535,20 +9526,13 @@ static Class tabBarButtonClass = nil;
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
     %orig(arg0);
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
-        setCurrentSpeedIndex(0);
-    }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
-    updateSpeedButtonUI();
 }
 
 - (void)prepareForDisplay {
     %orig;
     if (!DYYYShouldHandleSpeedFeatures()) {
         return;
-    }
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
-        setCurrentSpeedIndex(0);
     }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
     updateSpeedButtonUI();
@@ -9584,20 +9568,13 @@ static Class tabBarButtonClass = nil;
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
     %orig(arg0);
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
-        setCurrentSpeedIndex(0);
-    }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
-    updateSpeedButtonUI();
 }
 
 - (void)prepareForDisplay {
     %orig;
     if (!DYYYShouldHandleSpeedFeatures()) {
         return;
-    }
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
-        setCurrentSpeedIndex(0);
     }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
     updateSpeedButtonUI();
