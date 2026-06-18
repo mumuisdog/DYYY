@@ -16,6 +16,9 @@ extern BOOL isAppInTransition;
 extern NSArray *targetClassNames;
 extern BOOL dyyyInteractionViewVisible;
 extern BOOL dyyyCommentViewVisible;
+extern char dyyyClearOriginalAlphaKey;
+
+BOOL DYYYIsDynamicAlphaView(UIView *view);
 
 UIWindow *getKeyWindow(void);
 

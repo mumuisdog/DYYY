@@ -66,11 +66,11 @@ static char dyyyProgressModeKey;
 static char dyyyProgressOriginalHiddenKey;
 static char dyyyProgressOriginalInteractionKey;
 static char dyyyProgressOriginalLayerOpacityKey;
-static char dyyyClearOriginalAlphaKey;
+char dyyyClearOriginalAlphaKey;
 
 // AWEAwemePlayVideoPauseIcon 的 alpha 由抖音业务层动态控制（播放=0、暂停=1），
 // 对这类视图使用 hidden 属性隐藏而非修改 alpha，避免与业务层 alpha 控制冲突。
-static BOOL DYYYIsDynamicAlphaView(UIView *view) {
+BOOL DYYYIsDynamicAlphaView(UIView *view) {
     static Class pauseIconClass = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
