@@ -563,6 +563,9 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                                                  onPresentingVC:topView()
                                                selectionChanged:^(NSString *selectedValue) {
                                                  item.detail = selectedValue;
+                                                 DYYYNormalizeSpeedSettingsForRequiredSpeeds();
+                                                 [FloatingSpeedButton reloadConfiguration];
+                                                 updateSpeedButtonUI();
                                                  [item refreshCell];
                                                }];
               };
@@ -581,6 +584,9 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                                                  onPresentingVC:topView()
                                                selectionChanged:^(NSString *selectedValue) {
                                                  item.detail = selectedValue;
+                                                 DYYYNormalizeSpeedSettingsForRequiredSpeeds();
+                                                 [FloatingSpeedButton reloadConfiguration];
+                                                 updateSpeedButtonUI();
                                                  [item refreshCell];
                                                }];
               };
@@ -3110,6 +3116,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
       AWESettingItemModel *speedSettingsItem = [[%c(AWESettingItemModel) alloc] init];
       speedSettingsItem.identifier = @"DYYYSpeedSettings";
       speedSettingsItem.title = @"快捷倍速数值设置";
+      speedSettingsItem.subTitle = @"若设置默认倍速/设置长按倍速中数值未命中快捷倍速数值设置数值，快捷倍速数值设置自动回到原来的 1.0,1.25,1.5,2.0,2.5,3.0，建议按需自行设置。";
       speedSettingsItem.type = 0;
       speedSettingsItem.svgIconImageName = @"ic_speed_outlined_20";
       speedSettingsItem.cellType = 26;
@@ -3117,10 +3124,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
       speedSettingsItem.isEnable = YES;
 
       // 获取已保存的倍速数值设置
+      DYYYNormalizeSpeedSettingsForRequiredSpeeds();
       NSString *savedSpeedSettings = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYSpeedSettings"];
       // 如果没有设置过，使用默认值
       if (!savedSpeedSettings || savedSpeedSettings.length == 0) {
-          savedSpeedSettings = @"1.0,1.25,1.5,2.0";
+          savedSpeedSettings = DYYYDefaultSpeedSettingsString();
       }
       speedSettingsItem.detail = [NSString stringWithFormat:@"%@", savedSpeedSettings];
       speedSettingsItem.cellTappedBlock = ^{
@@ -3131,9 +3139,12 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                                        // 保存用户输入的倍速值
                                        NSString *trimmedText = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
                                        [[NSUserDefaults standardUserDefaults] setObject:trimmedText forKey:@"DYYYSpeedSettings"];
-                                       speedSettingsItem.detail = trimmedText;
+                                       DYYYNormalizeSpeedSettingsForRequiredSpeeds();
+                                       NSString *normalizedText = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYSpeedSettings"] ?: DYYYDefaultSpeedSettingsString();
+                                       speedSettingsItem.detail = normalizedText;
                                        [speedSettingsItem refreshCell];
                                        [FloatingSpeedButton reloadConfiguration];
+                                       updateSpeedButtonUI();
                                      }
                                       onCancel:nil];
       };
@@ -3228,7 +3239,10 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
         if (originalSpeedSwitchChangedBlock) {
             originalSpeedSwitchChangedBlock();
         }
+        DYYYNormalizeSpeedSettingsForRequiredSpeeds();
+        speedSettingsItem.detail = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYSpeedSettings"] ?: DYYYDefaultSpeedSettingsString();
         [FloatingSpeedButton reloadConfiguration];
+        updateSpeedButtonUI();
         refreshSpeedDependentItems();
       };
 
