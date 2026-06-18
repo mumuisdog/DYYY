@@ -1,9 +1,25 @@
 name: build deb
 
 on:
-  #push:
-  #  branches:
-  #    - main
+  push:
+    branches:
+      - main
+    paths:
+      - '*.h'
+      - '*.m'
+      - '*.mm'
+      - '*.x'
+      - '*.xm'
+      - '*.c'
+      - '*.cc'
+      - '*.cpp'
+      - '*.s'
+      - '*.S'
+      - 'DYYY.plist'
+      - 'control'
+      - 'Makefile'
+      - 'Resources/**'
+      - 'layout/**'
   workflow_dispatch:
     inputs:
       scheme:
@@ -18,10 +34,37 @@ on:
           - roothide
 
 permissions:
+  actions: read
   contents: write
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.relevance.outputs.should_build }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect build-relevant changes
+        id: relevance
+        env:
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]] ||
+             .github/scripts/build-relevance.sh range "$PUSH_BEFORE" "$GITHUB_SHA"; then
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo "Build-relevant plugin, package, or Makefile changes detected."
+          else
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+            echo "Only non-build Makefile settings changed; skipping Deb build and Release."
+          fi
+
   build:
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
     runs-on: macos-latest
 
     steps:
@@ -124,18 +167,25 @@ jobs:
 
           printf 'Release asset: %s\n' "${deb_files[@]}"
 
-      - name: Generate release notes
-        env:
-          PUSH_BEFORE: ${{ github.event.before }}
-        run: .github/scripts/generate-release-notes.sh
-
       - name: Upload specific Deb packages
         uses: actions/upload-artifact@v7
         with:
           name: DYYY-${{ steps.release.outputs.timestamp }}
           path: ${{ github.workspace }}/packages/*.deb
 
+      - name: Coordinate Release publication
+        id: release_gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW_FILE: build.yml
+        run: .github/scripts/release-coordinator.sh
+
+      - name: Generate release notes
+        if: steps.release_gate.outputs.should_publish == 'true'
+        run: .github/scripts/generate-release-notes.sh
+
       - name: Publish GitHub Release
+        if: steps.release_gate.outputs.should_publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
