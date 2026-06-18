@@ -5153,12 +5153,14 @@ static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
 - (BOOL)prefersStatusBarHidden {
     if (DYYYGetBool(@"DYYYHideStatusbar")) {
         return YES;
-    } else {
-        if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) != class_getInstanceMethod([%c(AWEFeedRootViewController) class], @selector(prefersStatusBarHidden))) {
-            return %orig;
-        }
-        return NO;
     }
+    if (DYYYGetBool(@"DYYYHideStatusBarOnClear") && hideButton && hideButton.isElementsHidden) {
+        return YES;
+    }
+    if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) != class_getInstanceMethod([%c(AWEFeedRootViewController) class], @selector(prefersStatusBarHidden))) {
+        return %orig;
+    }
+    return NO;
 }
 %end
 
@@ -5167,13 +5169,15 @@ static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
 - (BOOL)prefersStatusBarHidden {
     if (DYYYGetBool(@"DYYYHideStatusbar")) {
         return YES;
-    } else {
-        if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
-            class_getInstanceMethod([%c(IESLiveAudienceViewController) class], @selector(prefersStatusBarHidden))) {
-            return %orig;
-        }
-        return NO;
     }
+    if (DYYYGetBool(@"DYYYHideStatusBarOnClear") && hideButton && hideButton.isElementsHidden) {
+        return YES;
+    }
+    if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
+        class_getInstanceMethod([%c(IESLiveAudienceViewController) class], @selector(prefersStatusBarHidden))) {
+        return %orig;
+    }
+    return NO;
 }
 %end
 
@@ -5182,13 +5186,15 @@ static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
 - (BOOL)prefersStatusBarHidden {
     if (DYYYGetBool(@"DYYYHideStatusbar")) {
         return YES;
-    } else {
-        if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
-            class_getInstanceMethod([%c(AWEAwemeDetailTableViewController) class], @selector(prefersStatusBarHidden))) {
-            return %orig;
-        }
-        return NO;
     }
+    if (DYYYGetBool(@"DYYYHideStatusBarOnClear") && hideButton && hideButton.isElementsHidden) {
+        return YES;
+    }
+    if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
+        class_getInstanceMethod([%c(AWEAwemeDetailTableViewController) class], @selector(prefersStatusBarHidden))) {
+        return %orig;
+    }
+    return NO;
 }
 %end
 
@@ -5197,13 +5203,15 @@ static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
 - (BOOL)prefersStatusBarHidden {
     if (DYYYGetBool(@"DYYYHideStatusbar")) {
         return YES;
-    } else {
-        if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
-            class_getInstanceMethod([%c(AWEAwemeHotSpotTableViewController) class], @selector(prefersStatusBarHidden))) {
-            return %orig;
-        }
-        return NO;
     }
+    if (DYYYGetBool(@"DYYYHideStatusBarOnClear") && hideButton && hideButton.isElementsHidden) {
+        return YES;
+    }
+    if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
+        class_getInstanceMethod([%c(AWEAwemeHotSpotTableViewController) class], @selector(prefersStatusBarHidden))) {
+        return %orig;
+    }
+    return NO;
 }
 %end
 
@@ -5212,13 +5220,15 @@ static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
 - (BOOL)prefersStatusBarHidden {
     if (DYYYGetBool(@"DYYYHideStatusbar")) {
         return YES;
-    } else {
-        if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
-            class_getInstanceMethod([%c(AWEFullPageFeedNewContainerViewController) class], @selector(prefersStatusBarHidden))) {
-            return %orig;
-        }
-        return NO;
     }
+    if (DYYYGetBool(@"DYYYHideStatusBarOnClear") && hideButton && hideButton.isElementsHidden) {
+        return YES;
+    }
+    if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
+        class_getInstanceMethod([%c(AWEFullPageFeedNewContainerViewController) class], @selector(prefersStatusBarHidden))) {
+        return %orig;
+    }
+    return NO;
 }
 %end
 

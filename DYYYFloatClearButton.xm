@@ -62,6 +62,22 @@ typedef NS_ENUM(NSInteger, DYYYClearProgressMode) {
     DYYYClearProgressModeHide,
 };
 
+// 清屏隐藏状态栏：遍历所有 window 的 VC 层级，触发系统重新评估状态栏显隐
+static void DYYYRefreshStatusBarVisibility(void) {
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideStatusBarOnClear"] ||
+        [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideStatusbar"]) {
+        return;
+    }
+    for (UIWindow *window in [UIApplication sharedApplication].windows) {
+        UIViewController *rootVC = window.rootViewController;
+        if (!rootVC) continue;
+        [rootVC setNeedsStatusBarAppearanceUpdate];
+        for (UIViewController *child in rootVC.childViewControllers) {
+            [child setNeedsStatusBarAppearanceUpdate];
+        }
+    }
+}
+
 static char dyyyProgressModeKey;
 static char dyyyProgressOriginalHiddenKey;
 static char dyyyProgressOriginalInteractionKey;
@@ -713,11 +729,7 @@ void reloadClearButtonConfiguration(void) {
         }
 
         // 清屏隐藏状态栏：触发系统重新评估状态栏显隐
-        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideStatusBarOnClear"] &&
-            ![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideStatusbar"]) {
-            UIWindow *keyWindow = [DYYYUtils getActiveWindow];
-            [keyWindow.rootViewController setNeedsStatusBarAppearanceUpdate];
-        }
+        DYYYRefreshStatusBarVisibility();
     } else {
         self.isElementsHidden = NO;
         forceResetAllUIElements();
@@ -740,11 +752,7 @@ void reloadClearButtonConfiguration(void) {
         [self dyyy_hideEdgeIndicator];
 
         // 清屏隐藏状态栏：触发系统重新评估状态栏显隐
-        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideStatusBarOnClear"] &&
-            ![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideStatusbar"]) {
-            UIWindow *keyWindow = [DYYYUtils getActiveWindow];
-            [keyWindow.rootViewController setNeedsStatusBarAppearanceUpdate];
-        }
+        DYYYRefreshStatusBarVisibility();
     }
 }
 
@@ -868,11 +876,7 @@ void reloadClearButtonConfiguration(void) {
     [self dyyy_hideEdgeIndicator];
 
     // 清屏隐藏状态栏：触发系统重新评估状态栏显隐
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideStatusBarOnClear"] &&
-        ![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideStatusbar"]) {
-        UIWindow *keyWindow = [DYYYUtils getActiveWindow];
-        [keyWindow.rootViewController setNeedsStatusBarAppearanceUpdate];
-    }
+    DYYYRefreshStatusBarVisibility();
 }
 - (void)dealloc {
     [self stopTimers];
