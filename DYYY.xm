@@ -279,6 +279,27 @@ static NSString *DYYYSpeedAwemeIdentifier(AWEAwemeModel *aweme) {
     return [NSString stringWithFormat:@"%p", aweme];
 }
 
+static AWEAwemeModel *DYYYSpeedAwemeFromObject(id object) {
+    Class awemeClass = NSClassFromString(@"AWEAwemeModel");
+    if (!object || !awemeClass) {
+        return nil;
+    }
+    if ([object isKindOfClass:awemeClass]) {
+        return (AWEAwemeModel *)object;
+    }
+
+    for (NSString *key in @[ @"model", @"awemeModel", @"currentAweme" ]) {
+        @try {
+            id value = [object valueForKey:key];
+            if ([value isKindOfClass:awemeClass]) {
+                return (AWEAwemeModel *)value;
+            }
+        } @catch (NSException *exception) {
+        }
+    }
+    return nil;
+}
+
 static double DYYYDefaultPlaybackSpeed(void) {
     double defaultSpeed = [[NSUserDefaults standardUserDefaults] doubleForKey:@"DYYYDefaultSpeed"];
     if (isfinite(defaultSpeed) && defaultSpeed > 0.0) {
@@ -486,9 +507,20 @@ static double DYYYConfiguredPlaybackSpeed(void) {
     return 1.0;
 }
 
-static double DYYYPreparedPlaybackSpeed(void) {
+static BOOL DYYYShouldPrepareDefaultPlaybackSpeedForPlayer(id playerViewController) {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    if ([defaults boolForKey:@"DYYYEnableFloatSpeedButton"] && [defaults boolForKey:@"DYYYAutoRestoreSpeed"]) {
+    if (![defaults boolForKey:@"DYYYEnableFloatSpeedButton"] || ![defaults boolForKey:@"DYYYAutoRestoreSpeed"]) {
+        return NO;
+    }
+
+    AWEAwemeModel *targetAweme = DYYYSpeedAwemeFromObject(playerViewController) ?: dyyyCurrentSpeedAweme;
+    NSString *awemeIdentifier = DYYYSpeedAwemeIdentifier(targetAweme);
+    return awemeIdentifier.length > 0 && ![awemeIdentifier isEqualToString:dyyyLastAutoRestoredSpeedAwemeIdentifier];
+}
+
+static double DYYYPreparedPlaybackSpeedForPlayer(id playerViewController) {
+    // Auto-restore belongs to aweme transitions; current-video refreshes should keep the selected quick speed.
+    if (DYYYShouldPrepareDefaultPlaybackSpeedForPlayer(playerViewController)) {
         return DYYYDefaultPlaybackSpeed();
     }
     return DYYYConfiguredPlaybackSpeed();
@@ -499,7 +531,7 @@ static void DYYYApplyPreparedPlaybackSpeedToPlayer(id playerViewController) {
         return;
     }
 
-    double speed = DYYYPreparedPlaybackSpeed();
+    double speed = DYYYPreparedPlaybackSpeedForPlayer(playerViewController);
     void (^applyBlock)(void) = ^{
       DYYYSetPlaybackRateOnTarget(playerViewController, speed);
     };
