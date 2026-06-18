@@ -1376,10 +1376,19 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(retain, nonatomic) UIView *followAnimationView;
 @property(retain, nonatomic) UIView *unfollowAnimationView;
 @property(retain, nonatomic) UIView *staticFollowAnimationView;
+@property(retain, nonatomic) UIView *sendMessageView;
+@property(retain, nonatomic) UIView *sendMessageGuideView;
+@property(nonatomic, weak) UIImageView *avatarSendMessageImageView;
+@property(retain, nonatomic) UIView *enterStoreView;
+@property(retain, nonatomic) UIView *enterStoreGuideView;
+@property(nonatomic, weak) UIImageView *avatarEnterStoreImageView;
+@property(retain, nonatomic) UIView *linkIconContainerView;
+@property(retain, nonatomic) UIImageView *userAvatarLinkIcon;
 - (void)updateRightContainerElement;
 - (void)p_resetFollowAnimation;
 - (void)playFollowAnimation:(id)completion;
 - (void)playUnFollowAnimation;
+- (void)changeSendMessageViewWithFlag:(BOOL)flag;
 @end
 
 @interface AWEPlayInteractionStaticFollowAnimationView : UIView
@@ -1442,8 +1451,12 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(retain, nonatomic) UIView *unfollowAnimationView;
 @property(retain, nonatomic) AWEPlayInteractionStaticFollowAnimationView *staticFollowAnimationView;
 - (void)onFollowViewClicked:(id)gesture;
+- (void)onUnFollowViewClicked:(id)arg1;
+- (void)followPromptViewClicked:(id)arg1;
 - (void)layoutElementView;
 - (void)showFollowAddView:(BOOL)show;
+- (BOOL)shouldShowFollowAddWithModel:(id)arg1;
+- (BOOL)shouldShowSpecialFollowWithModel:(id)arg1;
 - (void)viewController_willDisplay;
 - (void)viewController_viewDidAppear;
 - (void)updateFollowStatus;
@@ -1480,6 +1493,71 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 - (void)layoutElementView;
 - (void)viewController_willDisplay;
 - (void)setDecorationStyle:(long long)style;
+@end
+
+@interface AWEPlayInteractionUserAvatarSendMessageController : NSObject
+- (id)userAvatarView;
+- (void)controllerViewDidLayout;
+- (void)controllerStartConfigAvatarView:(id)view;
+- (void)controllerWillDisplay;
+- (void)controllerPlay;
+- (void)controllerReset;
+- (void)updateSendMessageView:(BOOL)show;
+- (void)p_updateSendMessageView:(BOOL)show;
+- (void)p_showSendMessageView:(id)view shouldShowSendMessageView:(BOOL)show animated:(BOOL)animated completion:(id)completion;
+- (BOOL)shouldShowSendMessageView;
+- (BOOL)shouldShowSendMessageGuideAnimation;
+- (void)playSendMessageGuideAnimationIfNeeded;
+- (void)onSendMessageViewClicked:(id)arg1;
+@end
+
+@interface AWEPlayInteractionUserAvatarSendMsgController : NSObject
+@property(retain, nonatomic) AWEPlayInteractionUserAvatarContext *userAvatarContext;
+@property(retain, nonatomic) UIView *sendMessageView;
+@property(retain, nonatomic) UIView *sendMessageGuideView;
+@property(retain, nonatomic) UIImageView *avatarSendMessageImageView;
+- (void)layoutElementView;
+- (void)viewController_willDisplay;
+- (void)viewController_viewDidDisappear;
+- (void)play;
+- (void)reset;
+- (void)changeSendMessageViewWithFlag:(BOOL)flag;
+- (void)showSendMessageView:(id)view show:(BOOL)show animated:(BOOL)animated completion:(id)completion;
+- (void)showSendMessageViewWithAnimation:(BOOL)animated;
+- (BOOL)shouldShowSendMessageView:(id)arg1;
+- (BOOL)shouldShowSendMessageGuideAnimation;
+- (void)updateSendMsgWithFollowShow:(BOOL)show animation:(BOOL)animated;
+- (void)handleAvatarFollowStatusChange:(id)arg1;
+- (void)playSendMessageGuideAnimationIfNeeded;
+- (void)onSendMessageViewClicked:(id)arg1;
+@end
+
+@interface AWEPlayInteractionUserAvatarEnterStoreController : NSObject
+@property(retain, nonatomic) AWEPlayInteractionUserAvatarContext *userAvatarContext;
+@property(retain, nonatomic) UIView *enterStoreView;
+@property(retain, nonatomic) UIView *enterStoreGuideView;
+- (void)layoutElementView;
+- (void)viewController_willDisplay;
+- (void)viewController_viewDidAppear;
+- (void)play;
+- (void)reset;
+- (void)showEnterStore;
+- (void)hideEnterStore;
+- (BOOL)shouldShowEnterStoreView;
+- (BOOL)shouldShowEnterStoreGuideAnimation;
+- (void)playEnterStoreGuideAnimationIfNeeded;
+- (void)handleAvatarFollowStatusChange:(id)arg1;
+- (void)onEnterStoreViewClicked:(id)arg1;
+@end
+
+@interface AWEPlayInteractionUserAvatarAdLinkController : NSObject
+@property(retain, nonatomic) AWEPlayInteractionUserAvatarContext *userAvatarContext;
+@property(retain, nonatomic) UIView *linkIconContainerView;
+@property(retain, nonatomic) UIImageView *userAvatarLinkIcon;
+- (void)layoutElementView;
+- (void)reset;
+- (void)updateCommerceHotSplashLinkIconImageIfNeeded:(id)arg1;
+- (void)onLinkIconContainerViewClicked:(id)arg1;
 @end
 
 @interface AWECodeGenCommonAnchorBasicInfoModel : UIViewController

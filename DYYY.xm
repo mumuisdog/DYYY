@@ -279,6 +279,35 @@ static NSString *DYYYSpeedAwemeIdentifier(AWEAwemeModel *aweme) {
     return [NSString stringWithFormat:@"%p", aweme];
 }
 
+static AWEAwemeModel *DYYYSpeedAwemeFromObject(id object) {
+    Class awemeClass = NSClassFromString(@"AWEAwemeModel");
+    if (!object || !awemeClass) {
+        return nil;
+    }
+    if ([object isKindOfClass:awemeClass]) {
+        return (AWEAwemeModel *)object;
+    }
+
+    for (NSString *key in @[ @"model", @"awemeModel", @"currentAweme" ]) {
+        @try {
+            id value = [object valueForKey:key];
+            if ([value isKindOfClass:awemeClass]) {
+                return (AWEAwemeModel *)value;
+            }
+        } @catch (NSException *exception) {
+        }
+    }
+    return nil;
+}
+
+static double DYYYDefaultPlaybackSpeed(void) {
+    double defaultSpeed = [[NSUserDefaults standardUserDefaults] doubleForKey:@"DYYYDefaultSpeed"];
+    if (isfinite(defaultSpeed) && defaultSpeed > 0.0) {
+        return defaultSpeed;
+    }
+    return 1.0;
+}
+
 static void DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(AWEAwemeModel *aweme) {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     BOOL shouldAutoRestore = [defaults boolForKey:@"DYYYEnableFloatSpeedButton"] && [defaults boolForKey:@"DYYYAutoRestoreSpeed"];
@@ -293,7 +322,9 @@ static void DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(AWEAwemeModel *aweme) {
     }
 
     dyyyLastAutoRestoredSpeedAwemeIdentifier = [awemeIdentifier copy];
-    setCurrentSpeedIndex(0);
+    if (!setCurrentSpeedValue((float)DYYYDefaultPlaybackSpeed())) {
+        setCurrentSpeedIndex(0);
+    }
     updateSpeedButtonUI();
 }
 
@@ -318,7 +349,7 @@ static NSArray<AWEPlayInteractionViewController *> *DYYYSpeedInteractionControll
     return controllers;
 }
 
-static AWEPlayInteractionViewController *DYYYResolveCurrentSpeedInteractionController(AWEPlayInteractionViewController *preferredController) {
+static AWEPlayInteractionViewController *DYYYResolveSpeedInteractionController(AWEPlayInteractionViewController *preferredController, AWEAwemeModel *targetAweme, BOOL allowVisibleFallback) {
     AWEPlayInteractionViewController *bestModelMatch = nil;
     AWEPlayInteractionViewController *bestVisibleController = nil;
     CGFloat bestModelMatchScore = -1.0;
@@ -334,13 +365,17 @@ static AWEPlayInteractionViewController *DYYYResolveCurrentSpeedInteractionContr
             bestVisibleScore = visibilityScore;
             bestVisibleController = controller;
         }
-        if (DYYYAwemeModelsMatch(controller.model, dyyyCurrentSpeedAweme) && visibilityScore > bestModelMatchScore) {
+        if (targetAweme && DYYYAwemeModelsMatch(controller.model, targetAweme) && visibilityScore > bestModelMatchScore) {
             bestModelMatchScore = visibilityScore;
             bestModelMatch = controller;
         }
     }
 
-    return bestModelMatch ?: bestVisibleController;
+    return bestModelMatch ?: (allowVisibleFallback ? bestVisibleController : nil);
+}
+
+static AWEPlayInteractionViewController *DYYYResolveCurrentSpeedInteractionController(AWEPlayInteractionViewController *preferredController) {
+    return DYYYResolveSpeedInteractionController(preferredController, dyyyCurrentSpeedAweme, YES);
 }
 
 id DYYYCurrentSpeedInteractionController(void) {
@@ -349,7 +384,9 @@ id DYYYCurrentSpeedInteractionController(void) {
 
 static void DYYYEnsureFloatSpeedButton(AWEPlayInteractionViewController *interactionController) {
     [FloatingSpeedButton reloadConfiguration];
-    AWEPlayInteractionViewController *currentController = DYYYResolveCurrentSpeedInteractionController(interactionController);
+    AWEAwemeModel *targetAweme = dyyyCurrentSpeedAweme;
+    BOOL allowVisibleFallback = !targetAweme || (interactionController && DYYYAwemeModelsMatch(interactionController.model, targetAweme));
+    AWEPlayInteractionViewController *currentController = DYYYResolveSpeedInteractionController(interactionController, targetAweme, allowVisibleFallback);
     if (!currentController) {
         updateSpeedButtonVisibility();
         return;
@@ -465,25 +502,26 @@ static double DYYYConfiguredPlaybackSpeed(void) {
     }
 
     if ([defaults boolForKey:@"DYYYUserAgreementAccepted"]) {
-        double defaultSpeed = [defaults doubleForKey:@"DYYYDefaultSpeed"];
-        if (isfinite(defaultSpeed) && defaultSpeed > 0.0) {
-            return defaultSpeed;
-        }
+        return DYYYDefaultPlaybackSpeed();
     }
     return 1.0;
 }
 
-static double DYYYPreparedPlaybackSpeed(void) {
+static BOOL DYYYShouldPrepareDefaultPlaybackSpeedForPlayer(id playerViewController) {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    if ([defaults boolForKey:@"DYYYEnableFloatSpeedButton"] && [defaults boolForKey:@"DYYYAutoRestoreSpeed"]) {
-        NSArray *speeds = getSpeedOptions();
-        if (speeds.count > 0) {
-            double defaultSpeed = [speeds.firstObject doubleValue];
-            if (isfinite(defaultSpeed) && defaultSpeed > 0.0) {
-                return defaultSpeed;
-            }
-        }
-        return 1.0;
+    if (![defaults boolForKey:@"DYYYEnableFloatSpeedButton"] || ![defaults boolForKey:@"DYYYAutoRestoreSpeed"]) {
+        return NO;
+    }
+
+    AWEAwemeModel *targetAweme = DYYYSpeedAwemeFromObject(playerViewController) ?: dyyyCurrentSpeedAweme;
+    NSString *awemeIdentifier = DYYYSpeedAwemeIdentifier(targetAweme);
+    return awemeIdentifier.length > 0 && ![awemeIdentifier isEqualToString:dyyyLastAutoRestoredSpeedAwemeIdentifier];
+}
+
+static double DYYYPreparedPlaybackSpeedForPlayer(id playerViewController) {
+    // Auto-restore belongs to aweme transitions; current-video refreshes should keep the selected quick speed.
+    if (DYYYShouldPrepareDefaultPlaybackSpeedForPlayer(playerViewController)) {
+        return DYYYDefaultPlaybackSpeed();
     }
     return DYYYConfiguredPlaybackSpeed();
 }
@@ -493,7 +531,7 @@ static void DYYYApplyPreparedPlaybackSpeedToPlayer(id playerViewController) {
         return;
     }
 
-    double speed = DYYYPreparedPlaybackSpeed();
+    double speed = DYYYPreparedPlaybackSpeedForPlayer(playerViewController);
     void (^applyBlock)(void) = ^{
       DYYYSetPlaybackRateOnTarget(playerViewController, speed);
     };
@@ -509,7 +547,8 @@ static void DYYYBindAndApplyCurrentPlaybackSpeed(void) {
         return;
     }
 
-    AWEPlayInteractionViewController *currentController = DYYYResolveCurrentSpeedInteractionController(nil);
+    AWEAwemeModel *targetAweme = dyyyCurrentSpeedAweme;
+    AWEPlayInteractionViewController *currentController = DYYYResolveSpeedInteractionController(nil, targetAweme, targetAweme == nil);
     if (!currentController) {
         return;
     }
@@ -518,10 +557,20 @@ static void DYYYBindAndApplyCurrentPlaybackSpeed(void) {
     DYYYApplyPlaybackSpeed(currentController, DYYYConfiguredPlaybackSpeed());
 }
 
-static void DYYYScheduleConfiguredPlaybackSpeedRestore(void) {
-    dispatch_async(dispatch_get_main_queue(), ^{
+static void DYYYScheduleConfiguredPlaybackSpeedRestoreAfterDelay(NSTimeInterval delay) {
+    dispatch_block_t restoreBlock = ^{
       DYYYBindAndApplyCurrentPlaybackSpeed();
-    });
+    };
+    if (delay <= 0.0) {
+        dispatch_async(dispatch_get_main_queue(), restoreBlock);
+    } else {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), restoreBlock);
+    }
+}
+
+static void DYYYScheduleConfiguredPlaybackSpeedRestore(void) {
+    DYYYScheduleConfiguredPlaybackSpeedRestoreAfterDelay(0.0);
+    DYYYScheduleConfiguredPlaybackSpeedRestoreAfterDelay(0.2);
 }
 
 static void DYYYEndLockedLongPressSpeedAndRestoreIfNeeded(void) {
@@ -835,52 +884,12 @@ static void DYYYHandleCurrentSpeedAwemeChanged(id aweme) {
 @end
 
 static BOOL dyyyClearingFeedNowPlayingSystemInfo = NO;
-static BOOL dyyyFeedNowPlayingPictureInPictureActive = NO;
 static CFTimeInterval dyyyLastFeedNowPlayingSystemClearTime = 0.0;
-static CFTimeInterval dyyyFeedNowPlayingSystemBlockUntil = 0.0;
-static CFTimeInterval dyyyFeedNowPlayingPictureInPictureBlockUntil = 0.0;
-
-static void DYYYClearFeedNowPlayingSystemInfoThrottled(void);
-
-static BOOL DYYYIsAppActiveForFeedNowPlayingBlock(void) {
-    return [UIApplication sharedApplication].applicationState == UIApplicationStateActive;
-}
-
-static void DYYYExtendFeedNowPlayingSystemBlockWindow(void) {
-    dyyyFeedNowPlayingSystemBlockUntil = MAX(dyyyFeedNowPlayingSystemBlockUntil, CFAbsoluteTimeGetCurrent() + 0.75);
-}
-
-static void DYYYExtendFeedNowPlayingPictureInPictureBlockWindow(void) {
-    CFTimeInterval currentTime = CFAbsoluteTimeGetCurrent();
-    dyyyFeedNowPlayingPictureInPictureBlockUntil = MAX(dyyyFeedNowPlayingPictureInPictureBlockUntil, currentTime + 8.0);
-    dyyyFeedNowPlayingSystemBlockUntil = MAX(dyyyFeedNowPlayingSystemBlockUntil, currentTime + 1.5);
-}
-
-static void DYYYSetFeedNowPlayingPictureInPictureActive(BOOL active) {
-    dyyyFeedNowPlayingPictureInPictureActive = active;
-    if (active) {
-        DYYYExtendFeedNowPlayingPictureInPictureBlockWindow();
-        DYYYClearFeedNowPlayingSystemInfoThrottled();
-    } else {
-        dyyyFeedNowPlayingPictureInPictureBlockUntil = 0.0;
-    }
-}
-
-static BOOL DYYYIsFeedNowPlayingPictureInPictureBlockActive(void) {
-    return dyyyFeedNowPlayingPictureInPictureActive ||
-           CFAbsoluteTimeGetCurrent() <= dyyyFeedNowPlayingPictureInPictureBlockUntil;
-}
-
-static BOOL DYYYShouldBlockFeedNowPlayingScene(void) {
-    return DYYYIsAppActiveForFeedNowPlayingBlock() || DYYYIsFeedNowPlayingPictureInPictureBlockActive();
-}
 
 static void DYYYClearFeedNowPlayingSystemInfoThrottled(void) {
     if (!DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") || dyyyClearingFeedNowPlayingSystemInfo) {
         return;
     }
-
-    DYYYExtendFeedNowPlayingSystemBlockWindow();
 
     CFTimeInterval currentTime = CFAbsoluteTimeGetCurrent();
     if (currentTime - dyyyLastFeedNowPlayingSystemClearTime < 0.25) {
@@ -914,105 +923,14 @@ static void DYYYClearFeedNowPlayingSystemInfoThrottled(void) {
     }
 }
 
-static BOOL DYYYObjectIsKindOfClassNamed(id object, NSString *className) {
-    if (!object || className.length == 0) {
-        return NO;
-    }
-
-    Class targetClass = NSClassFromString(className);
-    return targetClass && [object isKindOfClass:targetClass];
-}
-
-static BOOL DYYYObjectBoolValueForSelector(id object, SEL selector) {
-    if (!object || ![object respondsToSelector:selector]) {
-        return NO;
-    }
-
-    return ((BOOL (*)(id, SEL))objc_msgSend)(object, selector);
-}
-
-static BOOL DYYYPlayerViewSupportsPictureInPicture(id playerView) {
-    return DYYYObjectBoolValueForSelector(playerView, NSSelectorFromString(@"isSupportPictureInPictureMode")) ||
-           DYYYObjectBoolValueForSelector(playerView, NSSelectorFromString(@"supportPictureInPictureMode"));
-}
-
-static BOOL DYYYFeedBackgroundPlayManagerIsUserAudioMode(id player) {
-    if (!DYYYObjectIsKindOfClassNamed(player, @"AWEFeedBackgroundPlayManager")) {
-        return NO;
-    }
-
-    return DYYYObjectBoolValueForSelector(player, @selector(backgroundPlayerIsOn)) ||
-           DYYYObjectBoolValueForSelector(player, @selector(isBackgroundPlayerOn)) ||
-           DYYYObjectBoolValueForSelector(player, @selector(enableListenFeed));
-}
-
-static BOOL DYYYShouldBlockFeedNowPlayingPlayer(id player) {
-    if (!DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") || !player) {
-        return NO;
-    }
-
-    if (DYYYObjectIsKindOfClassNamed(player, @"AWEAwemeBackgroundPlayModule")) {
-        return DYYYShouldBlockFeedNowPlayingScene();
-    }
-
-    if (DYYYObjectIsKindOfClassNamed(player, @"AWEFeedBackgroundPlayManager")) {
-        return DYYYShouldBlockFeedNowPlayingScene() && !DYYYFeedBackgroundPlayManagerIsUserAudioMode(player);
-    }
-
-    return NO;
-}
-
 static BOOL DYYYShouldBlockFeedNowPlayingSystemInfoWrite(void) {
-    return DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") &&
-           !dyyyClearingFeedNowPlayingSystemInfo &&
-           DYYYShouldBlockFeedNowPlayingScene() &&
-           (CFAbsoluteTimeGetCurrent() <= dyyyFeedNowPlayingSystemBlockUntil ||
-            DYYYIsFeedNowPlayingPictureInPictureBlockActive());
-}
-
-static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-      NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-      NSArray<NSString *> *startNotifications = @[
-          @"AVPictureInPictureControllerWillStartPictureInPictureNotification",
-          @"AVPictureInPictureControllerDidStartPictureInPictureNotification",
-          @"AVPictureInPictureControllerPictureInPictureWillStartNotification",
-          @"AVPictureInPictureControllerPictureInPictureDidStartNotification"
-      ];
-      NSArray<NSString *> *stopNotifications = @[
-          @"AVPictureInPictureControllerWillStopPictureInPictureNotification",
-          @"AVPictureInPictureControllerDidStopPictureInPictureNotification",
-          @"AVPictureInPictureControllerPictureInPictureWillStopNotification",
-          @"AVPictureInPictureControllerPictureInPictureDidStopNotification"
-      ];
-
-      for (NSString *name in startNotifications) {
-          [center addObserverForName:name
-                              object:nil
-                               queue:[NSOperationQueue mainQueue]
-                          usingBlock:^(__unused NSNotification *notification) {
-                            if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
-                                DYYYSetFeedNowPlayingPictureInPictureActive(YES);
-                            }
-                          }];
-      }
-
-      for (NSString *name in stopNotifications) {
-          [center addObserverForName:name
-                              object:nil
-                               queue:[NSOperationQueue mainQueue]
-                          usingBlock:^(__unused NSNotification *notification) {
-                            DYYYSetFeedNowPlayingPictureInPictureActive(NO);
-                          }];
-      }
-    });
+    return DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") && !dyyyClearingFeedNowPlayingSystemInfo;
 }
 
 %hook AWEAwemeBackgroundPlayModule
 
 - (id)nowPlayingInfo {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return nil;
     }
@@ -1021,7 +939,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)refreshNowPlayingInfoIfNeeded {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1030,7 +948,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)updateNowPlayingInfoPlayback {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1043,7 +961,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 %hook AWEFeedBackgroundPlayManager
 
 - (id)nowPlayingInfo {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return nil;
     }
@@ -1052,8 +970,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)setNowPlayingInfo:(id)nowPlayingInfo {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
-        %orig(nil);
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1062,7 +979,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)resetNowPlayingInfo:(id)model {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1071,7 +988,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)refreshNowPlayingInfo {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1080,7 +997,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)refreshNowPlayingInfoIsForce:(BOOL)isForce {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1089,7 +1006,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)updateNowPlayingInfoPlayback {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1099,11 +1016,11 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 
 %end
 
-// 再从抖音播放中心入口兜底，阻断前台信息流视频上岛。
+// 采用 HideNowPlayingInfo 的强屏蔽思路：播放中心写入时直接清空系统 Now Playing，不再走原实现。
 %hook AWENowPlayingInfoCenter
 
 - (void)becomePlayingPlayer:(id)player {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(player)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1112,8 +1029,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)setNowPlayingInfo:(id)nowPlayingInfo {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self.playingPlayer)) {
-        %orig(nil);
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -1122,7 +1038,7 @@ static void DYYYRegisterFeedNowPlayingPictureInPictureObservers(void) {
 }
 
 - (void)refreshNowPlayingInfo {
-    if (DYYYShouldBlockFeedNowPlayingPlayer(self.playingPlayer)) {
+    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo")) {
         DYYYClearFeedNowPlayingSystemInfoThrottled();
         return;
     }
@@ -4321,9 +4237,68 @@ static void DYYYRemoveAvatarViewForSelector(id object, SEL selector) {
 }
 
 static void DYYYHideAvatarFollowLayerContents(UIView *view) {
+    view.backgroundColor = UIColor.clearColor;
+    view.opaque = NO;
     view.layer.contents = nil;
+    view.layer.opaque = NO;
+    view.layer.backgroundColor = UIColor.clearColor.CGColor;
+    view.layer.borderWidth = 0.0;
+    view.layer.borderColor = UIColor.clearColor.CGColor;
+    view.layer.shadowOpacity = 0.0;
+    view.layer.shadowColor = UIColor.clearColor.CGColor;
     for (CALayer *sublayer in view.layer.sublayers) {
         sublayer.hidden = YES;
+    }
+}
+
+static void DYYYClearAvatarActionLayerChrome(CALayer *layer) {
+    if (!layer) {
+        return;
+    }
+
+    layer.contents = nil;
+    layer.opaque = NO;
+    layer.backgroundColor = UIColor.clearColor.CGColor;
+    layer.borderWidth = 0.0;
+    layer.borderColor = UIColor.clearColor.CGColor;
+    layer.shadowOpacity = 0.0;
+    layer.shadowColor = UIColor.clearColor.CGColor;
+    if ([layer isKindOfClass:[CAShapeLayer class]]) {
+        CAShapeLayer *shapeLayer = (CAShapeLayer *)layer;
+        shapeLayer.fillColor = UIColor.clearColor.CGColor;
+        shapeLayer.strokeColor = UIColor.clearColor.CGColor;
+    }
+
+    for (CALayer *sublayer in [layer.sublayers copy]) {
+        DYYYClearAvatarActionLayerChrome(sublayer);
+    }
+}
+
+static void DYYYClearAvatarActionSubviewChrome(UIView *view) {
+    if (!view) {
+        return;
+    }
+
+    view.backgroundColor = UIColor.clearColor;
+    view.opaque = NO;
+    DYYYClearAvatarActionLayerChrome(view.layer);
+
+    for (UIView *subview in [view.subviews copy]) {
+        DYYYClearAvatarActionSubviewChrome(subview);
+    }
+}
+
+static void DYYYClearAvatarActionViewChrome(UIView *view) {
+    if (!view) {
+        return;
+    }
+
+    view.backgroundColor = UIColor.clearColor;
+    view.opaque = NO;
+    DYYYClearAvatarActionLayerChrome(view.layer);
+
+    for (UIView *subview in [view.subviews copy]) {
+        DYYYClearAvatarActionSubviewChrome(subview);
     }
 }
 
@@ -4373,7 +4348,12 @@ static BOOL DYYYHideAvatarFollowIconInView(UIView *view) {
 
 static BOOL DYYYIsAvatarFollowContainerView(UIView *view) {
     NSString *className = NSStringFromClass(view.class);
-    return [className containsString:@"Follow"] || [className containsString:@"follow"] || [className containsString:@"Prompt"] || [className containsString:@"Add"];
+    return [className containsString:@"Follow"] || [className containsString:@"follow"] ||
+           [className containsString:@"Prompt"] || [className containsString:@"Add"] ||
+           [className containsString:@"SendMessage"] || [className containsString:@"sendMessage"] ||
+           [className containsString:@"SendMsg"] || [className containsString:@"sendMsg"] ||
+           [className containsString:@"EnterStore"] || [className containsString:@"enterStore"] ||
+           [className containsString:@"LinkIcon"] || [className containsString:@"linkIcon"];
 }
 
 static BOOL DYYYIsSmallAvatarFollowBadgeView(UIView *view) {
@@ -4396,6 +4376,83 @@ static UIView *DYYYAvatarFollowRemovalTargetForView(UIView *view, UIView *rootVi
     return target;
 }
 
+static BOOL DYYYHideAvatarAuxiliaryActionVisualsInView(UIView *view) {
+    if (!view) {
+        return NO;
+    }
+
+    NSString *className = NSStringFromClass(view.class);
+    BOOL isActionVisual = [view isKindOfClass:[UIImageView class]] ||
+                          [className containsString:@"GuideAnimation"] ||
+                          [className containsString:@"SendMessageImage"] ||
+                          [className containsString:@"SendMsgImage"] ||
+                          [className containsString:@"EnterStoreImage"] ||
+                          [className containsString:@"LinkIcon"];
+    if (isActionVisual) {
+        view.hidden = YES;
+        return YES;
+    }
+
+    BOOL foundVisual = NO;
+    for (UIView *subview in [view.subviews copy]) {
+        foundVisual = DYYYHideAvatarAuxiliaryActionVisualsInView(subview) || foundVisual;
+    }
+    return foundVisual;
+}
+
+static NSArray<NSArray<NSString *> *> *DYYYAvatarAuxiliaryActionSelectorGroups(void) {
+    return @[
+        @[ @"sendMessageView", @"avatarSendMessageImageView", @"sendMessageGuideView" ],
+        @[ @"enterStoreView", @"avatarEnterStoreImageView", @"enterStoreGuideView" ],
+        @[ @"linkIconContainerView", @"userAvatarLinkIcon" ],
+    ];
+}
+
+static BOOL DYYYApplyAvatarAuxiliaryActionSettingsForOwner(id owner) {
+    BOOL hidePlus = DYYYGetBool(@"DYYYHideLOTAnimationView");
+    BOOL removePlus = DYYYGetBool(@"DYYYHideFollowPromptView");
+    if (!hidePlus && !removePlus) {
+        return NO;
+    }
+
+    BOOL handled = NO;
+    for (NSArray<NSString *> *selectorGroup in DYYYAvatarAuxiliaryActionSelectorGroups()) {
+        UIView *containerView = DYYYAvatarViewForSelector(owner, NSSelectorFromString(selectorGroup.firstObject));
+        NSMutableArray<UIView *> *visualViews = [NSMutableArray array];
+        for (NSUInteger index = 1; index < selectorGroup.count; index++) {
+            UIView *visualView = DYYYAvatarViewForSelector(owner, NSSelectorFromString(selectorGroup[index]));
+            if (visualView) {
+                [visualViews addObject:visualView];
+            }
+        }
+
+        if (removePlus) {
+            UIView *fallbackVisual = visualViews.firstObject;
+            UIView *removalTarget = containerView ?: DYYYAvatarFollowRemovalTargetForView(fallbackVisual, nil);
+            DYYYRemoveAvatarView(removalTarget);
+            for (UIView *visualView in visualViews) {
+                DYYYRemoveAvatarView(visualView);
+            }
+            handled = (removalTarget || visualViews.count > 0) || handled;
+            continue;
+        }
+
+        for (UIView *visualView in visualViews) {
+            visualView.hidden = YES;
+            handled = YES;
+        }
+        if (containerView) {
+            DYYYClearAvatarActionViewChrome(containerView);
+            BOOL foundVisual = DYYYHideAvatarAuxiliaryActionVisualsInView(containerView);
+            if (!foundVisual && visualViews.count == 0) {
+                DYYYHideAvatarFollowLayerContents(containerView);
+            }
+            handled = YES;
+        }
+    }
+    return handled;
+}
+
 static BOOL DYYYApplyAvatarFollowSettingsInView(UIView *view, UIView *rootView) {
     if (!view) {
         return NO;
@@ -4408,10 +4465,15 @@ static BOOL DYYYApplyAvatarFollowSettingsInView(UIView *view, UIView *rootView) 
     }
 
     NSString *className = NSStringFromClass(view.class);
+    BOOL isAvatarView = [className isEqualToString:@"AWEPlayInteractionUserAvatarView"];
     BOOL isStaticFollowView = [className isEqualToString:@"AWEPlayInteractionStaticFollowAnimationView"];
     BOOL isLegacyFollowAnimation = [className isEqualToString:@"LOTAnimationView"] && DYYYIsLegacyAvatarFollowAnimationView(view);
     BOOL isLegacyPromptContainer = [className isEqualToString:@"AWEPlayInteractionFollowPromptView"];
     BOOL handled = NO;
+
+    if (isAvatarView) {
+        handled = DYYYApplyAvatarAuxiliaryActionSettingsForOwner(view) || handled;
+    }
 
     if (isStaticFollowView || isLegacyFollowAnimation) {
         if (removePlus) {
@@ -4463,8 +4525,11 @@ static void DYYYApplyAvatarFollowPromptSettings(id owner) {
         DYYYRemoveAvatarView(followAddView);
     } else {
         BOOL foundIcon = DYYYHideAvatarFollowIconInView(followAddView);
-        if (hidePlus && followAddView && !foundIcon) {
-            DYYYHideAvatarFollowLayerContents(followAddView);
+        if (hidePlus && followAddView) {
+            DYYYClearAvatarActionViewChrome(followAddView);
+            if (!foundIcon) {
+                DYYYHideAvatarFollowLayerContents(followAddView);
+            }
         }
     }
 
@@ -4475,10 +4540,16 @@ static void DYYYApplyAvatarFollowPromptSettings(id owner) {
         DYYYApplyAvatarFollowSettingsInView(followPromptView, followPromptView);
     }
 
+    DYYYApplyAvatarAuxiliaryActionSettingsForOwner(owner);
+
     if ([owner isKindOfClass:[UIView class]]) {
         DYYYApplyAvatarFollowSettingsInView((UIView *)owner, (UIView *)owner);
     } else if ([owner isKindOfClass:[UIViewController class]]) {
         DYYYApplyAvatarFollowSettingsInView(((UIViewController *)owner).view, ((UIViewController *)owner).view);
+    }
+    UIView *userAvatarView = DYYYAvatarViewForSelector(owner, NSSelectorFromString(@"userAvatarView"));
+    if (userAvatarView) {
+        DYYYApplyAvatarFollowSettingsInView(userAvatarView, userAvatarView);
     }
     DYYYApplyAvatarFollowSettingsForContext(DYYYAvatarObjectForSelector(owner, NSSelectorFromString(@"userAvatarContext")));
 }
@@ -7409,10 +7480,19 @@ static NSHashTable *processedParentViews = nil;
     %orig;
     DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
 }
+
+- (void)changeSendMessageViewWithFlag:(BOOL)flag {
+    %orig(flag);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
 %end
 
 %hook AWEPlayInteractionUserAvatarFollowPromptController
 - (void)onFollowViewClicked:(UITapGestureRecognizer *)gesture {
+    if (DYYYGetBool(@"DYYYHideFollowPromptView")) {
+        return;
+    }
+
     if (DYYYGetBool(@"DYYYFollowTips")) {
         AWEPlayInteractionUserAvatarContext *context = nil;
         if ([self respondsToSelector:@selector(userAvatarContext)]) {
@@ -7463,9 +7543,37 @@ static NSHashTable *processedParentViews = nil;
     }
 }
 
+- (void)onUnFollowViewClicked:(id)arg1 {
+    if (DYYYGetBool(@"DYYYHideFollowPromptView")) {
+        return;
+    }
+    %orig(arg1);
+}
+
+- (void)followPromptViewClicked:(id)arg1 {
+    if (DYYYGetBool(@"DYYYHideFollowPromptView")) {
+        return;
+    }
+    %orig(arg1);
+}
+
 - (void)layoutElementView {
     %orig;
     DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (BOOL)shouldShowFollowAddWithModel:(id)arg1 {
+    if (DYYYGetBool(@"DYYYHideFollowPromptView")) {
+        return NO;
+    }
+    return %orig(arg1);
+}
+
+- (BOOL)shouldShowSpecialFollowWithModel:(id)arg1 {
+    if (DYYYGetBool(@"DYYYHideFollowPromptView")) {
+        return NO;
+    }
+    return %orig(arg1);
 }
 
 - (void)showFollowAddView:(BOOL)show {
@@ -7582,6 +7690,251 @@ static NSHashTable *processedParentViews = nil;
 - (void)setDecorationStyle:(long long)style {
     %orig(style);
     DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+%end
+
+%hook AWEPlayInteractionUserAvatarSendMessageController
+- (void)controllerViewDidLayout {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)controllerStartConfigAvatarView:(id)view {
+    %orig(view);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(view);
+}
+
+- (void)controllerWillDisplay {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)controllerPlay {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)controllerReset {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)updateSendMessageView:(BOOL)show {
+    %orig(show);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)p_updateSendMessageView:(BOOL)show {
+    %orig(show);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)p_showSendMessageView:(id)view shouldShowSendMessageView:(BOOL)show animated:(BOOL)animated completion:(id)completion {
+    %orig(view, show, animated, completion);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(view);
+}
+
+- (BOOL)shouldShowSendMessageView {
+    if (DYYYGetBool(@"DYYYHideFollowPromptView")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)shouldShowSendMessageGuideAnimation {
+    if (DYYYAvatarFollowOptionsEnabled()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)playSendMessageGuideAnimationIfNeeded {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)onSendMessageViewClicked:(id)arg1 {
+    if (DYYYGetBool(@"DYYYHideFollowPromptView")) {
+        return;
+    }
+    %orig(arg1);
+}
+%end
+
+%hook AWEPlayInteractionUserAvatarSendMsgController
+- (void)layoutElementView {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)viewController_willDisplay {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)viewController_viewDidDisappear {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)play {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)reset {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)changeSendMessageViewWithFlag:(BOOL)flag {
+    %orig(flag);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)showSendMessageView:(id)view show:(BOOL)show animated:(BOOL)animated completion:(id)completion {
+    %orig(view, show, animated, completion);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(view);
+}
+
+- (void)showSendMessageViewWithAnimation:(BOOL)animated {
+    %orig(animated);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (BOOL)shouldShowSendMessageView:(id)arg1 {
+    if (DYYYGetBool(@"DYYYHideFollowPromptView")) {
+        return NO;
+    }
+    return %orig(arg1);
+}
+
+- (BOOL)shouldShowSendMessageGuideAnimation {
+    if (DYYYAvatarFollowOptionsEnabled()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)updateSendMsgWithFollowShow:(BOOL)show animation:(BOOL)animated {
+    %orig(show, animated);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)handleAvatarFollowStatusChange:(id)arg1 {
+    %orig(arg1);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)playSendMessageGuideAnimationIfNeeded {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)onSendMessageViewClicked:(id)arg1 {
+    if (DYYYGetBool(@"DYYYHideFollowPromptView")) {
+        return;
+    }
+    %orig(arg1);
+}
+%end
+
+%hook AWEPlayInteractionUserAvatarEnterStoreController
+- (void)layoutElementView {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)viewController_willDisplay {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)viewController_viewDidAppear {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)play {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)reset {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)showEnterStore {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)hideEnterStore {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (BOOL)shouldShowEnterStoreView {
+    if (DYYYGetBool(@"DYYYHideFollowPromptView")) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)shouldShowEnterStoreGuideAnimation {
+    if (DYYYAvatarFollowOptionsEnabled()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)playEnterStoreGuideAnimationIfNeeded {
+    if (DYYYAvatarFollowOptionsEnabled()) {
+        DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+        return;
+    }
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)handleAvatarFollowStatusChange:(id)arg1 {
+    %orig(arg1);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)onEnterStoreViewClicked:(id)arg1 {
+    if (DYYYGetBool(@"DYYYHideFollowPromptView")) {
+        return;
+    }
+    %orig(arg1);
+}
+%end
+
+%hook AWEPlayInteractionUserAvatarAdLinkController
+- (void)layoutElementView {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)reset {
+    %orig;
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)updateCommerceHotSplashLinkIconImageIfNeeded:(id)arg1 {
+    %orig(arg1);
+    DYYYApplyAvatarFollowPromptSettingsWithRetry(self);
+}
+
+- (void)onLinkIconContainerViewClicked:(id)arg1 {
+    if (DYYYGetBool(@"DYYYHideFollowPromptView")) {
+        return;
+    }
+    %orig(arg1);
 }
 %end
 
@@ -9897,33 +10250,11 @@ static Class TagViewClass = nil;
 
 %hook TTPlayerView
 
-- (void)checkPictureInPictureMode {
-    %orig;
-
-    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") && DYYYPlayerViewSupportsPictureInPicture(self)) {
-        DYYYExtendFeedNowPlayingPictureInPictureBlockWindow();
-        DYYYClearFeedNowPlayingSystemInfoThrottled();
-    }
-}
-
 - (void)layoutSubviews {
     %orig;
     UIView *parent = self.superview;
     if (parent) {
         parent.backgroundColor = self.backgroundColor;
-    }
-}
-
-%end
-
-%hook TTPlayerView2
-
-- (void)checkPictureInPictureMode {
-    %orig;
-
-    if (DYYYGetBool(@"DYYYDisableFeedNowPlayingInfo") && DYYYPlayerViewSupportsPictureInPicture(self)) {
-        DYYYExtendFeedNowPlayingPictureInPictureBlockWindow();
-        DYYYClearFeedNowPlayingSystemInfoThrottled();
     }
 }
 
@@ -10491,8 +10822,6 @@ static void findTargetViewInView(UIView *view) {
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{
         @"DYYYDisableFeedNowPlayingInfo" : @YES
     }];
-
-    DYYYRegisterFeedNowPlayingPictureInPictureObservers();
 
     DYYYMigrateCombinedHDRModeIfNeeded();
 

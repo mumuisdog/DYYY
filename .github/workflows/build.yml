@@ -167,11 +167,18 @@ jobs:
 
           printf 'Release asset: %s\n' "${deb_files[@]}"
 
-      - name: Upload specific Deb packages
+      - name: Extract arm64e dylib
+        env:
+          PACKAGE_VERSION: ${{ steps.release.outputs.version }}
+        run: .github/scripts/extract-release-dylib.sh
+
+      - name: Upload release package artifacts
         uses: actions/upload-artifact@v7
         with:
           name: DYYY-${{ steps.release.outputs.timestamp }}
-          path: ${{ github.workspace }}/packages/*.deb
+          path: |
+            ${{ github.workspace }}/packages/*.deb
+            ${{ github.workspace }}/packages/*.dylib
 
       - name: Coordinate Release publication
         id: release_gate
@@ -191,7 +198,7 @@ jobs:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
           RELEASE_TITLE: ${{ steps.release.outputs.title }}
         run: |
-          gh release create "$RELEASE_TAG" packages/*.deb \
+          gh release create "$RELEASE_TAG" packages/*.deb packages/*.dylib \
             --target "$GITHUB_SHA" \
             --title "$RELEASE_TITLE" \
             --notes-file release-notes.md \
