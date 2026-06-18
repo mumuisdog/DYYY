@@ -2122,6 +2122,129 @@ static os_unfair_lock _staticColorCreationLock = OS_UNFAIR_LOCK_INIT;
     return NSOrderedSame;
 }
 
+#pragma mark - Debug Utilities (调试工具)
+
+static NSString *DYYYSafeDescription(id _Nullable obj) {
+    if (!obj) {
+        return @"";
+    }
+    NSString *desc = nil;
+    @try {
+        desc = [obj description];
+    } @catch (NSException *e) {
+        return @"<desc-exception>";
+    }
+    if (desc.length > 200) {
+        desc = [desc substringToIndex:200];
+    }
+    desc = [desc stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+    desc = [desc stringByReplacingOccurrencesOfString:@"\r" withString:@" "];
+    return desc;
+}
+
+static void DYYYAppendViewTree(UIView *view, NSMutableString *buffer, NSUInteger depth) {
+    if (!view || !buffer) {
+        return;
+    }
+
+    NSMutableString *indent = [NSMutableString string];
+    for (NSUInteger i = 0; i < depth; i++) {
+        [indent appendString:@"  "];
+    }
+
+    CGRect frame = view.frame;
+    NSString *className = NSStringFromClass([view class]);
+    NSString *accessibility = view.accessibilityLabel ?: @"";
+    NSString *extra = @"";
+
+    if ([view isKindOfClass:[UILabel class]]) {
+        NSString *text = ((UILabel *)view).text ?: @"";
+        extra = [NSString stringWithFormat:@" text=\"%@\"", DYYYSafeDescription(text)];
+    } else if ([view isKindOfClass:[UIButton class]]) {
+        NSString *title = [((UIButton *)view) titleForState:UIControlStateNormal] ?: @"";
+        extra = [NSString stringWithFormat:@" title=\"%@\"", DYYYSafeDescription(title)];
+    } else if ([view isKindOfClass:[UIImageView class]]) {
+        UIImage *image = ((UIImageView *)view).image;
+        if (image) {
+            extra = [NSString stringWithFormat:@" image=%@x%@",
+                     @(image.size.width), @(image.size.height)];
+        }
+    }
+
+    [buffer appendFormat:@"%@<%@: %p> frame={%.1f,%.1f,%.1f,%.1f} alpha=%.2f hidden=%d uie=%d tag=%ld a11y=\"%@\"%@\n",
+     indent,
+     className,
+     view,
+     frame.origin.x, frame.origin.y, frame.size.width, frame.size.height,
+     view.alpha,
+     view.hidden,
+     view.userInteractionEnabled,
+     (long)view.tag,
+     DYYYSafeDescription(accessibility),
+     extra];
+
+    for (UIView *subview in view.subviews) {
+        DYYYAppendViewTree(subview, buffer, depth + 1);
+    }
+}
+
++ (void)dumpAllWindowsViewTreeToFile:(NSString *)filePath {
+    if (filePath.length == 0) {
+        return;
+    }
+
+    // 快照在主线程采集（UIView 属性只能在主线程读取）
+    NSMutableString *buffer = [NSMutableString stringWithCapacity:64 * 1024];
+    NSDate *now = [NSDate date];
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    formatter.dateFormat = @"yyyy-MM-dd HH:mm:ss.SSS";
+    [buffer appendFormat:@"# DYYY view tree dump @ %@\n", [formatter stringFromDate:now]];
+
+    NSArray<UIWindow *> *windows = [UIApplication sharedApplication].windows;
+    [buffer appendFormat:@"# windows count = %lu\n\n", (unsigned long)windows.count];
+    NSUInteger windowIndex = 0;
+    for (UIWindow *window in windows) {
+        [buffer appendFormat:@"==== Window[%lu] %@ keyWindow=%d level=%.1f hidden=%d alpha=%.2f ====\n",
+         (unsigned long)windowIndex,
+         NSStringFromClass([window class]),
+         window.isKeyWindow,
+         (double)window.windowLevel,
+         window.hidden,
+         window.alpha];
+        DYYYAppendViewTree(window, buffer, 0);
+        [buffer appendString:@"\n"];
+        windowIndex++;
+    }
+
+    NSString *targetPath = filePath;
+
+    // 后台线程写入，避免阻塞 UI
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        NSError *writeError = nil;
+        BOOL ok = [buffer writeToFile:targetPath
+                           atomically:YES
+                             encoding:NSUTF8StringEncoding
+                                error:&writeError];
+        if (!ok) {
+            // sandbox 环境下 /var/mobile 可能不可写，fallback 到 Documents
+            NSString *documents = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+            if (documents) {
+                NSString *fallback = [documents stringByAppendingPathComponent:[targetPath lastPathComponent]];
+                NSError *fallbackError = nil;
+                BOOL fallbackOK = [buffer writeToFile:fallback
+                                           atomically:YES
+                                             encoding:NSUTF8StringEncoding
+                                                error:&fallbackError];
+                NSLog(@"[DYYY] dump view tree fallback to %@ ok=%d err=%@", fallback, fallbackOK, fallbackError);
+            } else {
+                NSLog(@"[DYYY] dump view tree failed: %@", writeError);
+            }
+        } else {
+            NSLog(@"[DYYY] dump view tree to %@ size=%lu", targetPath, (unsigned long)buffer.length);
+        }
+    });
+}
+
 @end
 
 #pragma mark - External C Functions (外部 C 函数)

@@ -435,6 +435,20 @@ static void DYYYEnsureFloatSpeedButton(AWEPlayInteractionViewController *interac
     updateSpeedButtonVisibility();
 }
 
+// 提供给跨文件调用的刷新入口：根据当前可见 PlayInteractionVC 重新评估并恢复倍速按钮，
+// 用于清屏退出等场景，避免清屏期间 viewDidDisappear 把 dyyyInteractionViewVisible 置 NO 后状态卡住。
+void DYYYRefreshFloatSpeedButton(void) {
+    void (^applyBlock)(void) = ^{
+        AWEPlayInteractionViewController *currentController = (AWEPlayInteractionViewController *)DYYYCurrentSpeedInteractionController();
+        DYYYEnsureFloatSpeedButton(currentController);
+    };
+    if ([NSThread isMainThread]) {
+        applyBlock();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), applyBlock);
+    }
+}
+
 static BOOL DYYYSetPlaybackRateOnTarget(id target, double speed) {
     if (!target || ![target respondsToSelector:@selector(setVideoControllerPlaybackRate:)]) {
         return NO;
@@ -5210,12 +5224,14 @@ static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
 - (BOOL)prefersStatusBarHidden {
     if (DYYYGetBool(@"DYYYHideStatusbar")) {
         return YES;
-    } else {
-        if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) != class_getInstanceMethod([%c(AWEFeedRootViewController) class], @selector(prefersStatusBarHidden))) {
-            return %orig;
-        }
-        return NO;
     }
+    if (DYYYGetBool(@"DYYYHideStatusBarOnClear") && hideButton && hideButton.isElementsHidden) {
+        return YES;
+    }
+    if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) != class_getInstanceMethod([%c(AWEFeedRootViewController) class], @selector(prefersStatusBarHidden))) {
+        return %orig;
+    }
+    return NO;
 }
 %end
 
@@ -5224,13 +5240,15 @@ static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
 - (BOOL)prefersStatusBarHidden {
     if (DYYYGetBool(@"DYYYHideStatusbar")) {
         return YES;
-    } else {
-        if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
-            class_getInstanceMethod([%c(IESLiveAudienceViewController) class], @selector(prefersStatusBarHidden))) {
-            return %orig;
-        }
-        return NO;
     }
+    if (DYYYGetBool(@"DYYYHideStatusBarOnClear") && hideButton && hideButton.isElementsHidden) {
+        return YES;
+    }
+    if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
+        class_getInstanceMethod([%c(IESLiveAudienceViewController) class], @selector(prefersStatusBarHidden))) {
+        return %orig;
+    }
+    return NO;
 }
 %end
 
@@ -5239,13 +5257,15 @@ static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
 - (BOOL)prefersStatusBarHidden {
     if (DYYYGetBool(@"DYYYHideStatusbar")) {
         return YES;
-    } else {
-        if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
-            class_getInstanceMethod([%c(AWEAwemeDetailTableViewController) class], @selector(prefersStatusBarHidden))) {
-            return %orig;
-        }
-        return NO;
     }
+    if (DYYYGetBool(@"DYYYHideStatusBarOnClear") && hideButton && hideButton.isElementsHidden) {
+        return YES;
+    }
+    if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
+        class_getInstanceMethod([%c(AWEAwemeDetailTableViewController) class], @selector(prefersStatusBarHidden))) {
+        return %orig;
+    }
+    return NO;
 }
 %end
 
@@ -5254,13 +5274,15 @@ static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
 - (BOOL)prefersStatusBarHidden {
     if (DYYYGetBool(@"DYYYHideStatusbar")) {
         return YES;
-    } else {
-        if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
-            class_getInstanceMethod([%c(AWEAwemeHotSpotTableViewController) class], @selector(prefersStatusBarHidden))) {
-            return %orig;
-        }
-        return NO;
     }
+    if (DYYYGetBool(@"DYYYHideStatusBarOnClear") && hideButton && hideButton.isElementsHidden) {
+        return YES;
+    }
+    if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
+        class_getInstanceMethod([%c(AWEAwemeHotSpotTableViewController) class], @selector(prefersStatusBarHidden))) {
+        return %orig;
+    }
+    return NO;
 }
 %end
 
@@ -5269,13 +5291,15 @@ static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
 - (BOOL)prefersStatusBarHidden {
     if (DYYYGetBool(@"DYYYHideStatusbar")) {
         return YES;
-    } else {
-        if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
-            class_getInstanceMethod([%c(AWEFullPageFeedNewContainerViewController) class], @selector(prefersStatusBarHidden))) {
-            return %orig;
-        }
-        return NO;
     }
+    if (DYYYGetBool(@"DYYYHideStatusBarOnClear") && hideButton && hideButton.isElementsHidden) {
+        return YES;
+    }
+    if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
+        class_getInstanceMethod([%c(AWEFullPageFeedNewContainerViewController) class], @selector(prefersStatusBarHidden))) {
+        return %orig;
+    }
+    return NO;
 }
 %end
 
@@ -5284,13 +5308,15 @@ static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
 - (BOOL)prefersStatusBarHidden {
     if (DYYYGetBool(@"DYYYHideStatusbar")) {
         return YES;
-    } else {
-        if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
-            class_getInstanceMethod([%c(AFDPureModePageContainerViewController) class], @selector(prefersStatusBarHidden))) {
-            return %orig;
-        }
-        return NO;
     }
+    if (DYYYGetBool(@"DYYYHideStatusBarOnClear") && hideButton && hideButton.isElementsHidden) {
+        return YES;
+    }
+    if (class_getInstanceMethod([self class], @selector(prefersStatusBarHidden)) !=
+        class_getInstanceMethod([%c(AFDPureModePageContainerViewController) class], @selector(prefersStatusBarHidden))) {
+        return %orig;
+    }
+    return NO;
 }
 %end
 
@@ -9094,6 +9120,15 @@ static Class tabBarButtonClass = nil;
     if (hideButton && hideButton.isElementsHidden) {
         for (NSString *className in targetClassNames) {
             if ([view isKindOfClass:NSClassFromString(className)]) {
+                // 动态 alpha 视图（如暂停图标）：只用 hidden 隐藏，不干预 alpha
+                if (DYYYIsDynamicAlphaView(view)) {
+                    view.hidden = YES;
+                    break;
+                }
+                // 在置 0 之前先保存真正的原始 alpha，避免后续 findAndHideViews 记录到 0
+                if (!objc_getAssociatedObject(view, &dyyyClearOriginalAlphaKey)) {
+                    objc_setAssociatedObject(view, &dyyyClearOriginalAlphaKey, @(view.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                }
                 if ([view isKindOfClass:NSClassFromString(@"AWELeftSideBarEntranceView")]) {
                     dispatch_async(dispatch_get_main_queue(), ^{
                       UIViewController *controller = [hideButton findViewController:view];
@@ -9448,7 +9483,12 @@ static Class tabBarButtonClass = nil;
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
     %orig(arg0);
+    // 自动恢复默认倍速：同步重置悬浮按钮的 index 和显示文字
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
+        setCurrentSpeedIndex(0);
+    }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
+    updateSpeedButtonUI();
 }
 
 - (void)prepareForDisplay {
@@ -9457,6 +9497,10 @@ static Class tabBarButtonClass = nil;
         return;
     }
 
+    // 自动恢复默认倍速：先重置 index，再应用速度并更新 UI
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
+        setCurrentSpeedIndex(0);
+    }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
     updateSpeedButtonUI();
 }
@@ -9491,13 +9535,20 @@ static Class tabBarButtonClass = nil;
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
     %orig(arg0);
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
+        setCurrentSpeedIndex(0);
+    }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
+    updateSpeedButtonUI();
 }
 
 - (void)prepareForDisplay {
     %orig;
     if (!DYYYShouldHandleSpeedFeatures()) {
         return;
+    }
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
+        setCurrentSpeedIndex(0);
     }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
     updateSpeedButtonUI();
@@ -9533,13 +9584,20 @@ static Class tabBarButtonClass = nil;
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
     %orig(arg0);
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
+        setCurrentSpeedIndex(0);
+    }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
+    updateSpeedButtonUI();
 }
 
 - (void)prepareForDisplay {
     %orig;
     if (!DYYYShouldHandleSpeedFeatures()) {
         return;
+    }
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
+        setCurrentSpeedIndex(0);
     }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
     updateSpeedButtonUI();

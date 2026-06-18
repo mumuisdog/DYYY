@@ -3349,6 +3349,34 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
           @"imageName" : @"ic_eyeslash_outlined_16"
       }];
       [clearButtonItems addObject:hideSpeedButton];
+      // 清屏后隐藏清屏按钮自身（仍可点击恢复）
+      AWESettingItemModel *hideClearButtonOnTap = [DYYYSettingsHelper createSettingItem:@{
+          @"identifier" : @"DYYYHideClearButtonOnTap",
+          @"title" : @"清屏隐藏清屏",
+          @"subTitle" : @"清屏后隐藏清屏按钮自身，原位置仍可点击恢复",
+          @"detail" : @"",
+          @"cellType" : @37,
+          @"imageName" : @"ic_eyeslash_outlined_16"
+      }];
+      [clearButtonItems addObject:hideClearButtonOnTap];
+      AWESettingItemModel *hidePauseVideoIcon = [DYYYSettingsHelper createSettingItem:@{
+          @"identifier" : @"DYYYHidePauseVideoIcon",
+          @"title" : @"清屏隐藏暂停图标",
+          @"subTitle" : @"清屏状态下隐藏视频中央的播放/暂停图标",
+          @"detail" : @"",
+          @"cellType" : @37,
+          @"imageName" : @"ic_eyeslash_outlined_16"
+      }];
+      [clearButtonItems addObject:hidePauseVideoIcon];
+      AWESettingItemModel *hideStatusBarOnClear = [DYYYSettingsHelper createSettingItem:@{
+          @"identifier" : @"DYYYHideStatusBarOnClear",
+          @"title" : @"清屏隐藏状态栏",
+          @"subTitle" : @"清屏状态下隐藏系统顶部状态栏",
+          @"detail" : @"",
+          @"cellType" : @37,
+          @"imageName" : @"ic_eyeslash_outlined_16"
+      }];
+      [clearButtonItems addObject:hideStatusBarOnClear];
       NSMutableArray<AWESettingItemModel *> *clearDependentItems = [NSMutableArray array];
       for (AWESettingItemModel *item in clearButtonItems) {
           if (item != enableClearButton) {

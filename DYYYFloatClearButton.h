@@ -16,6 +16,9 @@ extern BOOL isAppInTransition;
 extern NSArray *targetClassNames;
 extern BOOL dyyyInteractionViewVisible;
 extern BOOL dyyyCommentViewVisible;
+extern char dyyyClearOriginalAlphaKey;
+
+BOOL DYYYIsDynamicAlphaView(UIView *view);
 
 UIWindow *getKeyWindow(void);
 
@@ -39,6 +42,7 @@ void DYYYApplyFloatClearProgressStateToView(UIView *view);
 @property(nonatomic, assign) CGFloat originalAlpha;
 @property(nonatomic, strong) NSTimer *checkTimer;
 @property(nonatomic, strong) NSTimer *fadeTimer;
+@property(nonatomic, strong) UIView *edgeIndicatorView;
 - (void)resetFadeTimer;
 - (void)loadSavedPosition;
 - (void)hideUIElements;
