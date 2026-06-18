@@ -216,6 +216,8 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(nonatomic, strong) AWEAwemeModel *model;
 - (BOOL)enableHDR;
 - (void)setEnableHDR:(BOOL)enableHDR;
+- (BOOL)awe_isCurrentVideoHDR;
+- (void)setPlayerLutFilter:(id)lutFilter HDRLutImage:(id)HDRLutImage;
 @end
 
 @interface AWELongPressPanelViewGroupModel : NSObject
