@@ -72,6 +72,26 @@ static NSString *DYYYFormatSpeedOption(double speed) {
     return speedString;
 }
 
+static BOOL DYYYSpeedValuesMatch(double lhs, double rhs) {
+    return fabs(lhs - rhs) <= 0.001;
+}
+
+static NSArray<NSString *> *DYYYAdjustedSpeedOptionsForMissingDefaultSpeed(NSArray<NSString *> *currentSpeeds, double defaultSpeed) {
+    if (DYYYSpeedValuesMatch(defaultSpeed, 1.25)) {
+        return @[ @"1.25", @"2.0" ];
+    }
+    if (DYYYSpeedValuesMatch(defaultSpeed, 1.5)) {
+        return @[ @"1.5", @"2.0" ];
+    }
+    if (DYYYSpeedValuesMatch(defaultSpeed, 2.0)) {
+        return @[ @"1.0", @"1.25", @"1.5", @"2.0" ];
+    }
+
+    NSMutableArray<NSString *> *adjustedSpeeds = [currentSpeeds mutableCopy];
+    [adjustedSpeeds addObject:DYYYFormatSpeedOption(defaultSpeed)];
+    return adjustedSpeeds;
+}
+
 NSArray *getSpeedOptions() {
     NSString *speedConfig = [[NSUserDefaults standardUserDefaults] stringForKey:@"DYYYSpeedSettings"] ?: @"1.0,1.25,1.5,2.0";
     NSMutableArray<NSString *> *validSpeeds = [NSMutableArray array];
@@ -92,7 +112,7 @@ NSArray *getSpeedOptions() {
         double speed = 0.0;
         if ([scanner scanDouble:&speed] && scanner.isAtEnd && isfinite(speed) && speed > 0.0) {
             [validSpeeds addObject:trimmedValue];
-            if (shouldIncludeDefaultSpeed && fabs(speed - configuredDefaultSpeed) <= 0.001) {
+            if (shouldIncludeDefaultSpeed && DYYYSpeedValuesMatch(speed, configuredDefaultSpeed)) {
                 containsDefaultSpeed = YES;
             }
         }
@@ -102,7 +122,7 @@ NSArray *getSpeedOptions() {
         [validSpeeds addObjectsFromArray:fallbackSpeeds];
         if (shouldIncludeDefaultSpeed) {
             for (NSString *speedString in fallbackSpeeds) {
-                if (fabs([speedString doubleValue] - configuredDefaultSpeed) <= 0.001) {
+                if (DYYYSpeedValuesMatch([speedString doubleValue], configuredDefaultSpeed)) {
                     containsDefaultSpeed = YES;
                     break;
                 }
@@ -111,7 +131,7 @@ NSArray *getSpeedOptions() {
     }
 
     if (shouldIncludeDefaultSpeed && !containsDefaultSpeed) {
-        [validSpeeds addObject:DYYYFormatSpeedOption(configuredDefaultSpeed)];
+        return DYYYAdjustedSpeedOptionsForMissingDefaultSpeed(validSpeeds, configuredDefaultSpeed);
     }
 
     return validSpeeds;
@@ -159,7 +179,7 @@ BOOL setCurrentSpeedValue(float speed) {
 
     NSArray *speeds = getSpeedOptions();
     for (NSInteger index = 0; index < speeds.count; index++) {
-        if (fabs([speeds[index] floatValue] - speed) <= 0.001f) {
+        if (DYYYSpeedValuesMatch([speeds[index] floatValue], speed)) {
             setCurrentSpeedIndex(index);
             return YES;
         }
