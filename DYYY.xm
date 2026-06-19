@@ -4744,7 +4744,7 @@ static BOOL DYYYSaveAvatarShouldShowItemHook(id self, SEL _cmd) {
     }
 
     NSString *className = NSStringFromClass([self class]);
-    DYYYSaveAvatarShouldShowItemIMP originalIMP = (DYYYSaveAvatarShouldShowItemIMP)[DYYYSaveAvatarOriginalShouldShowItemIMPs()[className] pointerValue];
+    DYYYSaveAvatarShouldShowItemIMP originalIMP = (DYYYSaveAvatarShouldShowItemIMP)(uintptr_t)[DYYYSaveAvatarOriginalShouldShowItemIMPs()[className] pointerValue];
     if (originalIMP) {
         return originalIMP(self, _cmd);
     }
@@ -4769,7 +4769,7 @@ static void DYYYRegisterSaveAvatarManagerClass(Class cls) {
     DYYYSaveAvatarShouldShowItemIMP originalIMP = NULL;
     MSHookMessageEx(cls, @selector(shouldShowSaveAvatarItem), (IMP)DYYYSaveAvatarShouldShowItemHook, (IMP *)&originalIMP);
     if (originalIMP) {
-        DYYYSaveAvatarOriginalShouldShowItemIMPs()[className] = [NSValue valueWithPointer:originalIMP];
+        DYYYSaveAvatarOriginalShouldShowItemIMPs()[className] = [NSValue valueWithPointer:(const void *)(uintptr_t)originalIMP];
     }
 }
 
