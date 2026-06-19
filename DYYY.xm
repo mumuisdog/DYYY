@@ -301,114 +301,6 @@ static AWEAwemeModel *DYYYSpeedAwemeFromObject(id object) {
     return nil;
 }
 
-static BOOL DYYYViewControllerChainContainsClassName(UIViewController *viewController, NSArray<NSString *> *classNames) {
-    UIViewController *currentViewController = viewController;
-    while (currentViewController) {
-        for (NSString *className in classNames) {
-            Class targetClass = NSClassFromString(className);
-            if (targetClass && [currentViewController isKindOfClass:targetClass]) {
-                return YES;
-            }
-        }
-        currentViewController = currentViewController.parentViewController;
-    }
-    return NO;
-}
-
-static AWEAwemeModel *DYYYAwemeFromViewControllerChain(UIViewController *viewController) {
-    UIViewController *currentViewController = viewController;
-    while (currentViewController) {
-        AWEAwemeModel *aweme = DYYYSpeedAwemeFromObject(currentViewController);
-        if (aweme) {
-            return aweme;
-        }
-        currentViewController = currentViewController.parentViewController;
-    }
-    return nil;
-}
-
-static BOOL DYYYShouldOptimizeHomepageFullscreenRenderView(UIView *view) {
-    if (!view || !DYYYGetBool(@"DYYYEnableFullScreen")) {
-        return NO;
-    }
-
-    UIViewController *viewController = [DYYYUtils firstAvailableViewControllerFromView:view];
-    if (!DYYYViewControllerChainContainsClassName(viewController, @[
-            @"AWEPlayVideoViewController",
-            @"AWEAwemePlayVideoViewController",
-            @"AWEDPlayerFeedPlayerViewController",
-            @"AWEDPlayerViewController_Merge"
-        ])) {
-        return NO;
-    }
-
-    AWEAwemeModel *aweme = DYYYAwemeFromViewControllerChain(viewController);
-    if (!aweme) {
-        return NO;
-    }
-
-    if ([aweme respondsToSelector:@selector(isLive)] && aweme.isLive) {
-        return NO;
-    }
-
-    NSString *referString = [aweme.referString lowercaseString];
-    return referString.length == 0 || [referString isEqualToString:@"homepage_hot"];
-}
-
-static CGRect DYYYOptimizedHomepageFullscreenRenderFrame(UIView *view, CGRect frame) {
-    if (!DYYYShouldOptimizeHomepageFullscreenRenderView(view)) {
-        return frame;
-    }
-
-    UIView *containerView = view.superview;
-    if (!containerView) {
-        return frame;
-    }
-
-    CGFloat containerWidth = CGRectGetWidth(containerView.bounds);
-    CGFloat containerHeight = CGRectGetHeight(containerView.bounds);
-    CGFloat frameWidth = frame.size.width;
-    CGFloat frameHeight = frame.size.height;
-
-    if (containerWidth <= 0.0 || containerHeight <= 0.0 ||
-        frameWidth <= 0.0 || frameHeight <= 0.0 ||
-        !isfinite(containerWidth) || !isfinite(containerHeight) ||
-        !isfinite(frameWidth) || !isfinite(frameHeight)) {
-        return frame;
-    }
-
-    if (frameWidth <= containerWidth + 1.0 || frameHeight < containerHeight * 0.72) {
-        return frame;
-    }
-
-    CGFloat videoAspect = frameWidth / frameHeight;
-    if (!isfinite(videoAspect) || videoAspect <= 0.0) {
-        return frame;
-    }
-
-    CGFloat targetWidth = containerWidth;
-
-    if (!isfinite(targetWidth) || targetWidth <= 0.0 || fabs(frameWidth - targetWidth) < 0.5) {
-        return frame;
-    }
-
-    CGFloat targetHeight = targetWidth / videoAspect;
-    if (!isfinite(targetHeight) || targetHeight <= 0.0) {
-        return frame;
-    }
-
-    CGFloat scale = [UIScreen mainScreen].scale ?: 2.0;
-    CGRect optimizedFrame = CGRectMake((containerWidth - targetWidth) * 0.5,
-                                       (containerHeight - targetHeight) * 0.5,
-                                       targetWidth,
-                                       targetHeight);
-    optimizedFrame.origin.x = round(optimizedFrame.origin.x * scale) / scale;
-    optimizedFrame.origin.y = round(optimizedFrame.origin.y * scale) / scale;
-    optimizedFrame.size.width = round(optimizedFrame.size.width * scale) / scale;
-    optimizedFrame.size.height = round(optimizedFrame.size.height * scale) / scale;
-    return optimizedFrame;
-}
-
 static double DYYYDefaultPlaybackSpeed(void) {
     double defaultSpeed = [[NSUserDefaults standardUserDefaults] doubleForKey:@"DYYYDefaultSpeed"];
     if (isfinite(defaultSpeed) && defaultSpeed > 0.0) {
@@ -10924,30 +10816,17 @@ static Class TagViewClass = nil;
 
 %hook TTPlayerView
 
-- (void)setFrame:(CGRect)frame {
-    %orig(DYYYOptimizedHomepageFullscreenRenderFrame(self, frame));
-}
-
 - (void)layoutSubviews {
     %orig;
     UIView *parent = self.superview;
     if (parent) {
         parent.backgroundColor = self.backgroundColor;
     }
-
-    CGRect optimizedFrame = DYYYOptimizedHomepageFullscreenRenderFrame(self, self.frame);
-    if (!CGRectEqualToRect(optimizedFrame, self.frame)) {
-        self.frame = optimizedFrame;
-    }
 }
 
 %end
 
 %hook TTMetalView
-- (void)setFrame:(CGRect)frame {
-    %orig(DYYYOptimizedHomepageFullscreenRenderFrame(self, frame));
-}
-
 - (void)setCenter:(CGPoint)center {
     BOOL shouldAdjust = NO;
     UIView *view = (UIView *)self;
@@ -10979,10 +10858,6 @@ static Class TagViewClass = nil;
 %end
 
 %hook TTMetalViewNew
-- (void)setFrame:(CGRect)frame {
-    %orig(DYYYOptimizedHomepageFullscreenRenderFrame((UIView *)self, frame));
-}
-
 - (void)setCenter:(CGPoint)center {
     BOOL shouldAdjust = NO;
     UIView *view = (UIView *)self;
