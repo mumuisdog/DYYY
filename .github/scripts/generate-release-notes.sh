@@ -18,7 +18,9 @@ docs_file=$(mktemp)
 style_file=$(mktemp)
 chore_file=$(mktemp)
 revert_file=$(mktemp)
-trap 'rm -f "$feat_file" "$fix_file" "$perf_file" "$refactor_file" "$docs_file" "$style_file" "$chore_file" "$revert_file"' EXIT
+records_file=$(mktemp)
+skip_file=$(mktemp)
+trap 'rm -f "$feat_file" "$fix_file" "$perf_file" "$refactor_file" "$docs_file" "$style_file" "$chore_file" "$revert_file" "$records_file" "$skip_file"' EXIT
 
 trim_text() {
     local value=$1
@@ -98,7 +100,7 @@ canonical_commit_type() {
         新增*|增加*|添加*|支持*|引入*|实现*)
             printf 'feat'
             ;;
-        修复*|解决*|恢复*|纠正*)
+        修复*|解决*|恢复*|纠正*|*修复*)
             printf 'fix'
             ;;
         性能*|提速*|加速*|*性能*优化*|*速度*优化*|*加载*优化*)
@@ -246,7 +248,7 @@ summarize_commit_title() {
             printf '新增%s' "${content:-插件功能}"
             ;;
         fix)
-            content=$(printf '%s' "$content" | sed -E 's/^(修复|解决|恢复|纠正|修改|调整)[[:space:]:：]*//; s/的问题$//')
+            content=$(printf '%s' "$content" | sed -E 's/^(兜底修复|修复|解决|恢复|纠正|修改|调整)[[:space:]:：]*//; s/的问题$//')
             content=$(printf '%s' "$content" | sed -E 's/不生效/生效异常/g; s/失效/异常/g; s/无法/不能/g')
             content=$(trim_text "$content")
             printf '修正%s' "${content:-已知问题}"
@@ -297,6 +299,123 @@ section_file_for_type() {
     esac
 }
 
+reverted_commit_hash() {
+    local hash=$1
+    local target_hash
+    local resolved_hash
+
+    target_hash=$(
+        git show -s --format=%B "$hash" |
+            sed -nE 's/^This reverts commit ([0-9a-fA-F]{7,40})\.$/\1/p' |
+            head -n 1
+    )
+
+    if [[ -z "$target_hash" ]]; then
+        return
+    fi
+
+    resolved_hash=$(git rev-parse --verify "${target_hash}^{commit}" 2>/dev/null || true)
+    printf '%s' "${resolved_hash:-$target_hash}"
+}
+
+reverted_subject_from_title() {
+    local subject=$1
+    local revert_regex='^Revert[[:space:]]+"(.*)"$'
+
+    if [[ "$subject" =~ $revert_regex ]]; then
+        printf '%s' "${BASH_REMATCH[1]}"
+        return
+    fi
+
+    case "$subject" in
+        回滚*|撤销*|取消*)
+            printf '%s' "$subject" | sed -E 's/^(回滚|撤销|取消)[[:space:]:：]*//'
+            ;;
+    esac
+}
+
+normalize_revert_match_text() {
+    local value=$1
+
+    value=$(strip_commit_type_prefix "$value")
+    value=$(printf '%s' "$value" |
+        sed -E 's/^(新增|增加|添加|支持|引入|实现|修复|解决|恢复|纠正|修改|调整|优化|完善|重构|简化|清理|整理)[[:space:]:：]*//')
+    value=$(printf '%s' "$value" |
+        sed -E 's/(的问题|问题|逻辑|优化|功能|选项|状态)$//')
+    value=$(printf '%s' "$value" |
+        tr -d '[:space:]' |
+        sed -E 's/[[:punct:]，。；：“”"'\''（）()、]//g')
+
+    printf '%s' "$value"
+}
+
+record_contains_hash() {
+    local target_hash=$1
+
+    awk -F $'\t' -v target="$target_hash" '
+        $1 == target || index($1, target) == 1 || index(target, $1) == 1 {
+            found = 1
+        }
+        END {
+            exit found ? 0 : 1
+        }
+    ' "$records_file"
+}
+
+mark_skip_pair() {
+    local revert_hash=$1
+    local target_hash=$2
+
+    printf '%s\n%s\n' "$revert_hash" "$target_hash" >> "$skip_file"
+}
+
+detect_same_range_reverts() {
+    local hash
+    local subject
+    local commit_type
+    local target_hash
+    local target_subject
+    local target_key
+    local candidate_hash
+    local candidate_subject
+    local candidate_type
+    local candidate_key
+
+    while IFS=$'\t' read -r hash subject commit_type; do
+        [[ -n "$hash" ]] || continue
+        [[ "$commit_type" == "revert" ]] || continue
+
+        target_hash=$(reverted_commit_hash "$hash")
+        if [[ -n "$target_hash" ]] && record_contains_hash "$target_hash"; then
+            mark_skip_pair "$hash" "$target_hash"
+            continue
+        fi
+
+        target_subject=$(reverted_subject_from_title "$subject")
+        target_key=$(normalize_revert_match_text "$target_subject")
+        if [[ -z "$target_key" || "${#target_key}" -lt 6 ]]; then
+            continue
+        fi
+
+        while IFS=$'\t' read -r candidate_hash candidate_subject candidate_type; do
+            [[ -n "$candidate_hash" ]] || continue
+            [[ "$candidate_hash" == "$hash" ]] && continue
+
+            candidate_key=$(normalize_revert_match_text "$candidate_subject")
+            if [[ -n "$candidate_key" && "$candidate_key" == "$target_key" ]]; then
+                mark_skip_pair "$hash" "$candidate_hash"
+                break
+            fi
+        done < "$records_file"
+    done < "$records_file"
+}
+
+commit_is_skipped() {
+    local hash=$1
+
+    grep -Fxq "$hash" "$skip_file"
+}
+
 commit_touches_control() {
     local hash=$1
 
@@ -317,8 +436,6 @@ else
     fi
 fi
 
-relevant_count=0
-
 while IFS=$'\t' read -r hash subject; do
     [[ -n "$hash" ]] || continue
 
@@ -327,13 +444,26 @@ while IFS=$'\t' read -r hash subject; do
         continue
     fi
 
+    commit_type=$(canonical_commit_type "$subject")
+    printf '%s\t%s\t%s\n' "$hash" "$subject" "$commit_type" >> "$records_file"
+done < <(git log --reverse --format=$'%H\t%s' "$commit_range")
+
+detect_same_range_reverts
+
+relevant_count=0
+
+while IFS=$'\t' read -r hash subject commit_type; do
+    [[ -n "$hash" ]] || continue
+    if commit_is_skipped "$hash"; then
+        continue
+    fi
+
     relevant_count=$((relevant_count + 1))
     short_hash=${hash:0:8}
-    commit_type=$(canonical_commit_type "$subject")
     summary_title=$(summarize_commit_title "$hash" "$subject" "$commit_type")
     entry="- \`${commit_type}\` **${summary_title}** ([\`${short_hash}\`](${server_url}/${repository}/commit/${hash}))"
     printf '%s\n' "$entry" >> "$(section_file_for_type "$commit_type")"
-done < <(git log --reverse --format=$'%H\t%s' "$commit_range")
+done < "$records_file"
 
 cat > "$notes_file" <<EOF
 # 更新日志
