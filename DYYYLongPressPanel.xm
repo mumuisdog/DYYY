@@ -1,3 +1,7 @@
+#import <objc/message.h>
+#import <objc/runtime.h>
+#import <substrate.h>
+
 #import "AwemeHeaders.h"
 #import "DYYYBottomAlertView.h"
 #import "DYYYConfirmCloseView.h"
@@ -1475,6 +1479,393 @@
 
 // 隐藏评论分享功能
 
+typedef void (*DYYYCommentLongPressSetModelsArrayIMP)(id, SEL, id);
+
+static NSMutableDictionary<NSString *, NSValue *> *DYYYCommentLongPressOriginalSetModelsArrayIMPs(void) {
+    static NSMutableDictionary<NSString *, NSValue *> *imps = nil;
+    if (!imps) {
+        imps = [NSMutableDictionary dictionary];
+    }
+    return imps;
+}
+
+static BOOL DYYYCommentLongPressSettingEnabled(NSString *key) {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:key];
+}
+
+static BOOL DYYYCommentLongPressAnyHideSettingEnabled(void) {
+    return DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentShareToFriends") ||
+           DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentLongPressCopy") ||
+           DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentLongPressSaveImage") ||
+           DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentLongPressReport") ||
+           DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentLongPressSearch") ||
+           DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentLongPressDaily") ||
+           DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentLongPressVideoReply") ||
+           DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentLongPressPictureSearch");
+}
+
+static void DYYYCommentLongPressAddSignal(NSMutableArray<NSString *> *signals, id value) {
+    if (!value || value == (id)kCFNull) {
+        return;
+    }
+
+    NSString *signal = nil;
+    if ([value isKindOfClass:[NSString class]]) {
+        signal = (NSString *)value;
+    } else if ([value isKindOfClass:[NSAttributedString class]]) {
+        signal = [(NSAttributedString *)value string];
+    } else if ([value respondsToSelector:@selector(stringValue)]) {
+        signal = [value stringValue];
+    }
+
+    if (signal.length > 0) {
+        [signals addObject:signal.lowercaseString];
+    }
+}
+
+static id DYYYCommentLongPressObjectValueForSelector(id object, SEL selector) {
+    if (!object || ![object respondsToSelector:selector]) {
+        return nil;
+    }
+
+    Method method = class_getInstanceMethod([object class], selector);
+    if (!method) {
+        return nil;
+    }
+
+    char returnType[16] = {0};
+    method_getReturnType(method, returnType, sizeof(returnType));
+    if (returnType[0] != '@') {
+        return nil;
+    }
+
+    @try {
+        return ((id (*)(id, SEL))objc_msgSend)(object, selector);
+    } @catch (__unused NSException *exception) {
+        return nil;
+    }
+}
+
+static NSString *DYYYCommentLongPressSelectorValueForSelector(id object, SEL selector) {
+    if (!object || ![object respondsToSelector:selector]) {
+        return nil;
+    }
+
+    Method method = class_getInstanceMethod([object class], selector);
+    if (!method) {
+        return nil;
+    }
+
+    char returnType[16] = {0};
+    method_getReturnType(method, returnType, sizeof(returnType));
+    if (returnType[0] != ':') {
+        return nil;
+    }
+
+    @try {
+        SEL value = ((SEL (*)(id, SEL))objc_msgSend)(object, selector);
+        return value ? NSStringFromSelector(value) : nil;
+    } @catch (__unused NSException *exception) {
+        return nil;
+    }
+}
+
+static NSArray<NSString *> *DYYYCommentLongPressSignalsForItem(id item) {
+    NSMutableArray<NSString *> *signals = [NSMutableArray array];
+    DYYYCommentLongPressAddSignal(signals, NSStringFromClass([item class]));
+
+    NSArray<NSString *> *objectSelectors = @[
+        @"title",
+        @"itemTitle",
+        @"panelTitle",
+        @"displayTitle",
+        @"describeString",
+        @"descString",
+        @"text",
+        @"labelText",
+        @"name",
+        @"identifier",
+        @"elementIdentifier",
+        @"actionName",
+        @"type"
+    ];
+
+    for (NSString *selectorName in objectSelectors) {
+        DYYYCommentLongPressAddSignal(signals, DYYYCommentLongPressObjectValueForSelector(item, NSSelectorFromString(selectorName)));
+    }
+
+    NSArray<NSString *> *selectorSelectors = @[
+        @"selector",
+        @"actionSelector",
+        @"tapSelector",
+        @"clickSelector",
+        @"eventSelector"
+    ];
+
+    for (NSString *selectorName in selectorSelectors) {
+        DYYYCommentLongPressAddSignal(signals, DYYYCommentLongPressSelectorValueForSelector(item, NSSelectorFromString(selectorName)));
+    }
+
+    NSArray<NSString *> *kvcKeys = @[
+        @"title",
+        @"itemTitle",
+        @"panelTitle",
+        @"displayTitle",
+        @"describeString",
+        @"text",
+        @"labelText",
+        @"name",
+        @"identifier",
+        @"elementIdentifier",
+        @"actionName"
+    ];
+
+    for (NSString *key in kvcKeys) {
+        @try {
+            DYYYCommentLongPressAddSignal(signals, [item valueForKey:key]);
+        } @catch (__unused NSException *exception) {
+        }
+    }
+
+    return signals;
+}
+
+static BOOL DYYYCommentLongPressSignalMatches(NSString *signal, NSArray<NSString *> *includeTokens, NSArray<NSString *> *excludeTokens) {
+    if (signal.length == 0) {
+        return NO;
+    }
+
+    for (NSString *exclude in excludeTokens) {
+        if (exclude.length > 0 && [signal containsString:exclude.lowercaseString]) {
+            return NO;
+        }
+    }
+
+    for (NSString *include in includeTokens) {
+        if (include.length > 0 && [signal containsString:include.lowercaseString]) {
+            return YES;
+        }
+    }
+
+    return NO;
+}
+
+static BOOL DYYYCommentLongPressSignalsMatch(NSArray<NSString *> *signals, NSArray<NSString *> *includeTokens, NSArray<NSString *> *excludeTokens) {
+    for (NSString *signal in signals) {
+        if (DYYYCommentLongPressSignalMatches(signal, includeTokens, excludeTokens)) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+static BOOL DYYYCommentLongPressClassHasSelectorMatch(id item, NSArray<NSString *> *includeTokens, NSArray<NSString *> *excludeTokens) {
+    for (Class cls = [item class]; cls && cls != [NSObject class]; cls = class_getSuperclass(cls)) {
+        unsigned int methodCount = 0;
+        Method *methods = class_copyMethodList(cls, &methodCount);
+        if (!methods) {
+            continue;
+        }
+
+        BOOL matched = NO;
+        for (unsigned int i = 0; i < methodCount; i++) {
+            NSString *selectorName = NSStringFromSelector(method_getName(methods[i])).lowercaseString;
+            if (DYYYCommentLongPressSignalMatches(selectorName, includeTokens, excludeTokens)) {
+                matched = YES;
+                break;
+            }
+        }
+
+        free(methods);
+        if (matched) {
+            return YES;
+        }
+    }
+
+    return NO;
+}
+
+static BOOL DYYYCommentLongPressItemMatches(id item, NSArray<NSString *> *signals, NSArray<NSString *> *signalTokens, NSArray<NSString *> *selectorTokens, NSArray<NSString *> *excludeTokens) {
+    return DYYYCommentLongPressSignalsMatch(signals, signalTokens, excludeTokens) ||
+           DYYYCommentLongPressClassHasSelectorMatch(item, selectorTokens, excludeTokens);
+}
+
+static BOOL DYYYCommentLongPressShouldFilterItem(id item) {
+    NSArray<NSString *> *signals = DYYYCommentLongPressSignalsForItem(item);
+
+    if (DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentShareToFriends") &&
+        DYYYCommentLongPressItemMatches(item,
+                                        signals,
+                                        @[@"privatemessage", @"shareuser", @"sharetofriend", @"sendtofriend", @"分享给朋友", @"发给朋友", @"好友", @"私信"],
+                                        @[@"privatemessage", @"shareuser", @"sharetofriend", @"sendtofriend", @"sendmessage", @"share"],
+                                        @[@"daily", @"moment", @"日常", @"转发日常"])) {
+        return YES;
+    }
+
+    if (DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentLongPressCopy") &&
+        DYYYCommentLongPressItemMatches(item,
+                                        signals,
+                                        @[@"copyelement", @"copy", @"复制"],
+                                        @[@"copycomment", @"copytext", @"copycontent", @"copyaction", @"copyelement", @"performcopy", @"handlcopy", @"handlecopy", @"didtapcopy"],
+                                        @[@"copywithzone", @"mutablecopy"])) {
+        return YES;
+    }
+
+    if (DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentLongPressSaveImage") &&
+        DYYYCommentLongPressItemMatches(item,
+                                        signals,
+                                        @[@"saveimage", @"savephoto", @"save_image", @"保存图片", @"保存"],
+                                        @[@"saveimage", @"savephoto", @"downloadimage", @"saveaction", @"handlesave", @"didtapsave"],
+                                        @[@"picturesearch", @"imagesearch", @"识别图片", @"搜图"])) {
+        return YES;
+    }
+
+    if (DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentLongPressReport") &&
+        DYYYCommentLongPressItemMatches(item,
+                                        signals,
+                                        @[@"reportelement", @"report", @"举报"],
+                                        @[@"reportcomment", @"reportaction", @"handlereport", @"didtapreport"],
+                                        @[])) {
+        return YES;
+    }
+
+    if (DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentLongPressDaily") &&
+        DYYYCommentLongPressItemMatches(item,
+                                        signals,
+                                        @[@"forwardelement", @"forwarddaily", @"publishdaily", @"daily", @"moment", @"转发日常", @"发日常", @"日常"],
+                                        @[@"forwarddaily", @"publishdaily", @"dailyaction", @"handledaily", @"forwardaction"],
+                                        @[@"privatemessage", @"sharetofriend", @"分享给朋友", @"好友", @"私信"])) {
+        return YES;
+    }
+
+    if (DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentLongPressVideoReply") &&
+        DYYYCommentLongPressItemMatches(item,
+                                        signals,
+                                        @[@"videoreply", @"video_reply", @"视频回复"],
+                                        @[@"videoreply", @"replywithvideo", @"handlevideoreply"],
+                                        @[])) {
+        return YES;
+    }
+
+    if (DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentLongPressPictureSearch") &&
+        DYYYCommentLongPressItemMatches(item,
+                                        signals,
+                                        @[@"picturesearch", @"imagesearch", @"photosearch", @"searchpicture", @"searchimage", @"identifyimage", @"recognizeimage", @"识别图片", @"图片搜索", @"搜图"],
+                                        @[@"picturesearch", @"imagesearch", @"photosearch", @"searchpicture", @"searchimage", @"identifyimage", @"recognizeimage"],
+                                        @[])) {
+        return YES;
+    }
+
+    if (DYYYCommentLongPressSettingEnabled(@"DYYYHideCommentLongPressSearch") &&
+        DYYYCommentLongPressItemMatches(item,
+                                        signals,
+                                        @[@"searchelement", @"search", @"搜索"],
+                                        @[@"searchcomment", @"searchaction", @"handlesearch", @"didtapsearch", @"gosearch"],
+                                        @[@"picturesearch", @"imagesearch", @"photosearch", @"searchpicture", @"searchimage", @"identifyimage", @"recognizeimage", @"识别图片", @"图片", @"搜图"])) {
+        return YES;
+    }
+
+    return NO;
+}
+
+static NSArray *DYYYCommentLongPressFilteredModelsArray(NSArray *inputArray) {
+    if (!DYYYCommentLongPressAnyHideSettingEnabled()) {
+        return inputArray;
+    }
+
+    NSMutableArray *filteredArray = nil;
+    for (id item in inputArray) {
+        if (DYYYCommentLongPressShouldFilterItem(item)) {
+            if (!filteredArray) {
+                filteredArray = [NSMutableArray arrayWithCapacity:inputArray.count];
+                for (id keepItem in inputArray) {
+                    if (keepItem == item) {
+                        break;
+                    }
+                    [filteredArray addObject:keepItem];
+                }
+            }
+            continue;
+        }
+
+        if (filteredArray) {
+            [filteredArray addObject:item];
+        }
+    }
+
+    return filteredArray ? [filteredArray copy] : inputArray;
+}
+
+static DYYYCommentLongPressSetModelsArrayIMP DYYYCommentLongPressOriginalSetModelsArrayIMPForObject(id object) {
+    NSMutableDictionary<NSString *, NSValue *> *imps = DYYYCommentLongPressOriginalSetModelsArrayIMPs();
+    for (Class cls = object_getClass(object); cls; cls = class_getSuperclass(cls)) {
+        NSValue *value = imps[NSStringFromClass(cls)];
+        if (value) {
+            return (DYYYCommentLongPressSetModelsArrayIMP)[value pointerValue];
+        }
+    }
+    return NULL;
+}
+
+static void DYYYCommentLongPressSetModelsArray(id self, SEL _cmd, id arg1) {
+    DYYYCommentLongPressSetModelsArrayIMP original = DYYYCommentLongPressOriginalSetModelsArrayIMPForObject(self);
+    if (!original) {
+        return;
+    }
+
+    if (![arg1 isKindOfClass:[NSArray class]]) {
+        original(self, _cmd, arg1);
+        return;
+    }
+
+    original(self, _cmd, DYYYCommentLongPressFilteredModelsArray((NSArray *)arg1));
+}
+
+static void DYYYHookCommentLongPressOwnerClass(Class ownerClass, NSMutableSet<NSString *> *hookedClasses) {
+    if (!ownerClass || ![ownerClass instancesRespondToSelector:@selector(setModelsArray:)]) {
+        return;
+    }
+
+    NSString *className = NSStringFromClass(ownerClass);
+    if ([hookedClasses containsObject:className]) {
+        return;
+    }
+
+    DYYYCommentLongPressSetModelsArrayIMP original = NULL;
+    MSHookMessageEx(ownerClass, @selector(setModelsArray:), (IMP)DYYYCommentLongPressSetModelsArray, (IMP *)&original);
+    if (original) {
+        DYYYCommentLongPressOriginalSetModelsArrayIMPs()[className] = [NSValue valueWithPointer:(const void *)original];
+        [hookedClasses addObject:className];
+    }
+}
+
+static void DYYYHookCommentLongPressOwnerClassNamed(NSString *className, NSMutableSet<NSString *> *hookedClasses) {
+    Class ownerClass = objc_getClass(className.UTF8String);
+    DYYYHookCommentLongPressOwnerClass(ownerClass, hookedClasses);
+}
+
+static void DYYYInitCommentLongPressSetModelsHooks(void) {
+    NSMutableSet<NSString *> *hookedClasses = [NSMutableSet set];
+    NSArray<NSString *> *candidateOwnerClasses = @[
+        @"AWECommentLongPressPanelSwiftImpl.CommentLongPressPanelNormalSectionViewModel",
+        @"AWECommentLongPressPanelSwiftImpl.CommentLongPressPanelHorizonSectionViewModel",
+        @"AWECommentLongPressPanelSwiftImpl.CommentLongPressPanelFooterSectionViewModel",
+        @"AWECommentLongPressPanelSwiftImpl.CommentLongPressPanelCollectionViewModel",
+        @"AWECommentLongPressPanelSwiftImpl.AWECommentLongPressPanelListViewModel",
+        @"AWECommentLongPressPanelSwiftImpl.CommentLongPressPanelHorizonModel",
+        @"_TtC33AWECommentLongPressPanelSwiftImpl43CommentLongPressPanelNormalSectionViewModel",
+        @"_TtC33AWECommentLongPressPanelSwiftImpl44CommentLongPressPanelHorizonSectionViewModel",
+        @"_TtC33AWECommentLongPressPanelSwiftImpl43CommentLongPressPanelFooterSectionViewModel",
+        @"_TtC33AWECommentLongPressPanelSwiftImpl40CommentLongPressPanelCollectionViewModel",
+        @"_TtC33AWECommentLongPressPanelSwiftImpl37AWECommentLongPressPanelListViewModel",
+        @"_TtC33AWECommentLongPressPanelSwiftImpl33CommentLongPressPanelHorizonModel"
+    ];
+
+    for (NSString *className in candidateOwnerClasses) {
+        DYYYHookCommentLongPressOwnerClassNamed(className, hookedClasses);
+    }
+}
+
 %hook AWEIMCommentShareUserHorizontalCollectionViewCell
 
 - (void)layoutSubviews {
@@ -1513,73 +1904,6 @@
     }
 }
 
-%group DYYYFilterSetterGroup
-
-%hook HOOK_TARGET_OWNER_CLASS
-
-- (void)setModelsArray:(id)arg1 {
-    if (![arg1 isKindOfClass:[NSArray class]]) {
-        %orig(arg1);
-        return;
-    }
-
-    NSArray *inputArray = (NSArray *)arg1;
-    NSMutableArray *filteredArray = nil;
-
-    for (id item in inputArray) {
-        NSString *className = NSStringFromClass([item class]);
-
-        BOOL shouldFilter = ([className isEqualToString:@"AWECommentIMSwiftImpl.CommentLongPressPanelForwardElement"] &&
-                             [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentLongPressDaily"]) ||
-
-                            ([className isEqualToString:@"AWECommentLongPressPanelSwiftImpl.CommentLongPressPanelCopyElement"] &&
-                             [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentLongPressCopy"]) ||
-
-                            ([className isEqualToString:@"AWECommentLongPressPanelSwiftImpl.CommentLongPressPanelSaveImageElement"] &&
-                             [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentLongPressSaveImage"]) ||
-
-                            ([className isEqualToString:@"AWECommentLongPressPanelSwiftImpl.CommentLongPressPanelReportElement"] &&
-                             [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentLongPressReport"]) ||
-
-                            ([className isEqualToString:@"AWECommentStudioSwiftImpl.CommentLongPressPanelVideoReplyElement"] &&
-                             [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentLongPressVideoReply"]) ||
-
-                            ([className isEqualToString:@"AWECommentSearchSwiftImpl.CommentLongPressPanelPictureSearchElement"] &&
-                             [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentLongPressPictureSearch"]) ||
-
-                            ([className isEqualToString:@"AWECommentSearchSwiftImpl.CommentLongPressPanelSearchElement"] &&
-                             [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentLongPressSearch"]);
-
-        if (shouldFilter) {
-            if (!filteredArray) {
-                filteredArray = [NSMutableArray arrayWithCapacity:inputArray.count];
-                for (id keepItem in inputArray) {
-                    if (keepItem == item)
-                        break;
-                    [filteredArray addObject:keepItem];
-                }
-            }
-            continue;
-        }
-
-        if (filteredArray) {
-            [filteredArray addObject:item];
-        }
-    }
-
-    if (filteredArray) {
-        %orig([filteredArray copy]);
-    } else {
-        %orig(arg1);
-    }
-}
-
-%end
-%end
-
 %ctor {
-    Class ownerClass = objc_getClass("AWECommentLongPressPanelSwiftImpl.CommentLongPressPanelNormalSectionViewModel");
-    if (ownerClass) {
-        %init(DYYYFilterSetterGroup, HOOK_TARGET_OWNER_CLASS = ownerClass);
-    }
+    DYYYInitCommentLongPressSetModelsHooks();
 }
