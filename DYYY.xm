@@ -10,6 +10,7 @@
 #import <UIKit/UIKit.h>
 #import <dlfcn.h>
 #import <float.h>
+#import <limits.h>
 #import <math.h>
 #import <objc/message.h>
 #import <objc/runtime.h>
@@ -4726,6 +4727,120 @@ static BOOL DYYYShouldEnableSaveAvatar(void) {
     return DYYYGetBool(@"DYYYEnableSaveAvatar");
 }
 
+typedef BOOL (*DYYYSaveAvatarShouldShowItemIMP)(id, SEL);
+
+static NSMutableDictionary<NSString *, NSValue *> *DYYYSaveAvatarOriginalShouldShowItemIMPs(void) {
+    static NSMutableDictionary<NSString *, NSValue *> *imps = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+      imps = [NSMutableDictionary dictionary];
+    });
+    return imps;
+}
+
+static BOOL DYYYSaveAvatarShouldShowItemHook(id self, SEL _cmd) {
+    if (DYYYShouldEnableSaveAvatar()) {
+        return YES;
+    }
+
+    NSString *className = NSStringFromClass([self class]);
+    DYYYSaveAvatarShouldShowItemIMP originalIMP = (DYYYSaveAvatarShouldShowItemIMP)[DYYYSaveAvatarOriginalShouldShowItemIMPs()[className] pointerValue];
+    if (originalIMP) {
+        return originalIMP(self, _cmd);
+    }
+    return NO;
+}
+
+static BOOL DYYYSaveAvatarManagerClassIsCandidate(Class cls) {
+    NSString *className = NSStringFromClass(cls);
+    return [className containsString:@"ProfileAvatar"] && [className containsString:@"FunctionManager"] && class_getInstanceMethod(cls, @selector(shouldShowSaveAvatarItem));
+}
+
+static void DYYYRegisterSaveAvatarManagerClass(Class cls) {
+    if (!cls || !DYYYSaveAvatarManagerClassIsCandidate(cls)) {
+        return;
+    }
+
+    NSString *className = NSStringFromClass(cls);
+    if (DYYYSaveAvatarOriginalShouldShowItemIMPs()[className]) {
+        return;
+    }
+
+    DYYYSaveAvatarShouldShowItemIMP originalIMP = NULL;
+    MSHookMessageEx(cls, @selector(shouldShowSaveAvatarItem), (IMP)DYYYSaveAvatarShouldShowItemHook, (IMP *)&originalIMP);
+    if (originalIMP) {
+        DYYYSaveAvatarOriginalShouldShowItemIMPs()[className] = [NSValue valueWithPointer:originalIMP];
+    }
+}
+
+static void DYYYRegisterSaveAvatarManagerHooks(void) {
+    NSArray<NSString *> *candidateClassNames = @[
+        @"AWEProfileAvatarFunctionManager",
+        @"AFDProfileAvatarFunctionManager"
+    ];
+
+    for (NSString *className in candidateClassNames) {
+        DYYYRegisterSaveAvatarManagerClass(objc_getClass(className.UTF8String));
+    }
+
+    unsigned int classCount = 0;
+    Class *classes = objc_copyClassList(&classCount);
+    for (unsigned int index = 0; index < classCount; index++) {
+        DYYYRegisterSaveAvatarManagerClass(classes[index]);
+    }
+    free(classes);
+}
+
+static id DYYYProfileAvatarObjectForSelector(id object, SEL selector) {
+    if (!object || ![object respondsToSelector:selector]) {
+        return nil;
+    }
+    return ((id (*)(id, SEL))objc_msgSend)(object, selector);
+}
+
+static long long DYYYProfileAvatarIntegerForSelector(id object, SEL selector, long long fallbackValue) {
+    if (!object || ![object respondsToSelector:selector]) {
+        return fallbackValue;
+    }
+    return ((long long (*)(id, SEL))objc_msgSend)(object, selector);
+}
+
+static id DYYYProfileAvatarSaveModelForPreviewController(id controller) {
+    id functionManager = DYYYProfileAvatarObjectForSelector(controller, @selector(functionManager));
+    return DYYYProfileAvatarObjectForSelector(functionManager, @selector(saveAvatarModel));
+}
+
+static BOOL DYYYProfileAvatarFunctionTypeIsSaveAvatar(id controller, long long functionType) {
+    id saveAvatarModel = DYYYProfileAvatarSaveModelForPreviewController(controller);
+    if (!saveAvatarModel) {
+        return NO;
+    }
+    return DYYYProfileAvatarIntegerForSelector(saveAvatarModel, @selector(type), LLONG_MIN) == functionType;
+}
+
+static void DYYYEnsureSaveAvatarModelInPreviewController(id controller) {
+    if (!DYYYShouldEnableSaveAvatar() || ![controller respondsToSelector:@selector(setFunctionModels:)]) {
+        return;
+    }
+
+    id saveAvatarModel = DYYYProfileAvatarSaveModelForPreviewController(controller);
+    if (!saveAvatarModel) {
+        return;
+    }
+
+    id functionModels = DYYYProfileAvatarObjectForSelector(controller, @selector(functionModels));
+    if ([functionModels isKindOfClass:[NSArray class]] && [(NSArray *)functionModels containsObject:saveAvatarModel]) {
+        return;
+    }
+
+    NSMutableArray *updatedModels = [NSMutableArray array];
+    if ([functionModels isKindOfClass:[NSArray class]]) {
+        [updatedModels addObjectsFromArray:(NSArray *)functionModels];
+    }
+    [updatedModels addObject:saveAvatarModel];
+    ((void (*)(id, SEL, id))objc_msgSend)(controller, @selector(setFunctionModels:), [updatedModels copy]);
+}
+
 %hook AWEUserProfileABTestServiceObjc
 
 + (BOOL)profileAvatarLongPressEnable {
@@ -4749,24 +4864,20 @@ static BOOL DYYYShouldEnableSaveAvatar(void) {
 
 %end
 
-%hook AWEProfileAvatarFunctionManager
+%hook AWEProfileAvatarViewController
 
-- (BOOL)shouldShowSaveAvatarItem {
-    if (DYYYShouldEnableSaveAvatar()) {
+- (BOOL)p_shouldShowFunctionWithType:(long long)functionType {
+    if (DYYYShouldEnableSaveAvatar() && DYYYProfileAvatarFunctionTypeIsSaveAvatar(self, functionType)) {
         return YES;
     }
     return %orig;
 }
 
-%end
-
-%hook AFDProfileAvatarFunctionManager
-- (BOOL)shouldShowSaveAvatarItem {
-    if (DYYYShouldEnableSaveAvatar()) {
-        return YES;
-    }
-    return %orig;
+- (void)showMoreOptionsPopover {
+    DYYYEnsureSaveAvatarModelInPreviewController(self);
+    %orig;
 }
+
 %end
 
 %hook AWECommentMediaDownloadConfigLivePhoto
@@ -6360,32 +6471,127 @@ static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
 %end
 
 
-// 隐藏暂停关键词
+// 隐藏暂停相关
+static BOOL DYYYShouldHidePauseRelatedContent(void) {
+    return DYYYGetBool(@"DYYYHidePauseVideoRelatedWord");
+}
+
+static void DYYYHidePauseRelatedView(id object) {
+    if (![object isKindOfClass:[UIView class]]) {
+        return;
+    }
+
+    UIView *view = (UIView *)object;
+    view.hidden = YES;
+    view.alpha = 0.0;
+    view.userInteractionEnabled = NO;
+    if (view.superview) {
+        [view removeFromSuperview];
+    }
+}
+
+static void DYYYDisablePauseRelatedTap(id object) {
+    SEL blockSetter = @selector(setDidTapRelatedWordBlock:);
+    if ([object respondsToSelector:blockSetter]) {
+        ((void (*)(id, SEL, id))objc_msgSend)(object, blockSetter, nil);
+    }
+
+    SEL searchBlockSetter = @selector(setSearchBtnClickedBlock:);
+    if ([object respondsToSelector:searchBlockSetter]) {
+        ((void (*)(id, SEL, id))objc_msgSend)(object, searchBlockSetter, nil);
+    }
+
+    SEL scanBlockSetter = @selector(setScanBtnClickedBlock:);
+    if ([object respondsToSelector:scanBlockSetter]) {
+        ((void (*)(id, SEL, id))objc_msgSend)(object, scanBlockSetter, nil);
+    }
+}
+
+static void DYYYSetPauseRelatedObjectIfPossible(id object, SEL selector, id value) {
+    if ([object respondsToSelector:selector]) {
+        ((void (*)(id, SEL, id))objc_msgSend)(object, selector, value);
+    }
+}
+
+static void DYYYSetPauseRelatedBoolIfPossible(id object, SEL selector, BOOL value) {
+    if ([object respondsToSelector:selector]) {
+        ((void (*)(id, SEL, BOOL))objc_msgSend)(object, selector, value);
+    }
+}
+
+static id DYYYGetPauseRelatedObjectIfPossible(id object, SEL selector) {
+    if ([object respondsToSelector:selector]) {
+        return ((id (*)(id, SEL))objc_msgSend)(object, selector);
+    }
+    return nil;
+}
+
+static void DYYYClearPauseRelatedModelDepth(id object, NSInteger depth) {
+    if (!object || depth > 3) {
+        return;
+    }
+
+    DYYYDisablePauseRelatedTap(object);
+
+    id pauseModalInfo = DYYYGetPauseRelatedObjectIfPossible(object, @selector(pauseModalInfo));
+    if (pauseModalInfo && pauseModalInfo != object) {
+        DYYYClearPauseRelatedModelDepth(pauseModalInfo, depth + 1);
+    }
+
+    id pauseSearchInfoModel = DYYYGetPauseRelatedObjectIfPossible(object, @selector(pauseSearchInfoModel));
+    if (pauseSearchInfoModel && pauseSearchInfoModel != object) {
+        DYYYClearPauseRelatedModelDepth(pauseSearchInfoModel, depth + 1);
+    }
+
+    DYYYSetPauseRelatedObjectIfPossible(object, @selector(setPauseModalInfo:), nil);
+    DYYYSetPauseRelatedObjectIfPossible(object, @selector(setPauseSearchInfoModel:), nil);
+    DYYYSetPauseRelatedObjectIfPossible(object, @selector(setRelatedWords:), nil);
+    DYYYSetPauseRelatedObjectIfPossible(object, @selector(setRelatedWordArray:), nil);
+    DYYYSetPauseRelatedObjectIfPossible(object, @selector(setRelatedWordsCollectionView:), nil);
+    DYYYSetPauseRelatedBoolIfPossible(object, @selector(setIsTopRightPauseSearchEntranceShow:), NO);
+}
+
+static void DYYYClearPauseRelatedModel(id object) {
+    DYYYClearPauseRelatedModelDepth(object, 0);
+}
+
+static void DYYYHidePauseRelatedControllerView(id controller) {
+    if (![controller respondsToSelector:@selector(view)]) {
+        return;
+    }
+
+    UIView *view = ((UIView *(*)(id, SEL))objc_msgSend)(controller, @selector(view));
+    DYYYHidePauseRelatedView(view);
+}
+
 %hook AWEFeedPauseRelatedWordComponent
 
 - (id)updateViewWithModel:(id)arg0 {
-    if (DYYYGetBool(@"DYYYHidePauseVideoRelatedWord")) {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
+        DYYYHidePauseRelatedView(self.relatedView);
         return nil;
     }
     return %orig;
 }
 
 - (id)pauseContentWithModel:(id)arg0 {
-    if (DYYYGetBool(@"DYYYHidePauseVideoRelatedWord")) {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
         return nil;
     }
     return %orig;
 }
 
 - (id)recommendsWords {
-    if (DYYYGetBool(@"DYYYHidePauseVideoRelatedWord")) {
+    if (DYYYShouldHidePauseRelatedContent()) {
         return nil;
     }
     return %orig;
 }
 
 - (void)showRelatedRecommendPanelControllerWithSelectedText:(id)arg0 {
-    if (DYYYGetBool(@"DYYYHidePauseVideoRelatedWord")) {
+    if (DYYYShouldHidePauseRelatedContent()) {
         return;
     }
     %orig;
@@ -6393,11 +6599,434 @@ static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
 
 - (void)setupUI {
     %orig;
-    if (DYYYGetBool(@"DYYYHidePauseVideoRelatedWord")) {
-        if (self.relatedView) {
-            self.relatedView.hidden = YES;
-        }
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYHidePauseRelatedView(self.relatedView);
+        DYYYDisablePauseRelatedTap(self.relatedView);
     }
+}
+
+%end
+
+%hook AWEFeedPauseVideoRelatedWordView
+
+- (id)initWithFrame:(CGRect)frame wordsStyle:(unsigned long long)wordsStyle {
+    id view = %orig;
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYDisablePauseRelatedTap(view);
+        DYYYHidePauseRelatedView(view);
+    }
+    return view;
+}
+
+- (void)setupUI {
+    %orig;
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYDisablePauseRelatedTap(self);
+        DYYYHidePauseRelatedView(self);
+    }
+}
+
+- (void)updateRecommendWords:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
+        DYYYDisablePauseRelatedTap(self);
+        DYYYHidePauseRelatedView(self);
+        return;
+    }
+    %orig;
+}
+
+- (void)showDefaultView {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYHidePauseRelatedView(self);
+        return;
+    }
+    %orig;
+}
+
+- (void)didTapRelatedWork {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return;
+    }
+    %orig;
+}
+
+- (void)collectionView:(id)arg0 didSelectItemAtIndexPath:(id)arg1 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return;
+    }
+    %orig;
+}
+
+- (long long)collectionView:(id)arg0 numberOfItemsInSection:(long long)arg1 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return 0;
+    }
+    return %orig;
+}
+
+- (long long)numberOfSectionsInCollectionView:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return 0;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEPlayInteractionFeedPauseModalElement
+
+- (id)activateInfoWithContext:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
+        return nil;
+    }
+    return %orig;
+}
+
+- (BOOL)shouldActiveWithContext:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)shouldShowPauseModalWithModel:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEFeedPauseModalManager
+
+- (void)createPauseModalViewWithModel:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
+        return;
+    }
+    %orig;
+}
+
+- (void)showBottomTabIfNeedWithModel:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
+        return;
+    }
+    %orig;
+}
+
+- (void)showPauseModalWithModel:(id)arg0 cellViewController:(id)arg1 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
+        return;
+    }
+    %orig;
+}
+
+- (BOOL)shouldShowPauseModalIntro:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEFeedPauseModalBaseComponent
+
+- (id)updateViewWithModel:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
+        id componentContainerView = nil;
+        id component = (id)self;
+        if ([component respondsToSelector:@selector(componentContainerView)]) {
+            componentContainerView = ((id (*)(id, SEL))objc_msgSend)(component, @selector(componentContainerView));
+        }
+        DYYYHidePauseRelatedView(componentContainerView);
+        return nil;
+    }
+    return %orig;
+}
+
+- (id)pauseContentWithModel:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
+        return nil;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEFeedPauseModalController
+
+- (void)viewDidLoad {
+    %orig;
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYHidePauseRelatedControllerView(self);
+    }
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    %orig;
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYHidePauseRelatedControllerView(self);
+    }
+}
+
+- (void)showPauseSearchPopoverIfNeeded {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYHidePauseRelatedControllerView(self);
+        return;
+    }
+    %orig;
+}
+
+%end
+
+%hook AWEFeedPauseToRelatePanelController
+
+- (void)viewDidLoad {
+    %orig;
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYHidePauseRelatedControllerView(self);
+    }
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    %orig;
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYHidePauseRelatedControllerView(self);
+    }
+}
+
+- (void)showSheet {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYHidePauseRelatedControllerView(self);
+        return;
+    }
+    %orig;
+}
+
+- (void)showSheet:(BOOL)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYHidePauseRelatedControllerView(self);
+        return;
+    }
+    %orig;
+}
+
+- (void)showUnModalViewController {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYHidePauseRelatedControllerView(self);
+        return;
+    }
+    %orig;
+}
+
+%end
+
+%hook AWEFeedSearchLongBarEntranceController
+
++ (BOOL)searchLongBarCouldShowForGlobal:(BOOL)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)addLongBarView {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return;
+    }
+    %orig;
+}
+
+- (void)searchLongBarEntranceViewTapped:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return;
+    }
+    %orig;
+}
+
+- (BOOL)isSearchLongBarEntranceSwitchOn {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)canShowLongBarEntrance {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)canShowLongBarEntranceForHit {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)canShowLongBarEntranceForGHit {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)searchLongBarEntranceHitEnable {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEFeedSearchLongBarEntranceView
+
+- (id)initWithFrame:(CGRect)frame enableSkyLight:(BOOL)enableSkyLight config:(id)config {
+    id view = %orig;
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYDisablePauseRelatedTap(view);
+        DYYYHidePauseRelatedView(view);
+    }
+    return view;
+}
+
+- (void)addSubiews {
+    %orig;
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYDisablePauseRelatedTap(self);
+        DYYYHidePauseRelatedView(self);
+    }
+}
+
+- (void)updateSuggestWords:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
+        DYYYDisablePauseRelatedTap(self);
+        DYYYHidePauseRelatedView(self);
+        return;
+    }
+    %orig;
+}
+
+- (void)scanBtnClicked {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return;
+    }
+    %orig;
+}
+
+- (void)searchBtnClicked {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return;
+    }
+    %orig;
+}
+
+%end
+
+%hook AWEFeedSearchRecommendedVideosView
+
+- (id)initWithFrame:(CGRect)frame {
+    id view = %orig;
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYHidePauseRelatedView(view);
+    }
+    return view;
+}
+
+- (void)layoutSubviews {
+    %orig;
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYHidePauseRelatedView(self);
+    }
+}
+
+- (BOOL)gestureRecognizerShouldBegin:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)_updateWithModel:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
+        DYYYHidePauseRelatedView(self);
+        return;
+    }
+    %orig;
+}
+
+- (void)collectionView:(id)arg0 didSelectItemAtIndexPath:(id)arg1 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return;
+    }
+    %orig;
+}
+
+- (long long)collectionView:(id)arg0 numberOfItemsInSection:(long long)arg1 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return 0;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWECodeGenPauseModalInfoModel
+
+- (id)pauseSearchInfoModel {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return nil;
+    }
+    return %orig;
+}
+
+- (void)setPauseSearchInfoModel:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
+        %orig(nil);
+        return;
+    }
+    %orig;
+}
+
+- (BOOL)hasPauseSearchInfo {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWECodeGenPauseSearchModel
+
+- (id)pauseSearchKeyWord {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return nil;
+    }
+    return %orig;
+}
+
+- (id)pauseSearchConfig {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return nil;
+    }
+    return %orig;
 }
 
 %end
@@ -8143,6 +8772,29 @@ static NSHashTable *processedParentViews = nil;
 		return;
 	}
 	%orig;
+}
+
+- (id)pauseModalInfo {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return nil;
+    }
+    return %orig;
+}
+
+- (void)setPauseModalInfo:(id)arg0 {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        DYYYClearPauseRelatedModel(arg0);
+        %orig(nil);
+        return;
+    }
+    %orig;
+}
+
+- (BOOL)hasPauseModalInfo {
+    if (DYYYShouldHidePauseRelatedContent()) {
+        return NO;
+    }
+    return %orig;
 }
 
 %end
@@ -11970,6 +12622,7 @@ static void findTargetViewInView(UIView *view) {
     }];
 
     DYYYMigrateCombinedHDRModeIfNeeded();
+    DYYYRegisterSaveAvatarManagerHooks();
 
     Class interactionBaseLabelClass = objc_getClass("AWECommentSwiftBizUI.CommentInteractionBaseLabel");
     if (interactionBaseLabelClass) {
