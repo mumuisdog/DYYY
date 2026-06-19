@@ -201,7 +201,7 @@ static void DYYYRegisterSearchSections(NSString *categoryTitle, NSArray *section
 
             NSString *identifier = item.identifier.length > 0 ? item.identifier : item.title;
             NSString *entryKey = [NSString stringWithFormat:@"%@|%@|%@", path, identifier, item.title];
-            NSString *searchableText = [NSString stringWithFormat:@"%@ %@ %@ %@ %@", path, item.title ?: @"", item.subTitle ?: @"", item.detail ?: @"", item.identifier ?: @""];
+            NSString *searchableText = [NSString stringWithFormat:@"%@ %@", item.title ?: @"", item.subTitle ?: @""];
 
             if (!indexMap[entryKey]) {
                 [orderedKeys addObject:entryKey];
