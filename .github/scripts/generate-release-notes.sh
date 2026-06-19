@@ -422,14 +422,14 @@ commit_touches_control() {
     commit_touches_path "$hash" "control"
 }
 
-if [[ -n "${PUSH_BEFORE:-}" && "$PUSH_BEFORE" != "$zero_sha" ]] &&
-   git cat-file -e "${PUSH_BEFORE}^{commit}" 2>/dev/null; then
+previous_tag=$(git tag --list 'DYYY_*-build.*' --sort=-version:refname | head -n 1)
+if [[ -n "$previous_tag" ]]; then
+    commit_range="${previous_tag}..${head_sha}"
+elif [[ -n "${PUSH_BEFORE:-}" && "$PUSH_BEFORE" != "$zero_sha" ]] &&
+     git cat-file -e "${PUSH_BEFORE}^{commit}" 2>/dev/null; then
     commit_range="${PUSH_BEFORE}..${head_sha}"
 else
-    previous_tag=$(git tag --list 'DYYY_*-build.*' --sort=-version:refname | head -n 1)
-    if [[ -n "$previous_tag" ]]; then
-        commit_range="${previous_tag}..${head_sha}"
-    elif git rev-parse "${head_sha}^" >/dev/null 2>&1; then
+    if git rev-parse "${head_sha}^" >/dev/null 2>&1; then
         commit_range="${head_sha}^..${head_sha}"
     else
         commit_range="$head_sha"

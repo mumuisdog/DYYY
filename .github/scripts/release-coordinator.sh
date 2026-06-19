@@ -8,6 +8,7 @@ branch=${GITHUB_REF_NAME:-main}
 max_wait_seconds=${RELEASE_COORDINATOR_MAX_WAIT_SECONDS:-3600}
 poll_interval_seconds=${RELEASE_COORDINATOR_POLL_INTERVAL_SECONDS:-30}
 settle_seconds=${RELEASE_COORDINATOR_SETTLE_SECONDS:-30}
+release_min_interval_seconds=${RELEASE_MIN_INTERVAL_SECONDS:-43200}
 start_time=$(date +%s)
 
 require_env() {
@@ -113,6 +114,67 @@ active_older_run_count() {
          | length' <<< "$runs_json"
 }
 
+iso8601_to_epoch() {
+    local timestamp=$1
+
+    if command -v python3 >/dev/null 2>&1; then
+        python3 -c 'from datetime import datetime, timezone; import sys; print(int(datetime.fromisoformat(sys.argv[1].replace("Z", "+00:00")).timestamp()))' "$timestamp"
+        return
+    fi
+
+    if date -u -d "$timestamp" +%s >/dev/null 2>&1; then
+        date -u -d "$timestamp" +%s
+        return
+    fi
+
+    date -j -u -f "%Y-%m-%dT%H:%M:%SZ" "$timestamp" +%s
+}
+
+latest_release_json() {
+    gh api -X GET "repos/${GITHUB_REPOSITORY}/releases/latest" 2>/dev/null || true
+}
+
+latest_release_is_within_cooldown() {
+    local release_json
+    local published_at
+    local tag_name
+    local published_epoch
+    local now
+    local age
+
+    if (( release_min_interval_seconds <= 0 )); then
+        return 1
+    fi
+
+    release_json=$(latest_release_json)
+    if [[ -z "$release_json" ]]; then
+        echo "No previous GitHub Release found; publishing Release."
+        return 1
+    fi
+
+    published_at=$(jq -r '.published_at // empty' <<< "$release_json")
+    tag_name=$(jq -r '.tag_name // "unknown"' <<< "$release_json")
+    if [[ -z "$published_at" ]]; then
+        echo "Latest GitHub Release has no published_at timestamp; publishing Release."
+        return 1
+    fi
+
+    if ! published_epoch=$(iso8601_to_epoch "$published_at"); then
+        echo "Unable to parse latest Release time (${published_at}); publishing Release." >&2
+        return 1
+    fi
+
+    now=$(date -u +%s)
+    age=$((now - published_epoch))
+    if (( age < release_min_interval_seconds )); then
+        echo "Latest Release ${tag_name} was published ${age}s ago; minimum interval is ${release_min_interval_seconds}s. Skipping Release publication and keeping artifacts only."
+        return 0
+    fi
+
+    echo "Latest Release ${tag_name} was published ${age}s ago; publishing Release."
+    return 1
+}
+
 main() {
     local quiet_period_seen=false
     local runs_json
@@ -140,6 +202,11 @@ main() {
                 echo "No older active build deb runs remain; waiting ${settle_seconds}s for the run list to settle."
                 sleep "$settle_seconds"
                 continue
+            fi
+
+            if latest_release_is_within_cooldown; then
+                set_should_publish false
+                return 0
             fi
 
             echo "This is the latest build-relevant completed packaging run; publishing Release."
