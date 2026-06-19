@@ -248,18 +248,23 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
     [DYYYSettingsHelper applyDependencyRulesForItem:item];
 }
 
-@interface DYYYSettingsSearchCoordinator : NSObject <UITextFieldDelegate>
+@interface DYYYSettingsSearchCoordinator : NSObject <UITextFieldDelegate, UIGestureRecognizerDelegate>
 @property(nonatomic, weak) AWESettingBaseViewController *settingsVC;
+@property(nonatomic, weak) UINavigationController *navigationController;
+@property(nonatomic, weak) id<UIGestureRecognizerDelegate> previousInteractivePopGestureDelegate;
 @property(nonatomic, strong) AWESettingsViewModel *viewModel;
 @property(nonatomic, copy) NSArray *originalSections;
 @property(nonatomic, copy) NSArray<NSDictionary *> *searchEntries;
 @property(nonatomic, strong) UIView *headerView;
 @property(nonatomic, strong) UIView *containerView;
 @property(nonatomic, strong) UITextField *searchTextField;
+@property(nonatomic, strong) UIView *centerPlaceholderView;
 @property(nonatomic, strong) UIImageView *centerIconView;
+@property(nonatomic, strong) UILabel *centerPlaceholderLabel;
 - (instancetype)initWithSettingsVC:(AWESettingBaseViewController *)settingsVC viewModel:(AWESettingsViewModel *)viewModel originalSections:(NSArray *)sections searchEntries:(NSArray<NSDictionary *> *)entries;
 - (void)installSearchHeader;
 - (void)updateLayout;
+- (BOOL)handleBackNavigationRequest;
 @end
 
 @implementation DYYYSettingsSearchCoordinator
@@ -317,21 +322,30 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
     [self.searchTextField addTarget:self action:@selector(searchTextDidChange:) forControlEvents:UIControlEventEditingChanged];
     [self.containerView addSubview:self.searchTextField];
 
+    self.centerPlaceholderView = [[UIView alloc] initWithFrame:CGRectZero];
+    self.centerPlaceholderView.userInteractionEnabled = NO;
+    [self.containerView addSubview:self.centerPlaceholderView];
+
     self.centerIconView = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"magnifyingglass"]];
     self.centerIconView.tintColor = [UIColor colorWithWhite:0 alpha:0.38];
     self.centerIconView.contentMode = UIViewContentModeScaleAspectFit;
-    self.centerIconView.frame = CGRectMake(0, 0, 22, 22);
-    self.centerIconView.userInteractionEnabled = NO;
-    [self.containerView addSubview:self.centerIconView];
+    [self.centerPlaceholderView addSubview:self.centerIconView];
+
+    self.centerPlaceholderLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    self.centerPlaceholderLabel.text = @"搜索设置项";
+    self.centerPlaceholderLabel.textColor = [UIColor colorWithWhite:0 alpha:0.38];
+    self.centerPlaceholderLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
+    [self.centerPlaceholderView addSubview:self.centerPlaceholderLabel];
 
     [self updateSearchPlaceholderVisibility];
     [self updateLayout];
     tableView.tableHeaderView = self.headerView;
+    [self installNavigationInterceptors];
 }
 
 - (void)updateLayout {
     UITableView *tableView = self.settingsVC.tableView;
-    if (!tableView || !self.headerView || !self.containerView || !self.centerIconView) {
+    if (!tableView || !self.headerView || !self.containerView || !self.centerPlaceholderView || !self.centerIconView || !self.centerPlaceholderLabel) {
         return;
     }
 
@@ -344,11 +358,24 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
     self.headerView.frame = CGRectMake(0, 0, width, 64);
     self.containerView.frame = CGRectMake(16, 8, width - 32, 44);
     self.searchTextField.frame = self.containerView.bounds;
-    self.centerIconView.center = CGPointMake(CGRectGetMidX(self.containerView.bounds), CGRectGetMidY(self.containerView.bounds));
+
+    CGFloat iconSize = 18.0;
+    CGFloat spacing = 8.0;
+    CGSize labelSize = [self.centerPlaceholderLabel.text sizeWithAttributes:@{NSFontAttributeName : self.centerPlaceholderLabel.font}];
+    CGFloat placeholderWidth = iconSize + spacing + ceil(labelSize.width);
+    CGFloat placeholderHeight = MAX(iconSize, ceil(labelSize.height));
+    self.centerPlaceholderView.frame = CGRectMake((CGRectGetWidth(self.containerView.bounds) - placeholderWidth) / 2.0,
+                                                  (CGRectGetHeight(self.containerView.bounds) - placeholderHeight) / 2.0,
+                                                  placeholderWidth,
+                                                  placeholderHeight);
+    self.centerIconView.frame = CGRectMake(0, (placeholderHeight - iconSize) / 2.0, iconSize, iconSize);
+    self.centerPlaceholderLabel.frame = CGRectMake(iconSize + spacing, 0, ceil(labelSize.width), placeholderHeight);
 
     if (needsHeaderUpdate) {
         tableView.tableHeaderView = self.headerView;
     }
+
+    [self installNavigationInterceptors];
 }
 
 - (NSString *)trimmedSearchText {
@@ -356,10 +383,10 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
 }
 
 - (void)updateSearchPlaceholderVisibility {
-    BOOL showCenteredIcon = !self.searchTextField.isEditing && [self trimmedSearchText].length == 0;
-    self.centerIconView.hidden = !showCenteredIcon;
-    self.searchTextField.placeholder = showCenteredIcon ? nil : @"搜索设置项";
-    self.searchTextField.leftViewMode = showCenteredIcon ? UITextFieldViewModeNever : UITextFieldViewModeAlways;
+    BOOL showCenteredPlaceholder = !self.searchTextField.isEditing && [self trimmedSearchText].length == 0;
+    self.centerPlaceholderView.hidden = !showCenteredPlaceholder;
+    self.searchTextField.placeholder = showCenteredPlaceholder ? nil : @"搜索设置项";
+    self.searchTextField.leftViewMode = showCenteredPlaceholder ? UITextFieldViewModeNever : UITextFieldViewModeAlways;
 }
 
 - (NSArray *)sectionsForSearchText:(NSString *)searchText {
@@ -368,7 +395,8 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
         return self.originalSections;
     }
 
-    NSMutableArray *sections = [NSMutableArray array];
+    NSMutableDictionary<NSString *, NSMutableArray *> *groupedItems = [NSMutableDictionary dictionary];
+    NSMutableArray<NSString *> *orderedPaths = [NSMutableArray array];
     for (NSDictionary *entry in self.searchEntries) {
         NSString *searchableText = [entry[@"searchableText"] lowercaseString];
         if (![searchableText containsString:query]) {
@@ -377,12 +405,28 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
 
         AWESettingItemModel *item = entry[@"item"];
         DYYYRefreshSearchItemValue(item);
+        NSString *path = entry[@"path"] ?: @"DYYY";
+        NSMutableArray *items = groupedItems[path];
+        if (!items) {
+            items = [NSMutableArray array];
+            groupedItems[path] = items;
+            [orderedPaths addObject:path];
+        }
+        [items addObject:item];
+    }
+
+    NSMutableArray *sections = [NSMutableArray array];
+    for (NSString *path in orderedPaths) {
+        NSArray *items = groupedItems[path];
+        if (items.count == 0) {
+            continue;
+        }
 
         AWESettingSectionModel *section = [[NSClassFromString(@"AWESettingSectionModel") alloc] init];
-        section.sectionHeaderTitle = entry[@"path"];
+        section.sectionHeaderTitle = path;
         section.sectionHeaderHeight = 40;
         section.type = 0;
-        section.itemArray = @[ item ];
+        section.itemArray = items;
         [sections addObject:section];
     }
 
@@ -404,6 +448,48 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
     [self.settingsVC.tableView reloadData];
 }
 
+- (BOOL)isSearchInteractionActive {
+    return self.searchTextField.isFirstResponder || [self trimmedSearchText].length > 0;
+}
+
+- (BOOL)handleBackNavigationRequest {
+    if (![self isSearchInteractionActive]) {
+        return NO;
+    }
+
+    self.searchTextField.text = @"";
+    [self.searchTextField resignFirstResponder];
+    [self updateSearchPlaceholderVisibility];
+    self.viewModel.sectionDataArray = self.originalSections;
+    [self.settingsVC.tableView reloadData];
+    return YES;
+}
+
+- (void)installNavigationInterceptors {
+    UINavigationController *navigationController = self.settingsVC.navigationController;
+    UIGestureRecognizer *popGesture = navigationController.interactivePopGestureRecognizer;
+    if (!navigationController || !popGesture || popGesture.delegate == (id<UIGestureRecognizerDelegate>)self) {
+        return;
+    }
+
+    self.navigationController = navigationController;
+    self.previousInteractivePopGestureDelegate = popGesture.delegate;
+    popGesture.delegate = (id<UIGestureRecognizerDelegate>)self;
+}
+
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
+    if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer && [self handleBackNavigationRequest]) {
+        return NO;
+    }
+
+    id<UIGestureRecognizerDelegate> delegate = self.previousInteractivePopGestureDelegate;
+    if (delegate && delegate != (id<UIGestureRecognizerDelegate>)self && [delegate respondsToSelector:@selector(gestureRecognizerShouldBegin:)]) {
+        return [delegate gestureRecognizerShouldBegin:gestureRecognizer];
+    }
+
+    return YES;
+}
+
 - (void)textFieldDidBeginEditing:(UITextField *)textField {
     [self updateSearchPlaceholderVisibility];
 }
@@ -415,6 +501,13 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
     [textField resignFirstResponder];
     return NO;
+}
+
+- (void)dealloc {
+    UIGestureRecognizer *popGesture = self.navigationController.interactivePopGestureRecognizer;
+    if (popGesture.delegate == (id<UIGestureRecognizerDelegate>)self) {
+        popGesture.delegate = self.previousInteractivePopGestureDelegate;
+    }
 }
 
 @end
@@ -474,6 +567,19 @@ static void DYYYBuildSettingsSearchIndexIfNeeded(NSArray<AWESettingItemModel *> 
     DYYYRemoveRemoteConfigObserver();
     %orig;
 }
+%end
+
+%hook UINavigationController
+
+- (UIViewController *)popViewControllerAnimated:(BOOL)animated {
+    DYYYSettingsSearchCoordinator *coordinator = objc_getAssociatedObject(self.topViewController, &kDYYYSettingsSearchCoordinatorKey);
+    if ([coordinator handleBackNavigationRequest]) {
+        return nil;
+    }
+
+    return %orig;
+}
+
 %end
 
 %hook AWESettingsTableViewCell
