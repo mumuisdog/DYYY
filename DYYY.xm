@@ -1261,6 +1261,10 @@ static NSString *const kDYYYHDRModeKey = @"DYYYHDRMode";
 static NSString *const kDYYYHDRModeOff = @"关闭";
 static NSString *const kDYYYHDRModeDisable = @"全局屏蔽HDR效果";
 static NSString *const kDYYYHDRModeFilter = @"全局过滤HDR作品";
+static char kDYYYHDRStrippedAwemeModelKey;
+static char kDYYYHDRStrippedVideoModelKey;
+static char kDYYYHDROnlyAwemeModelKey;
+static char kDYYYHDROnlyVideoModelKey;
 
 static void DYYYMigrateCombinedHDRModeIfNeeded(void) {
     static dispatch_once_t onceToken;
@@ -1508,6 +1512,11 @@ static BOOL DYYYVideoModelHasOnlyHDRBitrateModels(id video) {
         return NO;
     }
 
+    NSNumber *cachedResult = objc_getAssociatedObject(video, &kDYYYHDROnlyVideoModelKey);
+    if (cachedResult) {
+        return cachedResult.boolValue;
+    }
+
     NSMutableArray *models = [NSMutableArray array];
     NSArray *bitrateModels = DYYYValuePreferringIvar(video, "_bitrateModels", @"bitrateModels");
     if ([bitrateModels isKindOfClass:[NSArray class]]) {
@@ -1528,13 +1537,16 @@ static BOOL DYYYVideoModelHasOnlyHDRBitrateModels(id video) {
         return NO;
     }
 
+    BOOL onlyHDR = YES;
     for (id model in models) {
         if (!DYYYBitrateModelLooksHDR(model)) {
-            return NO;
+            onlyHDR = NO;
+            break;
         }
     }
 
-    return YES;
+    objc_setAssociatedObject(video, &kDYYYHDROnlyVideoModelKey, @(onlyHDR), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    return onlyHDR;
 }
 
 static BOOL DYYYAwemeModelHasOnlyHDRBitrateModels(id aweme) {
@@ -1542,22 +1554,37 @@ static BOOL DYYYAwemeModelHasOnlyHDRBitrateModels(id aweme) {
         return NO;
     }
 
-    id video = DYYYValuePreferringIvar(aweme, "_video", @"video");
-    if (DYYYVideoModelHasOnlyHDRBitrateModels(video)) {
-        return YES;
+    NSNumber *cachedResult = objc_getAssociatedObject(aweme, &kDYYYHDROnlyAwemeModelKey);
+    if (cachedResult) {
+        return cachedResult.boolValue;
     }
 
-    NSArray *albumImages = DYYYValuePreferringIvar(aweme, "_albumImages", @"albumImages");
-    if ([albumImages isKindOfClass:[NSArray class]]) {
-        for (id imageModel in albumImages) {
-            id clipVideo = DYYYValuePreferringIvar(imageModel, "_clipVideo", @"clipVideo");
-            if (DYYYVideoModelHasOnlyHDRBitrateModels(clipVideo)) {
-                return YES;
+    BOOL onlyHDR = NO;
+    BOOL shouldCacheResult = NO;
+    id video = DYYYValuePreferringIvar(aweme, "_video", @"video");
+    if (video) {
+        shouldCacheResult = YES;
+    }
+    if (DYYYVideoModelHasOnlyHDRBitrateModels(video)) {
+        onlyHDR = YES;
+    } else {
+        NSArray *albumImages = DYYYValuePreferringIvar(aweme, "_albumImages", @"albumImages");
+        if ([albumImages isKindOfClass:[NSArray class]]) {
+            shouldCacheResult = shouldCacheResult || albumImages.count > 0;
+            for (id imageModel in albumImages) {
+                id clipVideo = DYYYValuePreferringIvar(imageModel, "_clipVideo", @"clipVideo");
+                if (DYYYVideoModelHasOnlyHDRBitrateModels(clipVideo)) {
+                    onlyHDR = YES;
+                    break;
+                }
             }
         }
     }
 
-    return NO;
+    if (shouldCacheResult || onlyHDR) {
+        objc_setAssociatedObject(aweme, &kDYYYHDROnlyAwemeModelKey, @(onlyHDR), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+    return onlyHDR;
 }
 
 static NSArray *DYYYFilteredSDRRawBitrateData(NSArray *rawData) {
@@ -1623,6 +1650,11 @@ static void DYYYStripHDRHintsFromVideoModel(id video) {
         return;
     }
 
+    if (objc_getAssociatedObject(video, &kDYYYHDRStrippedVideoModelKey)) {
+        return;
+    }
+    objc_setAssociatedObject(video, &kDYYYHDRStrippedVideoModelKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
     if ([video respondsToSelector:@selector(setIsSourceHDR:)]) {
         ((void (*)(id, SEL, NSInteger))objc_msgSend)(video, @selector(setIsSourceHDR:), 0);
     }
@@ -1658,13 +1690,18 @@ static void DYYYStripHDRHintsFromAwemeModel(id aweme) {
         return;
     }
 
-    id video = DYYYKVCValueIfPossible(aweme, @"video");
+    if (objc_getAssociatedObject(aweme, &kDYYYHDRStrippedAwemeModelKey)) {
+        return;
+    }
+    objc_setAssociatedObject(aweme, &kDYYYHDRStrippedAwemeModelKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+    id video = DYYYValuePreferringIvar(aweme, "_video", @"video");
     DYYYStripHDRHintsFromVideoModel(video);
 
-    NSArray *albumImages = DYYYKVCValueIfPossible(aweme, @"albumImages");
+    NSArray *albumImages = DYYYValuePreferringIvar(aweme, "_albumImages", @"albumImages");
     if ([albumImages isKindOfClass:[NSArray class]]) {
         for (id imageModel in albumImages) {
-            DYYYStripHDRHintsFromVideoModel(DYYYKVCValueIfPossible(imageModel, @"clipVideo"));
+            DYYYStripHDRHintsFromVideoModel(DYYYValuePreferringIvar(imageModel, "_clipVideo", @"clipVideo"));
         }
     }
 }
@@ -7325,6 +7362,7 @@ static NSHashTable *processedParentViews = nil;
     NSInteger minLikesThreshold = DYYYGetInteger(@"DYYYFilterLowLikes"); // 读取低赞过滤阈值 (例如: 1000)
     BOOL skipPhotoText = DYYYGetBool(@"DYYYSkipPhotoText"); // 图文过滤
     BOOL skipPhoto = DYYYGetBool(@"DYYYSkipPhoto"); // 图集过滤
+    BOOL shouldDisableHDR = DYYYShouldDisableAllHDR();
 
     NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
     NSTimeInterval thresholdInSeconds = MAX(daysThreshold, 0) * 86400.0;
@@ -7382,13 +7420,15 @@ static NSHashTable *processedParentViews = nil;
         }
 
         // 4. 全局屏蔽 HDR 时，若作品没有 SDR 码率档，直接过滤，避免强播纯 HDR 源导致黑屏或 HDR 漏出。
-        if (DYYYShouldDisableAllHDR() &&
+        if (shouldDisableHDR &&
             ![m dyyy_shouldExcludeFromGlobalHDRFilter] &&
             DYYYAwemeModelHasOnlyHDRBitrateModels(m)) {
             continue;
         }
 
-        DYYYStripHDRHintsFromAwemeModel(m);
+        if (shouldDisableHDR) {
+            DYYYStripHDRHintsFromAwemeModel(m);
+        }
 
         [baseFiltered addObject:obj];
     }
@@ -7453,10 +7493,17 @@ static NSHashTable *processedParentViews = nil;
 - (id)initWithDictionary:(id)arg1 error:(id *)arg2 {
     id orig = %orig;
     if (orig) {
-        BOOL shouldFilterOnlyHDRSource = DYYYShouldDisableAllHDR() &&
-                                         ![self dyyy_shouldExcludeFromGlobalHDRFilter] &&
-                                         (DYYYRawObjectHasOnlyHDRBitrateModels(arg1) ||
-                                          DYYYAwemeModelHasOnlyHDRBitrateModels(self));
+        BOOL shouldDisableHDR = DYYYShouldDisableAllHDR();
+        BOOL shouldFilterOnlyHDRSource = NO;
+        if (shouldDisableHDR && ![self dyyy_shouldExcludeFromGlobalHDRFilter]) {
+            shouldFilterOnlyHDRSource = DYYYAwemeModelHasOnlyHDRBitrateModels(self);
+            if (!shouldFilterOnlyHDRSource) {
+                shouldFilterOnlyHDRSource = DYYYRawObjectHasOnlyHDRBitrateModels(arg1);
+                if (shouldFilterOnlyHDRSource) {
+                    objc_setAssociatedObject(self, &kDYYYHDROnlyAwemeModelKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                }
+            }
+        }
         BOOL shouldFilter = [self contentFilter];
         if (!shouldFilter && shouldFilterOnlyHDRSource) {
             shouldFilter = YES;
@@ -7469,7 +7516,9 @@ static NSHashTable *processedParentViews = nil;
         if (shouldFilter) {
             return nil;
         }
-        DYYYStripHDRHintsFromAwemeModel(self);
+        if (shouldDisableHDR) {
+            DYYYStripHDRHintsFromAwemeModel(self);
+        }
     }
     return orig;
 }
@@ -7480,28 +7529,20 @@ static NSHashTable *processedParentViews = nil;
 }
 
 - (AWEVideoModel *)video {
-    AWEVideoModel *video = %orig;
-    DYYYStripHDRHintsFromVideoModel(video);
-    return video;
+    return %orig;
 }
 
 - (void)setAlbumImages:(NSArray<AWEImageAlbumImageModel *> *)albumImages {
     if (DYYYShouldDisableAllHDR()) {
         for (AWEImageAlbumImageModel *imageModel in albumImages) {
-            DYYYStripHDRHintsFromVideoModel(imageModel.clipVideo);
+            DYYYStripHDRHintsFromVideoModel(DYYYValuePreferringIvar(imageModel, "_clipVideo", @"clipVideo"));
         }
     }
     %orig;
 }
 
 - (NSArray<AWEImageAlbumImageModel *> *)albumImages {
-    NSArray<AWEImageAlbumImageModel *> *albumImages = %orig;
-    if (DYYYShouldDisableAllHDR()) {
-        for (AWEImageAlbumImageModel *imageModel in albumImages) {
-            DYYYStripHDRHintsFromVideoModel(imageModel.clipVideo);
-        }
-    }
-    return albumImages;
+    return %orig;
 }
 
 - (BOOL)awe_enableHDR {
@@ -7614,6 +7655,7 @@ static NSHashTable *processedParentViews = nil;
 
     // 获取需要过滤的用户列表
     NSString *filterUsers = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYFilterUsers"];
+    BOOL disableHDR = DYYYShouldDisableAllHDR();
 
     // 检查是否需要过滤特定用户
     if (isRecommendFeed && filterUsers.length > 0 && self.author) {
@@ -7670,7 +7712,7 @@ static NSHashTable *processedParentViews = nil;
     }
 
     // 全局屏蔽 HDR 时，仍允许有 SDR 档的作品降档播放；纯 HDR 档作品直接过滤，避免黑屏或 HDR 漏出。
-    if (DYYYShouldDisableAllHDR() &&
+    if (disableHDR &&
         ![self dyyy_shouldExcludeFromGlobalHDRFilter] &&
         DYYYAwemeModelHasOnlyHDRBitrateModels(self)) {
         shouldFilterHDR = YES;
