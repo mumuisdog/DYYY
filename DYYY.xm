@@ -11455,6 +11455,26 @@ static Class TagViewClass = nil;
 
 %hook AWELandscapeFeedEntryView
 
+static const CGFloat kDYYYLandscapeEntryFullScreenShiftY = 30.0;
+
+static BOOL DYYYLandscapeEntryShouldApplyFullScreenShift(void) {
+    return DYYYGetBool(@"DYYYEnableFullScreen") && !DYYYGetBool(@"DYYYRemoveEntry") && !DYYYGetBool(@"DYYYHideEntry");
+}
+
+- (void)setFrame:(CGRect)frame {
+    if (DYYYLandscapeEntryShouldApplyFullScreenShift()) {
+        frame.origin.y += kDYYYLandscapeEntryFullScreenShiftY;
+    }
+    %orig(frame);
+}
+
+- (void)setCenter:(CGPoint)center {
+    if (DYYYLandscapeEntryShouldApplyFullScreenShift()) {
+        center.y += kDYYYLandscapeEntryFullScreenShiftY;
+    }
+    %orig(center);
+}
+
 - (void)setAlpha:(CGFloat)alpha {
     BOOL isApplyingGlobal = (dyyyGlobalTransparencyMutationDepth > 0);
     if (!isApplyingGlobal) {
@@ -11498,6 +11518,10 @@ static Class TagViewClass = nil;
             subview.hidden = YES;
         }
         return;
+    }
+
+    if (DYYYLandscapeEntryShouldApplyFullScreenShift() && self.superview) {
+        [self.superview bringSubviewToFront:self];
     }
 
     NSString *scaleValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYNicknameScale"];
