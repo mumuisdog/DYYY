@@ -1418,57 +1418,6 @@ static void DYYYDisableAVPlayerItemHDRMetadata(AVPlayerItem *item) {
 
 %end
 
-%hook UIScreen
-
-- (CGFloat)currentEDRHeadroom {
-    if (DYYYShouldDisableAllHDR()) {
-        return 1.0;
-    }
-    return %orig;
-}
-
-- (CGFloat)potentialEDRHeadroom {
-    if (DYYYShouldDisableAllHDR()) {
-        return 1.0;
-    }
-    return %orig;
-}
-
-%end
-
-%group DYYYHDRTraitCollectionGroup
-
-%hook UITraitCollection
-
-+ (UITraitCollection *)traitCollectionWithImageDynamicRange:(UIImageDynamicRange)imageDynamicRange {
-    if (DYYYShouldDisableAllHDR()) {
-        return %orig(UIImageDynamicRangeStandard);
-    }
-    return %orig;
-}
-
-- (UIImageDynamicRange)imageDynamicRange {
-    if (DYYYShouldDisableAllHDR()) {
-        return UIImageDynamicRangeStandard;
-    }
-    return %orig;
-}
-
-%end
-
-%hook UIImageView
-
-- (UIImageDynamicRange)imageDynamicRange {
-    if (DYYYShouldDisableAllHDR()) {
-        return UIImageDynamicRangeStandard;
-    }
-    return %orig;
-}
-
-%end
-
-%end
-
 %hook AWEKnowledgeABTestSettings
 
 + (BOOL)enableHDRAutomaticIdentification {
@@ -2073,21 +2022,6 @@ static void DYYYDisableAVPlayerItemHDRMetadata(AVPlayerItem *item) {
 
 %end
 
-%hook CAOpenGLLayer
-
-- (void)setWantsExtendedDynamicRangeContent:(BOOL)wantsExtendedDynamicRangeContent {
-    %orig(DYYYShouldDisableAllHDR() ? NO : wantsExtendedDynamicRangeContent);
-}
-
-- (BOOL)wantsExtendedDynamicRangeContent {
-    if (DYYYShouldDisableAllHDR()) {
-        return NO;
-    }
-    return %orig;
-}
-
-%end
-
 %hook CALayer
 
 - (void)setWantsExtendedDynamicRangeContent:(BOOL)wantsExtendedDynamicRangeContent {
@@ -2099,22 +2033,6 @@ static void DYYYDisableAVPlayerItemHDRMetadata(AVPlayerItem *item) {
         return NO;
     }
     return %orig;
-}
-
-- (void)setToneMapMode:(id)toneMapMode {
-    id forcedToneMapMode = DYYYToneMapModeIfSupported();
-    %orig(DYYYShouldDisableAllHDR() && forcedToneMapMode ? forcedToneMapMode : toneMapMode);
-}
-
-- (id)toneMapMode {
-    id toneMapMode = %orig;
-    if (DYYYShouldDisableAllHDR()) {
-        id forcedToneMapMode = DYYYToneMapModeIfSupported();
-        if (forcedToneMapMode) {
-            return forcedToneMapMode;
-        }
-    }
-    return toneMapMode;
 }
 
 - (void)setPreferredDynamicRange:(id)preferredDynamicRange {
@@ -11384,48 +11302,12 @@ static void findTargetViewInView(UIView *view) {
     }
 }
 
-%group DYYYHDRImageReaderConfigurationGroup
-
-%hook UIImageReaderConfiguration
-
-- (BOOL)prefersHighDynamicRange {
-    if (DYYYShouldDisableAllHDR()) {
-        return NO;
-    }
-    return %orig;
-}
-
-- (void)setPrefersHighDynamicRange:(BOOL)prefersHighDynamicRange {
-    %orig(DYYYShouldDisableAllHDR() ? NO : prefersHighDynamicRange);
-}
-
-%end
-
-%end
-
 %ctor {
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{
         @"DYYYDisableFeedNowPlayingInfo" : @YES
     }];
 
     DYYYMigrateCombinedHDRModeIfNeeded();
-
-    Class traitCollectionClass = objc_getClass("UITraitCollection");
-    Class imageViewClass = objc_getClass("UIImageView");
-    if (traitCollectionClass &&
-        imageViewClass &&
-        class_getClassMethod(traitCollectionClass, @selector(traitCollectionWithImageDynamicRange:)) &&
-        class_getInstanceMethod(traitCollectionClass, @selector(imageDynamicRange)) &&
-        class_getInstanceMethod(imageViewClass, @selector(imageDynamicRange))) {
-        %init(DYYYHDRTraitCollectionGroup);
-    }
-
-    Class imageReaderConfigurationClass = objc_getClass("UIImageReaderConfiguration");
-    if (imageReaderConfigurationClass &&
-        class_getInstanceMethod(imageReaderConfigurationClass, @selector(prefersHighDynamicRange)) &&
-        class_getInstanceMethod(imageReaderConfigurationClass, @selector(setPrefersHighDynamicRange:))) {
-        %init(DYYYHDRImageReaderConfigurationGroup);
-    }
 
     Class interactionBaseLabelClass = objc_getClass("AWECommentSwiftBizUI.CommentInteractionBaseLabel");
     if (interactionBaseLabelClass) {
