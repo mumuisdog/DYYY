@@ -6,6 +6,7 @@
 //  Created on: 2024/10/04
 //
 #import <QuartzCore/QuartzCore.h>
+#import <AVFoundation/AVFoundation.h>
 #import <UIKit/UIKit.h>
 #import <dlfcn.h>
 #import <float.h>
@@ -1233,6 +1234,19 @@ static id DYYYStandardCADynamicRange(void) {
     return standardDynamicRange;
 }
 
+static id DYYYToneMapModeIfSupported(void) {
+    static id toneMapMode = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        void *symbol = dlsym(RTLD_DEFAULT, "CAToneMapModeIfSupported");
+        if (symbol) {
+            id __unsafe_unretained *value = (id __unsafe_unretained *)symbol;
+            toneMapMode = *value;
+        }
+    });
+    return toneMapMode;
+}
+
 static void DYYYApplySDRDynamicRangeToImageView(UIImageView *imageView) {
     if (!DYYYShouldDisableAllHDR() || !imageView) {
         return;
@@ -1243,17 +1257,228 @@ static void DYYYApplySDRDynamicRangeToImageView(UIImageView *imageView) {
     }
 }
 
+static void DYYYDisableExtendedRangeForLayer(CALayer *layer) {
+    if (!DYYYShouldDisableAllHDR() || !layer) {
+        return;
+    }
+
+    SEL setWantsEDRSelector = @selector(setWantsExtendedDynamicRangeContent:);
+    if ([layer respondsToSelector:setWantsEDRSelector]) {
+        ((void (*)(id, SEL, BOOL))objc_msgSend)(layer, setWantsEDRSelector, NO);
+    }
+
+    id toneMapMode = DYYYToneMapModeIfSupported();
+    SEL setToneMapModeSelector = @selector(setToneMapMode:);
+    if (toneMapMode && [layer respondsToSelector:setToneMapModeSelector]) {
+        ((void (*)(id, SEL, id))objc_msgSend)(layer, setToneMapModeSelector, toneMapMode);
+    }
+
+    id standardDynamicRange = DYYYStandardCADynamicRange();
+    SEL setPreferredDynamicRangeSelector = @selector(setPreferredDynamicRange:);
+    if (standardDynamicRange && [layer respondsToSelector:setPreferredDynamicRangeSelector]) {
+        ((void (*)(id, SEL, id))objc_msgSend)(layer, setPreferredDynamicRangeSelector, standardDynamicRange);
+    }
+
+    if (@available(iOS 16.0, *)) {
+        if ([layer isKindOfClass:[CAMetalLayer class]]) {
+            ((CAMetalLayer *)layer).EDRMetadata = nil;
+        }
+    }
+}
+
 static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
     if (!DYYYShouldDisableAllHDR() || !metalLayer) {
         return;
     }
 
-    if (@available(iOS 16.0, *)) {
-        metalLayer.wantsExtendedDynamicRangeContent = NO;
+    DYYYDisableExtendedRangeForLayer(metalLayer);
+}
+
+static void DYYYDisableAVPlayerItemHDRMetadata(AVPlayerItem *item) {
+    if (!DYYYShouldDisableAllHDR() || !item) {
+        return;
+    }
+
+    if (@available(iOS 14.0, *)) {
+        item.appliesPerFrameHDRDisplayMetadata = NO;
     }
 }
 
 // 保留 HDR 解码及原生 HDR -> SDR 转换，只关闭亮度增强、SDR -> HDR 和最终 EDR 输出。
+
+%hook AVPlayer
+
++ (AVPlayerHDRMode)availableHDRModes {
+    if (DYYYShouldDisableAllHDR()) {
+        return 0;
+    }
+    return %orig;
+}
+
++ (BOOL)eligibleForHDRPlayback {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (instancetype)playerWithURL:(NSURL *)URL {
+    AVPlayer *player = %orig;
+    DYYYDisableAVPlayerItemHDRMetadata(player.currentItem);
+    return player;
+}
+
++ (instancetype)playerWithPlayerItem:(AVPlayerItem *)item {
+    DYYYDisableAVPlayerItemHDRMetadata(item);
+    return %orig;
+}
+
+- (instancetype)initWithURL:(NSURL *)URL {
+    self = %orig;
+    DYYYDisableAVPlayerItemHDRMetadata(self.currentItem);
+    return self;
+}
+
+- (instancetype)initWithPlayerItem:(AVPlayerItem *)item {
+    DYYYDisableAVPlayerItemHDRMetadata(item);
+    return %orig;
+}
+
+- (void)replaceCurrentItemWithPlayerItem:(AVPlayerItem *)item {
+    DYYYDisableAVPlayerItemHDRMetadata(item);
+    %orig;
+}
+
+%end
+
+%hook AVPlayerItem
+
++ (instancetype)playerItemWithURL:(NSURL *)URL {
+    AVPlayerItem *item = %orig;
+    DYYYDisableAVPlayerItemHDRMetadata(item);
+    return item;
+}
+
++ (instancetype)playerItemWithAsset:(AVAsset *)asset {
+    AVPlayerItem *item = %orig;
+    DYYYDisableAVPlayerItemHDRMetadata(item);
+    return item;
+}
+
++ (instancetype)playerItemWithAsset:(AVAsset *)asset automaticallyLoadedAssetKeys:(NSArray<NSString *> *)automaticallyLoadedAssetKeys {
+    AVPlayerItem *item = %orig;
+    DYYYDisableAVPlayerItemHDRMetadata(item);
+    return item;
+}
+
+- (instancetype)initWithURL:(NSURL *)URL {
+    self = %orig;
+    DYYYDisableAVPlayerItemHDRMetadata(self);
+    return self;
+}
+
+- (instancetype)initWithAsset:(AVAsset *)asset {
+    self = %orig;
+    DYYYDisableAVPlayerItemHDRMetadata(self);
+    return self;
+}
+
+- (instancetype)initWithAsset:(AVAsset *)asset automaticallyLoadedAssetKeys:(NSArray<NSString *> *)automaticallyLoadedAssetKeys {
+    self = %orig;
+    DYYYDisableAVPlayerItemHDRMetadata(self);
+    return self;
+}
+
+- (void)setAppliesPerFrameHDRDisplayMetadata:(BOOL)appliesPerFrameHDRDisplayMetadata {
+    %orig(DYYYShouldDisableAllHDR() ? NO : appliesPerFrameHDRDisplayMetadata);
+}
+
+- (BOOL)appliesPerFrameHDRDisplayMetadata {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AVPlayerLayer
+
+- (void)setPlayer:(AVPlayer *)player {
+    DYYYDisableAVPlayerItemHDRMetadata(player.currentItem);
+    %orig;
+    DYYYDisableExtendedRangeForLayer(self);
+}
+
+- (void)layoutSublayers {
+    %orig;
+    DYYYDisableAVPlayerItemHDRMetadata(self.player.currentItem);
+    DYYYDisableExtendedRangeForLayer(self);
+}
+
+%end
+
+%hook UIScreen
+
+- (CGFloat)currentEDRHeadroom {
+    if (DYYYShouldDisableAllHDR()) {
+        return 1.0;
+    }
+    return %orig;
+}
+
+- (CGFloat)potentialEDRHeadroom {
+    if (DYYYShouldDisableAllHDR()) {
+        return 1.0;
+    }
+    return %orig;
+}
+
+%end
+
+%group DYYYHDRTraitCollectionGroup
+
+%hook UITraitCollection
+
++ (UITraitCollection *)traitCollectionWithImageDynamicRange:(UIImageDynamicRange)imageDynamicRange {
+    if (DYYYShouldDisableAllHDR()) {
+        return %orig(UIImageDynamicRangeStandard);
+    }
+    return %orig;
+}
+
+- (UIImageDynamicRange)imageDynamicRange {
+    if (DYYYShouldDisableAllHDR()) {
+        return UIImageDynamicRangeStandard;
+    }
+    return %orig;
+}
+
+%end
+
+%hook UIImageView
+
+- (UIImageDynamicRange)imageDynamicRange {
+    if (DYYYShouldDisableAllHDR()) {
+        return UIImageDynamicRangeStandard;
+    }
+    return %orig;
+}
+
+%end
+
+%end
+
+%hook AWEKnowledgeABTestSettings
+
++ (BOOL)enableHDRAutomaticIdentification {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
 
 %hook AWEFeedABSettings
 
@@ -1272,6 +1497,20 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 }
 
 + (BOOL)enableDynamicGaussianBlurHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)enableHDRFullModelAdaptation {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
++ (BOOL)hdrAutomaticIdentification {
     if (DYYYShouldDisableAllHDR()) {
         return NO;
     }
@@ -1300,11 +1539,39 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
     return %orig;
 }
 
+- (BOOL)enableHDRFullModelAdaptation {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)hdrAutomaticIdentification {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
 %end
 
 %hook AWEBDSimPlayerBizConfig
 
 - (BOOL)enableHDRBrightnessOpt {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)enableHDRFullModelAdaptation {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)hdrAutomaticIdentification {
     if (DYYYShouldDisableAllHDR()) {
         return NO;
     }
@@ -1326,6 +1593,21 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
         return 0.0;
     }
     return %orig;
+}
+
+%end
+
+%hook AWEPlayVideoViewController
+
+- (BOOL)awe_isCurrentVideoHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setPlayerLutFilter:(id)lutFilter HDRLutImage:(id)HDRLutImage {
+    %orig(lutFilter, DYYYShouldDisableAllHDR() ? nil : HDRLutImage);
 }
 
 %end
@@ -1357,11 +1639,70 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 
 %end
 
+%hook ALMOwnPlayerWrapper
+
+- (void)setLutFilter:(id)lutFilter HDRLutImage:(id)HDRLutImage {
+    %orig(lutFilter, DYYYShouldDisableAllHDR() ? nil : HDRLutImage);
+}
+
+%end
+
+%hook ALMSysPlayerWrapper
+
+- (void)setLutFilter:(id)lutFilter HDRLutImage:(id)HDRLutImage {
+    %orig(lutFilter, DYYYShouldDisableAllHDR() ? nil : HDRLutImage);
+}
+
+%end
+
+%hook ALMVideoPlayerConfig
+
++ (void)setPlayerEffectHDRLutImageEnable:(BOOL)enable {
+    %orig(DYYYShouldDisableAllHDR() ? NO : enable);
+}
+
+%end
+
+%hook IESVideoPlayerConfig
+
++ (void)setPlayerEffectHDRLutImageEnable:(BOOL)enable {
+    %orig(DYYYShouldDisableAllHDR() ? NO : enable);
+}
+
+%end
+
 %hook AWEIMModuleService
 
 - (BOOL)im_forceHDRToSDR {
     if (DYYYShouldDisableAllHDR()) {
         return YES;
+    }
+    return %orig;
+}
+
+%end
+
+%hook IESIMVideoPlayerWrapper
+
+- (void)setupHDREnable:(BOOL)enable {
+    %orig(DYYYShouldDisableAllHDR() ? NO : enable);
+}
+
+%end
+
+%hook AWEIMVideoBrowserCollectionViewCell
+
+- (void)setEnablePlayHDR:(BOOL)enable {
+    %orig(DYYYShouldDisableAllHDR() ? NO : enable);
+}
+
+%end
+
+%hook AWEECOMIMAppSettingsService
+
++ (BOOL)enableVideoPreviewSupportHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
     }
     return %orig;
 }
@@ -1487,6 +1828,17 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 
 %hook TVLManager
 
+- (BOOL)shouldForbidHDR10Render {
+    if (DYYYShouldDisableAllHDR()) {
+        return YES;
+    }
+    return %orig;
+}
+
+- (void)setShouldForbidHDR10Render:(BOOL)shouldForbid {
+    %orig(DYYYShouldDisableAllHDR() ? YES : shouldForbid);
+}
+
 - (void)setupVideoSDR2HDR:(id)config {
     if (!DYYYShouldDisableAllHDR()) {
         %orig;
@@ -1521,9 +1873,145 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
 
 %end
 
+%hook TVLSettingsManager
+
+- (BOOL)enableMetalRenderHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook IESFiltersManager
+
+- (void)setHDRIndensity:(double)intensity {
+    %orig(DYYYShouldDisableAllHDR() ? 0.0 : intensity);
+}
+
+%end
+
+%hook BDImageDecoderFactory
+
++ (BOOL)isHDRImageData:(id)data withHeifDecoderClass:(Class)decoderClass {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+%end
+
+%hook BDImageDecoderImageIO
+
+- (BOOL)isHDRCGImage:(CGImageRef)image decodedToHDR:(BOOL)decodedToHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (id)hdrOptionsFor:(id)image decodedToHDR:(BOOL *)decodedToHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        if (decodedToHDR) {
+            *decodedToHDR = NO;
+        }
+        return nil;
+    }
+    return %orig;
+}
+
+%end
+
+%hook BDImageDecoderHeic
+
++ (BOOL)isHDRData:(id)data {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (BOOL)isHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setIsHDR:(BOOL)isHDR {
+    %orig(DYYYShouldDisableAllHDR() ? NO : isHDR);
+}
+
+%end
+
+%hook BDImageDecoderBVC2
+
+- (BOOL)isHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setIsHDR:(BOOL)isHDR {
+    %orig(DYYYShouldDisableAllHDR() ? NO : isHDR);
+}
+
+%end
+
+%hook BDImageDecoderWebP
+
+- (BOOL)isHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setIsHDR:(BOOL)isHDR {
+    %orig(DYYYShouldDisableAllHDR() ? NO : isHDR);
+}
+
+%end
+
+%hook BDImage
+
+- (BOOL)isHDR {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setIsHDR:(BOOL)isHDR {
+    %orig(DYYYShouldDisableAllHDR() ? NO : isHDR);
+}
+
+%end
+
 %hook HDRMTUIImageView
 
+- (instancetype)initWithFrame:(CGRect)frame hdrEnabled:(BOOL)hdrEnabled {
+    return %orig(frame, DYYYShouldDisableAllHDR() ? NO : hdrEnabled);
+}
+
+- (BOOL)hdrEnabled {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setHdrEnabled:(BOOL)hdrEnabled {
+    %orig(DYYYShouldDisableAllHDR() ? NO : hdrEnabled);
+}
+
 - (void)setImage:(UIImage *)image {
+    if (DYYYShouldDisableAllHDR()) {
+        self.hdrEnabled = NO;
+    }
     DYYYApplySDRDynamicRangeToImageView(self);
     %orig;
     DYYYApplySDRDynamicRangeToImageView(self);
@@ -1572,6 +2060,32 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
     return %orig;
 }
 
+- (void)setEDRMetadata:(CAEDRMetadata *)EDRMetadata {
+    %orig(DYYYShouldDisableAllHDR() ? nil : EDRMetadata);
+}
+
+- (CAEDRMetadata *)EDRMetadata {
+    if (DYYYShouldDisableAllHDR()) {
+        return nil;
+    }
+    return %orig;
+}
+
+%end
+
+%hook CAOpenGLLayer
+
+- (void)setWantsExtendedDynamicRangeContent:(BOOL)wantsExtendedDynamicRangeContent {
+    %orig(DYYYShouldDisableAllHDR() ? NO : wantsExtendedDynamicRangeContent);
+}
+
+- (BOOL)wantsExtendedDynamicRangeContent {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
 %end
 
 %hook CALayer
@@ -1585,6 +2099,22 @@ static void DYYYDisableExtendedRangeForMetalLayer(CAMetalLayer *metalLayer) {
         return NO;
     }
     return %orig;
+}
+
+- (void)setToneMapMode:(id)toneMapMode {
+    id forcedToneMapMode = DYYYToneMapModeIfSupported();
+    %orig(DYYYShouldDisableAllHDR() && forcedToneMapMode ? forcedToneMapMode : toneMapMode);
+}
+
+- (id)toneMapMode {
+    id toneMapMode = %orig;
+    if (DYYYShouldDisableAllHDR()) {
+        id forcedToneMapMode = DYYYToneMapModeIfSupported();
+        if (forcedToneMapMode) {
+            return forcedToneMapMode;
+        }
+    }
+    return toneMapMode;
 }
 
 - (void)setPreferredDynamicRange:(id)preferredDynamicRange {
@@ -7451,6 +7981,7 @@ static NSHashTable *processedParentViews = nil;
 
 - (void)layoutSubviews {
     %orig;
+    DYYYDisableExtendedRangeForLayer(self.layer);
     UIViewController *vc = [DYYYUtils firstAvailableViewControllerFromView:self];
     Class playVCClass = NSClassFromString(@"AWEPlayVideoViewController");
     if (vc && playVCClass && [vc isKindOfClass:playVCClass]) {
@@ -9483,12 +10014,7 @@ static Class tabBarButtonClass = nil;
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
     %orig(arg0);
-    // 自动恢复默认倍速：同步重置悬浮按钮的 index 和显示文字
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
-        setCurrentSpeedIndex(0);
-    }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
-    updateSpeedButtonUI();
 }
 
 - (void)prepareForDisplay {
@@ -9497,10 +10023,6 @@ static Class tabBarButtonClass = nil;
         return;
     }
 
-    // 自动恢复默认倍速：先重置 index，再应用速度并更新 UI
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
-        setCurrentSpeedIndex(0);
-    }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
     updateSpeedButtonUI();
 }
@@ -9535,20 +10057,13 @@ static Class tabBarButtonClass = nil;
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
     %orig(arg0);
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
-        setCurrentSpeedIndex(0);
-    }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
-    updateSpeedButtonUI();
 }
 
 - (void)prepareForDisplay {
     %orig;
     if (!DYYYShouldHandleSpeedFeatures()) {
         return;
-    }
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
-        setCurrentSpeedIndex(0);
     }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
     updateSpeedButtonUI();
@@ -9584,20 +10099,13 @@ static Class tabBarButtonClass = nil;
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
     %orig(arg0);
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
-        setCurrentSpeedIndex(0);
-    }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
-    updateSpeedButtonUI();
 }
 
 - (void)prepareForDisplay {
     %orig;
     if (!DYYYShouldHandleSpeedFeatures()) {
         return;
-    }
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYAutoRestoreSpeed"]) {
-        setCurrentSpeedIndex(0);
     }
     DYYYApplyPreparedPlaybackSpeedToPlayer(self);
     updateSpeedButtonUI();
@@ -10876,12 +11384,48 @@ static void findTargetViewInView(UIView *view) {
     }
 }
 
+%group DYYYHDRImageReaderConfigurationGroup
+
+%hook UIImageReaderConfiguration
+
+- (BOOL)prefersHighDynamicRange {
+    if (DYYYShouldDisableAllHDR()) {
+        return NO;
+    }
+    return %orig;
+}
+
+- (void)setPrefersHighDynamicRange:(BOOL)prefersHighDynamicRange {
+    %orig(DYYYShouldDisableAllHDR() ? NO : prefersHighDynamicRange);
+}
+
+%end
+
+%end
+
 %ctor {
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{
         @"DYYYDisableFeedNowPlayingInfo" : @YES
     }];
 
     DYYYMigrateCombinedHDRModeIfNeeded();
+
+    Class traitCollectionClass = objc_getClass("UITraitCollection");
+    Class imageViewClass = objc_getClass("UIImageView");
+    if (traitCollectionClass &&
+        imageViewClass &&
+        class_getClassMethod(traitCollectionClass, @selector(traitCollectionWithImageDynamicRange:)) &&
+        class_getInstanceMethod(traitCollectionClass, @selector(imageDynamicRange)) &&
+        class_getInstanceMethod(imageViewClass, @selector(imageDynamicRange))) {
+        %init(DYYYHDRTraitCollectionGroup);
+    }
+
+    Class imageReaderConfigurationClass = objc_getClass("UIImageReaderConfiguration");
+    if (imageReaderConfigurationClass &&
+        class_getInstanceMethod(imageReaderConfigurationClass, @selector(prefersHighDynamicRange)) &&
+        class_getInstanceMethod(imageReaderConfigurationClass, @selector(setPrefersHighDynamicRange:))) {
+        %init(DYYYHDRImageReaderConfigurationGroup);
+    }
 
     Class interactionBaseLabelClass = objc_getClass("AWECommentSwiftBizUI.CommentInteractionBaseLabel");
     if (interactionBaseLabelClass) {

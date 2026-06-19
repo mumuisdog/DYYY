@@ -3342,7 +3342,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
       [clearButtonItems addObject:hideTabButton];
       AWESettingItemModel *hideSpeedButton = [DYYYSettingsHelper createSettingItem:@{
           @"identifier" : @"DYYYHideSpeed",
-          @"title" : @"清屏隐藏倍速",
+          @"title" : @"清屏隐藏倍速按钮",
           @"subTitle" : @"清屏状态下隐藏DYYY的倍速按钮",
           @"detail" : @"",
           @"cellType" : @37,
@@ -3352,7 +3352,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
       // 清屏后隐藏清屏按钮自身（仍可点击恢复）
       AWESettingItemModel *hideClearButtonOnTap = [DYYYSettingsHelper createSettingItem:@{
           @"identifier" : @"DYYYHideClearButtonOnTap",
-          @"title" : @"清屏隐藏清屏",
+          @"title" : @"清屏隐藏清屏按钮",
           @"subTitle" : @"清屏后隐藏清屏按钮自身，原位置仍可点击恢复",
           @"detail" : @"",
           @"cellType" : @37,
