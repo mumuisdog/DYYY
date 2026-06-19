@@ -9831,8 +9831,8 @@ static Class tabBarButtonClass = nil;
             }
         }
 
-        // 39.1.0 及更早版本的私信播放页以完整高度布局信息区，否则底部约束会整体上移。
-        if (currentVersion.length > 0 && [DYYYUtils compareVersion:currentVersion toVersion:@"39.1.0"] != NSOrderedDescending) {
+        // 39.2.0 及更早版本的私信播放页以完整高度布局信息区，否则底部约束会整体上移。 （靠版本号判断不靠谱，这个是 abtest 的）
+        if (currentVersion.length > 0 && [DYYYUtils compareVersion:currentVersion toVersion:@"39.2.0"] != NSOrderedDescending) {
             useFullHeight = YES;
         }
     }
