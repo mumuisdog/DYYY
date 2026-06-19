@@ -252,18 +252,24 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
 @property(nonatomic, weak) AWESettingBaseViewController *settingsVC;
 @property(nonatomic, weak) UINavigationController *navigationController;
 @property(nonatomic, weak) id<UIGestureRecognizerDelegate> previousInteractivePopGestureDelegate;
+@property(nonatomic, assign) BOOL previousInteractivePopGestureEnabled;
+@property(nonatomic, assign) BOOL hasStoredInteractivePopGestureEnabled;
 @property(nonatomic, strong) AWESettingsViewModel *viewModel;
 @property(nonatomic, copy) NSArray *originalSections;
 @property(nonatomic, copy) NSArray<NSDictionary *> *searchEntries;
 @property(nonatomic, strong) UIView *headerView;
 @property(nonatomic, strong) UIView *containerView;
 @property(nonatomic, strong) UITextField *searchTextField;
+@property(nonatomic, strong) UIScreenEdgePanGestureRecognizer *searchBackGestureRecognizer;
 @property(nonatomic, strong) UIView *centerPlaceholderView;
 @property(nonatomic, strong) UIImageView *centerIconView;
 @property(nonatomic, strong) UILabel *centerPlaceholderLabel;
 - (instancetype)initWithSettingsVC:(AWESettingBaseViewController *)settingsVC viewModel:(AWESettingsViewModel *)viewModel originalSections:(NSArray *)sections searchEntries:(NSArray<NSDictionary *> *)entries;
 - (void)installSearchHeader;
+- (void)installNavigationInterceptors;
 - (void)updateLayout;
+- (void)updateNavigationGestureState;
+- (void)restoreNavigationGestureState;
 - (BOOL)handleBackNavigationRequest;
 @end
 
@@ -341,6 +347,7 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
     [self updateLayout];
     tableView.tableHeaderView = self.headerView;
     [self installNavigationInterceptors];
+    [self updateNavigationGestureState];
 }
 
 - (void)updateLayout {
@@ -376,6 +383,7 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
     }
 
     [self installNavigationInterceptors];
+    [self updateNavigationGestureState];
 }
 
 - (NSString *)trimmedSearchText {
@@ -446,6 +454,7 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
     [self updateSearchPlaceholderVisibility];
     self.viewModel.sectionDataArray = [self sectionsForSearchText:[self trimmedSearchText]];
     [self.settingsVC.tableView reloadData];
+    [self updateNavigationGestureState];
 }
 
 - (BOOL)isSearchInteractionActive {
@@ -462,22 +471,79 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
     [self updateSearchPlaceholderVisibility];
     self.viewModel.sectionDataArray = self.originalSections;
     [self.settingsVC.tableView reloadData];
+    [self updateNavigationGestureState];
     return YES;
 }
 
 - (void)installNavigationInterceptors {
     UINavigationController *navigationController = self.settingsVC.navigationController;
     UIGestureRecognizer *popGesture = navigationController.interactivePopGestureRecognizer;
-    if (!navigationController || !popGesture || popGesture.delegate == (id<UIGestureRecognizerDelegate>)self) {
+    if (!navigationController || !popGesture) {
         return;
     }
 
     self.navigationController = navigationController;
-    self.previousInteractivePopGestureDelegate = popGesture.delegate;
-    popGesture.delegate = (id<UIGestureRecognizerDelegate>)self;
+    if (!self.hasStoredInteractivePopGestureEnabled) {
+        self.previousInteractivePopGestureEnabled = popGesture.enabled;
+        self.hasStoredInteractivePopGestureEnabled = YES;
+    }
+    if (popGesture.delegate != (id<UIGestureRecognizerDelegate>)self) {
+        self.previousInteractivePopGestureDelegate = popGesture.delegate;
+        popGesture.delegate = (id<UIGestureRecognizerDelegate>)self;
+    }
+
+    if (!self.searchBackGestureRecognizer) {
+        self.searchBackGestureRecognizer = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(handleSearchBackGesture:)];
+        self.searchBackGestureRecognizer.edges = UIRectEdgeLeft;
+        self.searchBackGestureRecognizer.delegate = (id<UIGestureRecognizerDelegate>)self;
+        self.searchBackGestureRecognizer.enabled = NO;
+        [self.settingsVC.view addGestureRecognizer:self.searchBackGestureRecognizer];
+    }
+}
+
+- (void)updateNavigationGestureState {
+    UINavigationController *navigationController = self.settingsVC.navigationController ?: self.navigationController;
+    UIGestureRecognizer *popGesture = navigationController.interactivePopGestureRecognizer;
+    BOOL searchActive = [self isSearchInteractionActive];
+
+    if (popGesture) {
+        if (!self.hasStoredInteractivePopGestureEnabled) {
+            self.previousInteractivePopGestureEnabled = popGesture.enabled;
+            self.hasStoredInteractivePopGestureEnabled = YES;
+        }
+        if (searchActive) {
+            popGesture.enabled = NO;
+        } else {
+            popGesture.enabled = self.previousInteractivePopGestureEnabled;
+        }
+    }
+
+    self.searchBackGestureRecognizer.enabled = searchActive;
+}
+
+- (void)restoreNavigationGestureState {
+    UINavigationController *navigationController = self.settingsVC.navigationController ?: self.navigationController;
+    UIGestureRecognizer *popGesture = navigationController.interactivePopGestureRecognizer;
+    if (popGesture.delegate == (id<UIGestureRecognizerDelegate>)self) {
+        popGesture.delegate = self.previousInteractivePopGestureDelegate;
+    }
+    if (self.hasStoredInteractivePopGestureEnabled) {
+        popGesture.enabled = self.previousInteractivePopGestureEnabled;
+    }
+    self.searchBackGestureRecognizer.enabled = NO;
+}
+
+- (void)handleSearchBackGesture:(UIScreenEdgePanGestureRecognizer *)gestureRecognizer {
+    if (gestureRecognizer.state == UIGestureRecognizerStateBegan) {
+        [self handleBackNavigationRequest];
+    }
 }
 
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
+    if (gestureRecognizer == self.searchBackGestureRecognizer) {
+        return [self isSearchInteractionActive];
+    }
+
     if (gestureRecognizer == self.navigationController.interactivePopGestureRecognizer && [self handleBackNavigationRequest]) {
         return NO;
     }
@@ -492,10 +558,12 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
 
 - (void)textFieldDidBeginEditing:(UITextField *)textField {
     [self updateSearchPlaceholderVisibility];
+    [self updateNavigationGestureState];
 }
 
 - (void)textFieldDidEndEditing:(UITextField *)textField {
     [self updateSearchPlaceholderVisibility];
+    [self updateNavigationGestureState];
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
@@ -504,10 +572,7 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
 }
 
 - (void)dealloc {
-    UIGestureRecognizer *popGesture = self.navigationController.interactivePopGestureRecognizer;
-    if (popGesture.delegate == (id<UIGestureRecognizerDelegate>)self) {
-        popGesture.delegate = self.previousInteractivePopGestureDelegate;
-    }
+    [self restoreNavigationGestureState];
 }
 
 @end
@@ -550,6 +615,19 @@ static void DYYYBuildSettingsSearchIndexIfNeeded(NSArray<AWESettingItemModel *> 
     if (!original)
         return objc_getAssociatedObject(self, &kViewModelKey);
     return original;
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    %orig;
+    DYYYSettingsSearchCoordinator *coordinator = objc_getAssociatedObject(self, &kDYYYSettingsSearchCoordinatorKey);
+    [coordinator installNavigationInterceptors];
+    [coordinator updateNavigationGestureState];
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    DYYYSettingsSearchCoordinator *coordinator = objc_getAssociatedObject(self, &kDYYYSettingsSearchCoordinatorKey);
+    [coordinator restoreNavigationGestureState];
+    %orig;
 }
 
 - (void)viewDidLayoutSubviews {
