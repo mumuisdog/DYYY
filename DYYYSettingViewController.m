@@ -1,5 +1,6 @@
 #import "DYYYSettingViewController.h"
 #import <Foundation/Foundation.h>
+#import <math.h>
 #import <UIKit/UIKit.h>
 #import "DYYYConstants.h"
 #import "DYYYFloatClearButton.h"
@@ -36,10 +37,15 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
 
 @end
 
-@interface DYYYSettingViewController () <UITableViewDelegate, UITableViewDataSource>
+@interface DYYYSettingViewController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>
 
 @property(nonatomic, strong) UITableView *tableView;
+@property(nonatomic, strong) UIView *searchHeaderView;
+@property(nonatomic, strong) UIView *searchContainerView;
+@property(nonatomic, strong) UITextField *searchTextField;
+@property(nonatomic, strong) UIImageView *searchPlaceholderIconView;
 @property(nonatomic, strong) NSArray<NSArray<DYYYSettingItem *> *> *settingSections;
+@property(nonatomic, strong) NSArray<NSIndexPath *> *filteredSettingIndexPaths;
 @property(nonatomic, strong) UILabel *footerLabel;
 @property(nonatomic, strong) NSMutableArray<NSString *> *sectionTitles;
 @property(nonatomic, strong) NSMutableSet *expandedSections;
@@ -56,6 +62,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
 
     self.title = @"DYYY设置";
     self.expandedSections = [NSMutableSet set];
+    self.filteredSettingIndexPaths = @[];
     self.isAgreementShown = NO;
 
     [self setupAppearance];
@@ -66,6 +73,11 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
     [self setupSectionTitles];
     [self setupFooterLabel];
     [self addTitleGradientAnimation];
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    [self updateSearchHeaderLayout];
 }
 
 - (void)setupDefaultValues {
@@ -128,6 +140,76 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
     self.tableView.contentInset = UIEdgeInsetsMake(20, 0, 0, 0);
     self.tableView.sectionHeaderTopPadding = 0;
     [self.view addSubview:self.tableView];
+    [self setupSearchHeaderView];
+}
+
+- (void)setupSearchHeaderView {
+    self.searchHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 64)];
+    self.searchHeaderView.backgroundColor = [UIColor clearColor];
+    self.searchHeaderView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+
+    self.searchContainerView = [[UIView alloc] initWithFrame:CGRectMake(16, 8, self.searchHeaderView.bounds.size.width - 32, 44)];
+    self.searchContainerView.backgroundColor = [UIColor colorWithWhite:1 alpha:0.12];
+    self.searchContainerView.layer.cornerRadius = 14;
+    self.searchContainerView.layer.masksToBounds = YES;
+    self.searchContainerView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    [self.searchHeaderView addSubview:self.searchContainerView];
+
+    self.searchTextField = [[UITextField alloc] initWithFrame:self.searchContainerView.bounds];
+    self.searchTextField.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    self.searchTextField.backgroundColor = [UIColor clearColor];
+    self.searchTextField.textColor = [UIColor whiteColor];
+    self.searchTextField.tintColor = [UIColor whiteColor];
+    self.searchTextField.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
+    self.searchTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
+    self.searchTextField.returnKeyType = UIReturnKeySearch;
+    self.searchTextField.autocorrectionType = UITextAutocorrectionTypeNo;
+    self.searchTextField.spellCheckingType = UITextSpellCheckingTypeNo;
+    self.searchTextField.delegate = self;
+
+    UIView *leftView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 38, 30)];
+    UIImageView *leftIconView = [[UIImageView alloc] initWithFrame:CGRectMake(14, 5, 18, 18)];
+    leftIconView.image = [UIImage systemImageNamed:@"magnifyingglass"];
+    leftIconView.tintColor = [UIColor colorWithWhite:1 alpha:0.65];
+    leftIconView.contentMode = UIViewContentModeScaleAspectFit;
+    [leftView addSubview:leftIconView];
+    self.searchTextField.leftView = leftView;
+    self.searchTextField.leftViewMode = UITextFieldViewModeNever;
+
+    [self.searchTextField addTarget:self action:@selector(searchTextDidChange:) forControlEvents:UIControlEventEditingChanged];
+    [self.searchContainerView addSubview:self.searchTextField];
+
+    self.searchPlaceholderIconView = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"magnifyingglass"]];
+    self.searchPlaceholderIconView.tintColor = [UIColor colorWithWhite:1 alpha:0.65];
+    self.searchPlaceholderIconView.contentMode = UIViewContentModeScaleAspectFit;
+    self.searchPlaceholderIconView.frame = CGRectMake(0, 0, 22, 22);
+    self.searchPlaceholderIconView.userInteractionEnabled = NO;
+    [self.searchContainerView addSubview:self.searchPlaceholderIconView];
+
+    [self updateSearchPlaceholderVisibility];
+    self.tableView.tableHeaderView = self.searchHeaderView;
+}
+
+- (void)updateSearchHeaderLayout {
+    if (!self.searchHeaderView || !self.searchContainerView || !self.searchPlaceholderIconView) {
+        return;
+    }
+
+    CGFloat width = self.tableView.bounds.size.width;
+    if (width <= 0) {
+        return;
+    }
+
+    CGRect headerFrame = self.searchHeaderView.frame;
+    BOOL needsHeaderUpdate = fabs(headerFrame.size.width - width) > 0.5 || fabs(headerFrame.size.height - 64) > 0.5;
+    self.searchHeaderView.frame = CGRectMake(0, 0, width, 64);
+    self.searchContainerView.frame = CGRectMake(16, 8, width - 32, 44);
+    self.searchTextField.frame = self.searchContainerView.bounds;
+    self.searchPlaceholderIconView.center = CGPointMake(CGRectGetMidX(self.searchContainerView.bounds), CGRectGetMidY(self.searchContainerView.bounds));
+
+    if (needsHeaderUpdate) {
+        self.tableView.tableHeaderView = self.searchHeaderView;
+    }
 }
 
 - (void)setupSettingItems {
@@ -386,6 +468,121 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
     self.sectionTitles = [@[ @"基本设置", @"界面设置", @"隐藏设置", @"顶栏移除", @"隐藏面板", @"面板设置", @"功能设置", @"悬浮按钮" ] mutableCopy];
 }
 
+- (NSString *)sectionTitleAtIndex:(NSInteger)section {
+    if (section >= 0 && section < (NSInteger)self.sectionTitles.count) {
+        return self.sectionTitles[section];
+    }
+
+    NSArray<NSString *> *fallbackTitles = @[ @"基本设置", @"界面设置", @"隐藏设置", @"顶栏移除", @"隐藏面板", @"面板设置", @"功能设置", @"悬浮按钮" ];
+    if (section >= 0 && section < (NSInteger)fallbackTitles.count) {
+        return fallbackTitles[section];
+    }
+
+    return @"";
+}
+
+- (NSString *)trimmedSearchText {
+    NSString *text = self.searchTextField.text ?: @"";
+    return [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+}
+
+- (BOOL)isSearchingSettings {
+    return [self trimmedSearchText].length > 0;
+}
+
+- (void)updateSearchPlaceholderVisibility {
+    BOOL shouldShowCenteredIcon = !self.searchTextField.isEditing && [self trimmedSearchText].length == 0;
+    self.searchPlaceholderIconView.hidden = !shouldShowCenteredIcon;
+    self.searchTextField.placeholder = shouldShowCenteredIcon ? nil : @"搜索设置项";
+    self.searchTextField.leftViewMode = shouldShowCenteredIcon ? UITextFieldViewModeNever : UITextFieldViewModeAlways;
+}
+
+- (void)searchTextDidChange:(UITextField *)textField {
+    [self updateSearchPlaceholderVisibility];
+    [self updateFilteredSettingIndexPaths];
+    [self.tableView reloadData];
+}
+
+- (void)updateFilteredSettingIndexPaths {
+    NSString *query = [[self trimmedSearchText] lowercaseString];
+    if (query.length == 0) {
+        self.filteredSettingIndexPaths = @[];
+        return;
+    }
+
+    NSMutableArray<NSIndexPath *> *matches = [NSMutableArray array];
+    for (NSInteger section = 0; section < (NSInteger)self.settingSections.count; section++) {
+        NSArray<DYYYSettingItem *> *items = self.settingSections[section];
+        for (NSInteger row = 0; row < (NSInteger)items.count; row++) {
+            NSIndexPath *sourceIndexPath = [NSIndexPath indexPathForRow:row inSection:section];
+            DYYYSettingItem *item = items[row];
+            NSString *path = [self pathForSettingAtSourceIndexPath:sourceIndexPath];
+            NSString *searchableText =
+                [NSString stringWithFormat:@"%@ %@ %@ %@", item.title ?: @"", item.key ?: @"", item.placeholder ?: @"", path ?: @""];
+
+            if ([[searchableText lowercaseString] containsString:query]) {
+                [matches addObject:sourceIndexPath];
+            }
+        }
+    }
+
+    self.filteredSettingIndexPaths = matches;
+}
+
+- (NSIndexPath *)sourceIndexPathForVisibleIndexPath:(NSIndexPath *)indexPath {
+    if ([self isSearchingSettings]) {
+        if (indexPath.section < (NSInteger)self.filteredSettingIndexPaths.count) {
+            return self.filteredSettingIndexPaths[indexPath.section];
+        }
+        return nil;
+    }
+
+    return indexPath;
+}
+
+- (NSIndexPath *)sourceIndexPathForControlTag:(NSInteger)tag {
+    return [NSIndexPath indexPathForRow:tag % 1000 inSection:tag / 1000];
+}
+
+- (DYYYSettingItem *)settingItemAtSourceIndexPath:(NSIndexPath *)sourceIndexPath {
+    if (!sourceIndexPath || sourceIndexPath.section >= (NSInteger)self.settingSections.count) {
+        return nil;
+    }
+
+    NSArray<DYYYSettingItem *> *items = self.settingSections[sourceIndexPath.section];
+    if (sourceIndexPath.row >= (NSInteger)items.count) {
+        return nil;
+    }
+
+    return items[sourceIndexPath.row];
+}
+
+- (NSString *)pathForSettingAtSourceIndexPath:(NSIndexPath *)sourceIndexPath {
+    NSString *sectionTitle = [self sectionTitleAtIndex:sourceIndexPath.section];
+    if (sectionTitle.length == 0) {
+        return @"DYYY设置";
+    }
+
+    return [NSString stringWithFormat:@"DYYY设置 - %@", sectionTitle];
+}
+
+- (NSString *)textFieldValueForKey:(NSString *)key {
+    id value = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+    if (!value) {
+        return @"";
+    }
+
+    if ([value isKindOfClass:[NSString class]]) {
+        return value;
+    }
+
+    if ([value respondsToSelector:@selector(stringValue)]) {
+        return [value stringValue];
+    }
+
+    return [NSString stringWithFormat:@"%@", value];
+}
+
 - (void)setupFooterLabel {
     self.footerLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 50)];
     self.footerLabel.text = [NSString stringWithFormat:@"Developer By @huamidev\nVersion: %@ (%@)", DYYY_VERSION, @"260104"];
@@ -527,34 +724,39 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
 #pragma mark - UITableViewDataSource
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    if ([self isSearchingSettings]) {
+        return MAX((NSInteger)self.filteredSettingIndexPaths.count, 1);
+    }
+
     return self.settingSections.count;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    switch (section) {
-        case 0:
-            return @"基本设置";
-        case 1:
-            return @"界面设置";
-        case 2:
-            return @"隐藏设置";
-        case 3:
-            return @"顶栏移除";
-        case 4:
-            return @"隐藏面板";
-        case 5:
-            return @"面板设置";
-        case 6:
-            return @"功能设置";
-        case 7:
-            return @"悬浮按钮";
-        default:
-            return @"";
+    if ([self isSearchingSettings]) {
+        if (self.filteredSettingIndexPaths.count == 0) {
+            return @"未找到相关设置";
+        }
+
+        NSIndexPath *sourceIndexPath = self.filteredSettingIndexPaths[section];
+        return [self pathForSettingAtSourceIndexPath:sourceIndexPath];
     }
+
+    return [self sectionTitleAtIndex:section];
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
     UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, tableView.bounds.size.width, 44)];
+
+    if ([self isSearchingSettings]) {
+        UILabel *pathLabel = [[UILabel alloc] initWithFrame:CGRectMake(15, 0, headerView.bounds.size.width - 30, 36)];
+        pathLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+        pathLabel.text = [self tableView:tableView titleForHeaderInSection:section];
+        pathLabel.textAlignment = NSTextAlignmentCenter;
+        pathLabel.textColor = [UIColor colorWithWhite:1 alpha:0.62];
+        pathLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightMedium];
+        [headerView addSubview:pathLabel];
+        return headerView;
+    }
 
     UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(15, 0, headerView.bounds.size.width - 50, 44)];
     titleLabel.text = [self tableView:tableView titleForHeaderInSection:section];
@@ -579,10 +781,18 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    if ([self isSearchingSettings]) {
+        return self.filteredSettingIndexPaths.count == 0 ? 44 : 36;
+    }
+
     return 44;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    if ([self isSearchingSettings]) {
+        return self.filteredSettingIndexPaths.count == 0 ? 0 : 1;
+    }
+
     return [self.expandedSections containsObject:@(section)] ? self.settingSections[section].count : 0;
 }
 
@@ -598,7 +808,8 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    DYYYSettingItem *item = self.settingSections[indexPath.section][indexPath.row];
+    NSIndexPath *sourceIndexPath = [self sourceIndexPathForVisibleIndexPath:indexPath];
+    DYYYSettingItem *item = [self settingItemAtSourceIndexPath:sourceIndexPath];
 
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"SettingCell"];
     if (!cell) {
@@ -615,10 +826,16 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
     cell.textLabel.text = item.title;
     cell.textLabel.textColor = [UIColor whiteColor];
     cell.backgroundColor = [UIColor colorWithWhite:1 alpha:0.1];
+    cell.accessoryView = nil;
+    cell.accessoryType = UITableViewCellAccessoryNone;
 
     cell.backgroundView = nil;
 
-    if (indexPath.row == [self.settingSections[indexPath.section] count] - 1) {
+    if ([self isSearchingSettings]) {
+        cell.layer.cornerRadius = 10;
+        cell.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner | kCALayerMinXMaxYCorner | kCALayerMaxXMaxYCorner;
+        cell.layer.masksToBounds = YES;
+    } else if (indexPath.row == [self.settingSections[indexPath.section] count] - 1) {
         cell.layer.cornerRadius = 10;
         cell.layer.maskedCorners = kCALayerMinXMaxYCorner | kCALayerMaxXMaxYCorner;
         cell.layer.masksToBounds = YES;
@@ -631,20 +848,23 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
         UISwitch *switchView = [[UISwitch alloc] init];
         [switchView setOn:[[NSUserDefaults standardUserDefaults] boolForKey:item.key]];
         [switchView addTarget:self action:@selector(switchToggled:) forControlEvents:UIControlEventValueChanged];
-        switchView.tag = indexPath.section * 1000 + indexPath.row;
+        switchView.tag = sourceIndexPath.section * 1000 + sourceIndexPath.row;
         cell.accessoryView = switchView;
     } else if (item.type == DYYYSettingItemTypeTextField) {
         UITextField *textField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 100, 30)];
         textField.borderStyle = UITextBorderStyleRoundedRect;
         textField.placeholder = item.placeholder;
-        textField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:item.placeholder attributes:@{NSForegroundColorAttributeName : [UIColor lightGrayColor]}];
-        textField.text = [[NSUserDefaults standardUserDefaults] objectForKey:item.key];
+        if (item.placeholder.length > 0) {
+            textField.attributedPlaceholder =
+                [[NSAttributedString alloc] initWithString:item.placeholder attributes:@{NSForegroundColorAttributeName : [UIColor lightGrayColor]}];
+        }
+        textField.text = [self textFieldValueForKey:item.key];
         textField.textAlignment = NSTextAlignmentRight;
         textField.backgroundColor = [UIColor colorWithWhite:1 alpha:0.1];
         textField.textColor = [UIColor whiteColor];
 
         [textField addTarget:self action:@selector(textFieldDidChange:) forControlEvents:UIControlEventEditingDidEnd];
-        textField.tag = indexPath.section * 1000 + indexPath.row;
+        textField.tag = sourceIndexPath.section * 1000 + sourceIndexPath.row;
         cell.accessoryView = textField;
     } else if (item.type == DYYYSettingItemTypePicker) {
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
@@ -659,7 +879,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
         pickerLabel.text = [self displayValueForKey:item.key value:currentValue];
         pickerLabel.textColor = [UIColor whiteColor];
         pickerLabel.textAlignment = NSTextAlignmentRight;
-        pickerLabel.tag = indexPath.section * 1000 + indexPath.row;
+        pickerLabel.tag = sourceIndexPath.section * 1000 + sourceIndexPath.row;
 
         // 添加垂直居中约束
         pickerLabel.translatesAutoresizingMaskIntoConstraints = NO;
@@ -685,7 +905,8 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
 #pragma mark - UITableViewDelegate
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    DYYYSettingItem *item = self.settingSections[indexPath.section][indexPath.row];
+    NSIndexPath *sourceIndexPath = [self sourceIndexPathForVisibleIndexPath:indexPath];
+    DYYYSettingItem *item = [self settingItemAtSourceIndexPath:sourceIndexPath];
     if (item.type == DYYYSettingItemTypePicker) {
         [self showUniversalPickerForIndexPath:indexPath];
     }
@@ -693,7 +914,8 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
 }
 
 - (void)showUniversalPickerForIndexPath:(NSIndexPath *)indexPath {
-    DYYYSettingItem *item = self.settingSections[indexPath.section][indexPath.row];
+    NSIndexPath *sourceIndexPath = [self sourceIndexPathForVisibleIndexPath:indexPath];
+    DYYYSettingItem *item = [self settingItemAtSourceIndexPath:sourceIndexPath];
 
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:[NSString stringWithFormat:@"选择%@", item.title] message:nil preferredStyle:UIAlertControllerStyleActionSheet];
 
@@ -715,6 +937,10 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
                                                                  pickerLabel.text = [self displayValueForKey:item.key value:option];
                                                              }
                                                          }
+
+                                                         if ([self isSearchingSettings]) {
+                                                             [self.tableView reloadData];
+                                                         }
                                                        }];
         [alert addAction:action];
     }
@@ -734,8 +960,12 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
 #pragma mark - Actions
 
 - (void)switchToggled:(UISwitch *)sender {
-    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:sender.tag % 1000 inSection:sender.tag / 1000];
-    DYYYSettingItem *item = self.settingSections[indexPath.section][indexPath.row];
+    NSIndexPath *indexPath = [self sourceIndexPathForControlTag:sender.tag];
+    DYYYSettingItem *item = [self settingItemAtSourceIndexPath:indexPath];
+    if (!item) {
+        return;
+    }
+
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     [defaults setBool:sender.isOn forKey:item.key];
     if ([item.key isEqualToString:@"DYYYEnableFloatSpeedButton"] || [item.key isEqualToString:@"DYYYSpeedButtonShowX"]) {
@@ -768,8 +998,12 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
 }
 
 - (void)textFieldDidChange:(UITextField *)textField {
-    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:textField.tag % 1000 inSection:textField.tag / 1000];
-    DYYYSettingItem *item = self.settingSections[indexPath.section][indexPath.row];
+    NSIndexPath *indexPath = [self sourceIndexPathForControlTag:textField.tag];
+    DYYYSettingItem *item = [self settingItemAtSourceIndexPath:indexPath];
+    if (!item) {
+        return;
+    }
+
     [[NSUserDefaults standardUserDefaults] setObject:textField.text forKey:item.key];
     if ([item.key isEqualToString:@"DYYYSpeedSettings"] || [item.key isEqualToString:@"DYYYSpeedButtonSize"]) {
         [FloatingSpeedButton reloadConfiguration];
@@ -796,6 +1030,29 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) { DYYYSettingItemTypeSwitch, DYY
                      }];
 
     [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:sender.tag] withRowAnimation:UITableViewRowAnimationFade];
+}
+
+#pragma mark - UITextFieldDelegate
+
+- (void)textFieldDidBeginEditing:(UITextField *)textField {
+    if (textField == self.searchTextField) {
+        [self updateSearchPlaceholderVisibility];
+    }
+}
+
+- (void)textFieldDidEndEditing:(UITextField *)textField {
+    if (textField == self.searchTextField) {
+        [self updateSearchPlaceholderVisibility];
+    }
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    if (textField == self.searchTextField) {
+        [textField resignFirstResponder];
+        return NO;
+    }
+
+    return YES;
 }
 
 @end
