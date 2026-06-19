@@ -309,34 +309,6 @@ static double DYYYDefaultPlaybackSpeed(void) {
     return 1.0;
 }
 
-static double DYYYLongPressPlaybackSpeed(void) {
-    double longPressSpeed = [[NSUserDefaults standardUserDefaults] doubleForKey:@"DYYYLongPressSpeed"];
-    if (isfinite(longPressSpeed) && longPressSpeed > 0.0) {
-        return longPressSpeed;
-    }
-    return 2.0;
-}
-
-static void DYYYSyncFloatSpeedButtonToPlaybackSpeed(double speed) {
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYEnableFloatSpeedButton"] || !isfinite(speed) || speed <= 0.0) {
-        return;
-    }
-
-    DYYYNormalizeSpeedSettingsForRequiredSpeeds();
-    if (!setCurrentSpeedValue((float)speed)) {
-        setCurrentSpeedIndex(0);
-    }
-    updateSpeedButtonUI();
-}
-
-static void DYYYSyncFloatSpeedButtonToDefaultPlaybackSpeed(void) {
-    DYYYSyncFloatSpeedButtonToPlaybackSpeed(DYYYDefaultPlaybackSpeed());
-}
-
-static void DYYYSyncFloatSpeedButtonToLongPressPlaybackSpeed(void) {
-    DYYYSyncFloatSpeedButtonToPlaybackSpeed(DYYYLongPressPlaybackSpeed());
-}
-
 static void DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(AWEAwemeModel *aweme) {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     BOOL shouldAutoRestore = [defaults boolForKey:@"DYYYEnableFloatSpeedButton"] && [defaults boolForKey:@"DYYYAutoRestoreSpeed"];
@@ -351,7 +323,10 @@ static void DYYYRestoreFloatSpeedButtonForAwemeIfNeeded(AWEAwemeModel *aweme) {
     }
 
     dyyyLastAutoRestoredSpeedAwemeIdentifier = [awemeIdentifier copy];
-    DYYYSyncFloatSpeedButtonToDefaultPlaybackSpeed();
+    if (!setCurrentSpeedValue((float)DYYYDefaultPlaybackSpeed())) {
+        setCurrentSpeedIndex(0);
+    }
+    updateSpeedButtonUI();
 }
 
 static NSArray<AWEPlayInteractionViewController *> *DYYYSpeedInteractionControllers(AWEPlayInteractionViewController *preferredController) {
@@ -618,7 +593,6 @@ static void DYYYEndLockedLongPressSpeedAndRestoreIfNeeded(void) {
         return;
     }
     dyyyLongPressLockedSpeedActive = NO;
-    DYYYSyncFloatSpeedButtonToDefaultPlaybackSpeed();
     DYYYScheduleConfiguredPlaybackSpeedRestore();
 }
 
@@ -4198,9 +4172,6 @@ static BOOL isGestureActive = NO;
     %orig;
 
     if (isEnding) {
-        if (!dyyyLongPressLockedSpeedActive) {
-            DYYYSyncFloatSpeedButtonToDefaultPlaybackSpeed();
-        }
         DYYYScheduleConfiguredPlaybackSpeedRestore();
     }
 
@@ -4254,7 +4225,6 @@ static BOOL isGestureActive = NO;
     %orig(arg1, gesture);
     dyyyLongPressFastSpeedActive = NO;
     dyyyLongPressLockedSpeedActive = YES;
-    DYYYSyncFloatSpeedButtonToLongPressPlaybackSpeed();
 }
 
 - (void)longPressSpeedControlDidChangeSpeed:(double)speed {
