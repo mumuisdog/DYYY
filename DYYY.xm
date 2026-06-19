@@ -4722,10 +4722,47 @@ static BOOL isGestureActive = NO;
 %end
 
 // 强制启用保存他人头像
+static BOOL DYYYShouldEnableSaveAvatar(void) {
+    return DYYYGetBool(@"DYYYEnableSaveAvatar");
+}
+
+%hook AWEUserProfileABTestServiceObjc
+
++ (BOOL)profileAvatarLongPressEnable {
+    if (DYYYShouldEnableSaveAvatar()) {
+        return YES;
+    }
+    return %orig;
+}
+
+%end
+
+%hook AWEProfileAvatarCollectionViewCellV2
+
+- (void)refreshLongPressState:(BOOL)enabled {
+    if (DYYYShouldEnableSaveAvatar()) {
+        %orig(YES);
+        return;
+    }
+    %orig(enabled);
+}
+
+%end
+
+%hook AWEProfileAvatarFunctionManager
+
+- (BOOL)shouldShowSaveAvatarItem {
+    if (DYYYShouldEnableSaveAvatar()) {
+        return YES;
+    }
+    return %orig;
+}
+
+%end
+
 %hook AFDProfileAvatarFunctionManager
 - (BOOL)shouldShowSaveAvatarItem {
-    BOOL shouldEnable = DYYYGetBool(@"DYYYEnableSaveAvatar");
-    if (shouldEnable) {
+    if (DYYYShouldEnableSaveAvatar()) {
         return YES;
     }
     return %orig;
