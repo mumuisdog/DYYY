@@ -11431,6 +11431,37 @@ static Class TagViewClass = nil;
 }
 %end
 
+%hook TTMetalViewVP
+- (void)setCenter:(CGPoint)center {
+    BOOL shouldAdjust = NO;
+    UIView *view = (UIView *)self;
+    if (DYYYGetBool(@"DYYYEnableFullScreen")) {
+        CGFloat viewWidth = CGRectGetWidth(view.bounds);
+        CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
+        if (viewWidth + 0.5f >= screenWidth) {
+            UIViewController *vc = [DYYYUtils firstAvailableViewControllerFromView:view];
+            Class playClass = %c(AWEPlayVideoViewController);
+            if (playClass && [vc isKindOfClass:playClass]) {
+                AWEPlayVideoViewController *playVC = (AWEPlayVideoViewController *)vc;
+                AWEAwemeModel *model = playVC.model;
+                if ([model respondsToSelector:@selector(isShowLandscapeEntryView)] && model.isShowLandscapeEntryView) {
+                    shouldAdjust = YES;
+                }
+            }
+        }
+    }
+
+    if (shouldAdjust) {
+        CGFloat offset = gCurrentTabBarHeight > 0 ? gCurrentTabBarHeight : originalTabBarHeight;
+        if (offset > 0) {
+            center.y -= offset * 0.5;
+        }
+    }
+
+    %orig(center);
+}
+%end
+
 // 隐藏图片滑条
 %hook AWEStoryProgressContainerView
 - (void)setCenter:(CGPoint)center {
@@ -11454,26 +11485,6 @@ static Class TagViewClass = nil;
 %end
 
 %hook AWELandscapeFeedEntryView
-
-static const CGFloat kDYYYLandscapeEntryFullScreenShiftY = 30.0;
-
-static BOOL DYYYLandscapeEntryShouldApplyFullScreenShift(void) {
-    return DYYYGetBool(@"DYYYEnableFullScreen") && !DYYYGetBool(@"DYYYRemoveEntry") && !DYYYGetBool(@"DYYYHideEntry");
-}
-
-- (void)setFrame:(CGRect)frame {
-    if (DYYYLandscapeEntryShouldApplyFullScreenShift()) {
-        frame.origin.y += kDYYYLandscapeEntryFullScreenShiftY;
-    }
-    %orig(frame);
-}
-
-- (void)setCenter:(CGPoint)center {
-    if (DYYYLandscapeEntryShouldApplyFullScreenShift()) {
-        center.y += kDYYYLandscapeEntryFullScreenShiftY;
-    }
-    %orig(center);
-}
 
 - (void)setAlpha:(CGFloat)alpha {
     BOOL isApplyingGlobal = (dyyyGlobalTransparencyMutationDepth > 0);
@@ -11520,7 +11531,7 @@ static BOOL DYYYLandscapeEntryShouldApplyFullScreenShift(void) {
         return;
     }
 
-    if (DYYYLandscapeEntryShouldApplyFullScreenShift() && self.superview) {
+    if (self.superview) {
         [self.superview bringSubviewToFront:self];
     }
 
