@@ -537,7 +537,7 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
     NSString *imagePath = [dyyyFolderPath stringByAppendingPathComponent:saveFilename];
 
     BOOL fileExists = [[NSFileManager defaultManager] fileExistsAtPath:imagePath];
-    item.detail = fileExists ? @"已设置" : @"默认";
+    item.detail = fileExists ? @"已設置" : @"預設";
 
     item.type = 0;
     item.svgIconImageName = svgIconName;
@@ -565,7 +565,7 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
                 NSError *error = nil;
                 [[NSFileManager defaultManager] removeItemAtPath:imagePath error:&error];
                 if (!error) {
-                    weakItem.detail = @"默认";
+                    weakItem.detail = @"預設";
                     [weakItem refreshCell];
                 }
             }
@@ -584,7 +584,7 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
               }
               if (!originalImageURL) {
                   dispatch_async(dispatch_get_main_queue(), ^{
-                    [DYYYUtils showToast:@"无法获取选中的图片"];
+                    [DYYYUtils showToast:@"無法獲取選中的圖片"];
                   });
                   return;
               }
@@ -597,7 +597,7 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
 
                 if (!imageData) {
                     dispatch_async(dispatch_get_main_queue(), ^{
-                      [DYYYUtils showToast:@"读取图片数据失败"];
+                      [DYYYUtils showToast:@"讀取圖片數據失敗"];
                     });
                     return;
                 }
@@ -617,10 +617,10 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
                 BOOL writeSuccess = [imageData writeToFile:imagePath atomically:YES];
                 dispatch_async(dispatch_get_main_queue(), ^{
                   if (writeSuccess) {
-                      weakItem.detail = @"已设置";
+                      weakItem.detail = @"已設置";
                       [weakItem refreshCell];
                   } else {
-                      [DYYYUtils showToast:@"保存图标失败"];
+                      [DYYYUtils showToast:@"保存圖標失敗"];
                   }
                 });
               });
@@ -706,19 +706,19 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
 }
 
 + (void)showUserAgreementAlert {
-    [self showTextInputAlert:@"用户协议"
+    [self showTextInputAlert:@"用戶協議"
         defaultText:@""
-        placeholder:@"我已阅读并同意继续使用"
+        placeholder:@"我已閱讀並同意繼續使用"
         onConfirm:^(NSString *text) {
-          if ([text isEqualToString:@"我已阅读并同意继续使用"]) {
+          if ([text isEqualToString:@"我已閱讀並同意繼續使用"]) {
               [self setUserDefaults:@"YES" forKey:@"DYYYUserAgreementAccepted"];
           } else {
-              [DYYYUtils showToast:@"请正确输入内容"];
+              [DYYYUtils showToast:@"請正確輸入內容"];
               [self showUserAgreementAlert];
           }
         }
         onCancel:^{
-          [DYYYUtils showToast:@"请立即卸载本插件"];
+          [DYYYUtils showToast:@"請立即移除本插件"];
           dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             exit(0);
           });
