@@ -20,7 +20,7 @@
 
 - (void)setAddItemTitle:(NSString *)addItemTitle {
     _addItemTitle = [addItemTitle copy];
-    NSString *addTitle = _addItemTitle ?: @"添加";
+    NSString *addTitle = _addItemTitle ?: @"新增";
     if (self.addButton) {
         [self.addButton setTitle:[@"+ " stringByAppendingString:addTitle] forState:UIControlStateNormal];
     }
@@ -29,9 +29,9 @@
 - (instancetype)initWithTitle:(NSString *)title keywords:(NSArray *)keywords {
     if (self = [super initWithFrame:UIScreen.mainScreen.bounds]) {
         self.keywords = [NSMutableArray arrayWithArray:keywords ?: @[]];
-        self.addItemTitle = @"添加过滤项";
-        self.editItemTitle = @"编辑过滤项";
-        self.inputPlaceholder = @"请输入过滤项";
+        self.addItemTitle = @"新增過濾項";
+        self.editItemTitle = @"編輯過濾項";
+        self.inputPlaceholder = @"請輸入過濾項";
         self.backgroundColor = [UIColor colorWithWhite:0 alpha:0.2];
 
         BOOL isDarkMode = [DYYYUtils isDarkMode];
@@ -56,7 +56,7 @@
 
         // 主标题 - 根据模式设置文本颜色
         self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 20, 260, 24)];
-        self.titleLabel.text = title ?: @"过滤过滤项";
+        self.titleLabel.text = title ?: @"過濾過濾項";
         self.titleLabel.textColor =
             isDarkMode ? [UIColor colorWithRed:230 / 255.0 green:230 / 255.0 blue:235 / 255.0 alpha:1.0] : [UIColor colorWithRed:45 / 255.0 green:47 / 255.0 blue:56 / 255.0 alpha:1.0];
         self.titleLabel.textAlignment = NSTextAlignmentCenter;
@@ -83,7 +83,7 @@
         self.addButton.backgroundColor =
             isDarkMode ? [UIColor colorWithRed:45 / 255.0 green:45 / 255.0 blue:45 / 255.0 alpha:1.0] : [UIColor colorWithRed:245 / 255.0 green:245 / 255.0 blue:245 / 255.0 alpha:1.0];
         self.addButton.layer.cornerRadius = 8;
-        NSString *addTitle = self.addItemTitle ?: @"添加";
+        NSString *addTitle = self.addItemTitle ?: @"新增";
         [self.addButton setTitle:[@"+ " stringByAppendingString:addTitle] forState:UIControlStateNormal];
         [self.addButton setTitleColor:[UIColor colorWithRed:11 / 255.0 green:223 / 255.0 blue:154 / 255.0 alpha:1.0] forState:UIControlStateNormal];  // 强调色保持不变 #0BDF9A
         [self.addButton addTarget:self action:@selector(addKeywordTapped) forControlEvents:UIControlEventTouchUpInside];
@@ -120,7 +120,7 @@
         self.confirmButton = [UIButton buttonWithType:UIButtonTypeSystem];
         self.confirmButton.frame = CGRectMake(150, 0, 150, 55.5);
         self.confirmButton.backgroundColor = [UIColor clearColor];
-        [self.confirmButton setTitle:@"确定" forState:UIControlStateNormal];
+        [self.confirmButton setTitle:@"確定" forState:UIControlStateNormal];
         [self.confirmButton
             setTitleColor:isDarkMode ? [UIColor colorWithRed:230 / 255.0 green:230 / 255.0 blue:235 / 255.0 alpha:1.0] : [UIColor colorWithRed:45 / 255.0 green:47 / 255.0 blue:56 / 255.0 alpha:1.0]
                  forState:UIControlStateNormal];
