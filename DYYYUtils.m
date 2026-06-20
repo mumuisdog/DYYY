@@ -2335,4 +2335,3 @@ id DYYYJSONSafeObject(id obj) {
     }
     return [obj description];
 }
-}
