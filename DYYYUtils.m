@@ -417,15 +417,15 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
 
     NSString *currentLabelText = label.text ?: @"";
     NSString *newText = nil;
-    NSRange ipRange = [currentLabelText rangeOfString:@"IP属地："];
+    NSRange ipRange = [currentLabelText rangeOfString:@"IP位置："];
     if (ipRange.location != NSNotFound) {
         NSString *baseText = [currentLabelText substringToIndex:ipRange.location];
-        newText = [NSString stringWithFormat:@"%@IP属地：%@", baseText, resolvedLocation];
+        newText = [NSString stringWithFormat:@"%@IP位置：%@", baseText, resolvedLocation];
     } else {
         if (currentLabelText.length > 0) {
-            newText = [NSString stringWithFormat:@"%@  IP属地：%@", currentLabelText, resolvedLocation];
+            newText = [NSString stringWithFormat:@"%@  IP位置：%@", currentLabelText, resolvedLocation];
         } else {
-            newText = [NSString stringWithFormat:@"IP属地：%@", resolvedLocation];
+            newText = [NSString stringWithFormat:@"IP位置：%@", resolvedLocation];
         }
     }
 
@@ -487,7 +487,7 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
             NSString *displayLocation = @"未知";
 
             if (countryName.length > 0) {
-                if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:@"中国"] && ![countryName isEqualToString:localName]) {
+                if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:@"中國"] && ![countryName isEqualToString:localName]) {
                     displayLocation = [NSString stringWithFormat:@"%@ %@ %@", countryName, adminName1, localName];
                 } else if (localName.length > 0 && ![countryName isEqualToString:localName]) {
                     displayLocation = [NSString stringWithFormat:@"%@ %@", countryName, localName];
@@ -535,7 +535,7 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
                                         NSString *localName = locationInfo[@"name"];
 
                                         if (countryName.length > 0) {
-                                            if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:@"中国"] && ![countryName isEqualToString:localName]) {
+                                            if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:@"中國"] && ![countryName isEqualToString:localName]) {
                                                 displayLocation = [NSString stringWithFormat:@"%@ %@ %@", countryName, adminName1, localName];
                                             } else if (localName.length > 0 && ![countryName isEqualToString:localName]) {
                                                 displayLocation = [NSString stringWithFormat:@"%@ %@", countryName, localName];
@@ -581,9 +581,9 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
         BOOL isDirectCity = [provinceName isEqualToString:cityName] || ([cityCode hasPrefix:@"11"] || [cityCode hasPrefix:@"12"] || [cityCode hasPrefix:@"31"] || [cityCode hasPrefix:@"50"]);
         if (!model.ipAttribution) {
             if (isDirectCity) {
-                label.text = [NSString stringWithFormat:@"%@  IP属地：%@", originalText, cityName];
+                label.text = [NSString stringWithFormat:@"%@  IP位置：%@", originalText, cityName];
             } else {
-                label.text = [NSString stringWithFormat:@"%@  IP属地：%@ %@", originalText, provinceName, cityName];
+                label.text = [NSString stringWithFormat:@"%@  IP位置：%@ %@", originalText, provinceName, cityName];
             }
         } else {
             BOOL containsProvince = [originalText containsString:provinceName];
@@ -591,7 +591,7 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
             if (containsProvince && !isDirectCity && !containsCity) {
                 label.text = [NSString stringWithFormat:@"%@ %@", originalText, cityName];
             } else if (isDirectCity && !containsCity) {
-                label.text = [NSString stringWithFormat:@"%@  IP属地：%@", originalText, cityName];
+                label.text = [NSString stringWithFormat:@"%@  IP位置：%@", originalText, cityName];
             }
         }
         [DYYYUtils applyColorSettingsToLabel:label colorHexString:colorHexString];
@@ -619,7 +619,7 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
         return nil;
     }
 
-    NSArray<NSString *> *prefixes = @[ @"IP属地：", @"IP属地:", @"IP 属地：", @"IP 属地:" ];
+    NSArray<NSString *> *prefixes = @[ @"IP位置：", @"IP位置:", @"IP 位置：", @"IP 位置:" ];
     for (NSString *prefix in prefixes) {
         if ([trimmedValue hasPrefix:prefix]) {
             trimmedValue = [trimmedValue substringFromIndex:prefix.length];
@@ -1106,15 +1106,15 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
 + (NSString *)mediaTypeDescription:(MediaType)mediaType {
     switch (mediaType) {
         case MediaTypeVideo:
-            return @"视频";
+            return @"影片";
         case MediaTypeImage:
-            return @"图片";
+            return @"圖片";
         case MediaTypeAudio:
-            return @"音频";
+            return @"音訊";
         case MediaTypeHeic:
             return @"表情包";
         default:
-            return @"文件";
+            return @"檔案";
     }
 }
 
@@ -1365,7 +1365,7 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
             NSError *removeError = nil;
             [[NSFileManager defaultManager] removeItemAtPath:path error:&removeError];
             if (removeError) {
-                NSLog(@"删除临时GIF文件失败: %@", removeError);
+                NSLog(@"刪除臨時GIF檔案失敗: %@", removeError);
             }
           });
         }];
@@ -1383,7 +1383,7 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
         completionHandler:^(BOOL success, NSError *_Nullable error) {
           dispatch_async(dispatch_get_main_queue(), ^{
             if (!success) {
-                [DYYYUtils showToast:@"保存失败"];
+                [DYYYUtils showToast:@"儲存失敗"];
             }
             [[NSFileManager defaultManager] removeItemAtPath:gifURL.path error:nil];
             if (completion) {
@@ -1550,17 +1550,17 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
       NSString *failureReason = nil;
 
       if (!heicData || heicData.length == 0) {
-          failureReason = @"读取HEIC数据失败或数据为空";
+          failureReason = @"讀取HEIC數據失敗或數據為空";
       } else {
           YYImageDecoder *decoder = DYYYUtilsCreateYYDecoderWithData(heicData, 1.0f);
           if (!decoder) {
-              failureReason = @"无法通过YYImageDecoder解析HEIC数据，可能是资源不是动图或SDK不可用";
+              failureReason = @"無法通過YYImageDecoder解析HEIC數據，可能是資源不是動圖或SDK不可用";
           } else if (decoder.frameCount == 0) {
-              failureReason = @"YYImageDecoder未解析到任何帧，HEIC资源可能不是动图";
+              failureReason = @"YYImageDecoder未解析到任何幀，HEIC資源可能不是動圖";
           } else {
               success = DYYYUtilsWriteGIFUsingYYDecoder(decoder, gifURL, heifDuration);
               if (!success) {
-                  failureReason = @"YYImageDecoder写入GIF失败，可能是图像数据损坏或磁盘空间不足";
+                  failureReason = @"YYImageDecoder寫入GIF失敗，可能是圖像數據損壞或磁碟空間不足";
               }
           }
       }
@@ -1568,7 +1568,7 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
       if (!success) {
           [[NSFileManager defaultManager] removeItemAtURL:gifURL error:nil];
           if (failureReason.length > 0) {
-              NSLog(@"[DYYY] convertHeicToGif失败: %@", failureReason);
+              NSLog(@"[DYYY] convertHeicToGif失敗: %@", failureReason);
           }
       }
 
@@ -2334,4 +2334,5 @@ id DYYYJSONSafeObject(id obj) {
         return @([(NSDate *)obj timeIntervalSince1970]);
     }
     return [obj description];
+}
 }
