@@ -968,8 +968,8 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
           },
           @{
               @"identifier" : @"DYYYEnableBackgroundListen",
-              @"title" : @"啟用后台播放",
-              @"subTitle" : @"使受到后台播放限制的影片可以在后台繼續播放",
+              @"title" : @"啟用背景播放",
+              @"subTitle" : @"使受到背景播放限制的影片可以在背景繼續播放",
               @"detail" : @"",
               @"cellType" : @37,
               @"imageName" : @"ic_play_outlined_12"
@@ -2590,7 +2590,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
       NSMutableArray<AWESettingItemModel *> *longPressItems = [NSMutableArray array];
       NSArray *longPressSettings = @[
           @{@"identifier" : @"DYYYLongPressSaveVideo",
-            @"title" : @"長按儲存當前影片",
+            @"title" : @"長按儲存目前影片",
             @"detail" : @"",
             @"cellType" : @6,
             @"imageName" : @"ic_boxarrowdown_outlined"},
@@ -2605,7 +2605,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
             @"cellType" : @6,
             @"imageName" : @"ic_boxarrowdown_outlined"},
           @{@"identifier" : @"DYYYLongPressSaveCurrentImage",
-            @"title" : @"長按儲存當前圖片",
+            @"title" : @"長按儲存目前圖片",
             @"detail" : @"",
             @"cellType" : @6,
             @"imageName" : @"ic_boxarrowdown_outlined"},
@@ -2786,22 +2786,22 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
             @"cellType" : @26,
             @"imageName" : @"ic_cloudarrowdown_outlined_20"},
           @{@"identifier" : @"SaveCurrentABTestData",
-            @"title" : @"匯出當前配置",
+            @"title" : @"匯出目前配置",
             @"detail" : @"",
             @"cellType" : @26,
             @"imageName" : @"ic_memorycard_outlined_20"},
           @{@"identifier" : @"SaveABTestConfigFile",
-            @"title" : @"匯出本地配置",
+            @"title" : @"匯出本機配置",
             @"detail" : @"",
             @"cellType" : @26,
             @"imageName" : @"ic_memorycard_outlined_20"},
           @{@"identifier" : @"LoadABTestConfigFile",
-            @"title" : @"匯入本地配置",
+            @"title" : @"匯入本機配置",
             @"detail" : @"",
             @"cellType" : @26,
             @"imageName" : @"ic_phonearrowup_outlined_20"},
           @{@"identifier" : @"DeleteABTestConfigFile",
-            @"title" : @"刪除本地配置",
+            @"title" : @"刪除本機配置",
             @"detail" : @"",
             @"cellType" : @26,
             @"imageName" : @"ic_trash_outlined_20"}
@@ -2974,11 +2974,11 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                     return;
                 NSString *currentMode = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYABTestModeString"] ?: @"替换模式：忽略原配置，使用新数据";
 
-                NSArray *modeOptions = @[ @"覆写模式：保留原设置，覆盖同名项", @"替换模式：忽略原配置，使用新数据", DYYY_REMOTE_MODE_STRING ];
+                NSArray *modeOptions = @[ @"覆寫模式：保留原始設定，覆蓋同名項目", @"替換模式：忽略原始配置，使用新數據", DYYY_REMOTE_MODE_STRING ];
 
                 [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYABTestModeString"
                                                    optionsArray:modeOptions
-                                                     headerText:@"選擇本地配置的應用方式"
+                                                     headerText:@"選擇本機配置的應用方式"
                                                  onPresentingVC:topView()
                                                selectionChanged:^(NSString *selectedValue) {
                                                  BOOL isPatchMode = [DYYYABTestHook isPatchMode];
@@ -3139,14 +3139,14 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 
                 NSData *jsonData = [NSData dataWithContentsOfFile:jsonFilePath];
                 if (!jsonData) {
-                    [DYYYUtils showToast:@"本地配置獲取失敗"];
+                    [DYYYUtils showToast:@"本機配置獲取失敗"];
                     return;
                 }
 
                 NSError *error;
                 NSDictionary *originalData = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&error];
                 if (error || ![originalData isKindOfClass:[NSDictionary class]]) {
-                    [DYYYUtils showToast:@"本地配置序列化失敗"];
+                    [DYYYUtils showToast:@"本機配置序列化失敗"];
                     return;
                 }
 
@@ -3174,7 +3174,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                 DYYYBackupPickerDelegate *pickerDelegate = [[DYYYBackupPickerDelegate alloc] init];
                 pickerDelegate.tempFilePath = tempFilePath;
                 pickerDelegate.completionBlock = ^(NSURL *url) {
-                  [DYYYUtils showToast:@"本地配置已儲存"];
+                  [DYYYUtils showToast:@"本機配置已儲存"];
                 };
 
                 static char kABTestConfigPickerDelegateKey;
@@ -3290,7 +3290,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                     NSError *error = nil;
                     BOOL success = [[NSFileManager defaultManager] removeItemAtPath:configPath error:&error];
 
-                    NSString *message = success ? @"本地配置已刪除成功" : [NSString stringWithFormat:@"刪除失敗: %@", error.localizedDescription];
+                    NSString *message = success ? @"本機配置已刪除成功" : [NSString stringWithFormat:@"刪除失敗: %@", error.localizedDescription];
                     [DYYYUtils showToast:message];
 
                     if (success) {
@@ -3304,7 +3304,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                         refreshConfigConflictState();
                     }
                 } else {
-                    [DYYYUtils showToast:@"本地配置不存在"];
+                    [DYYYUtils showToast:@"本機配置不存在"];
                 }
               };
           }
@@ -3445,7 +3445,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
           @{
               @"identifier" : @"DYYYEnableDoubleOpenComment",
               @"title" : @"啟用雙擊打開評論",
-              @"subTitle" : @"與“雙擊打開菜單”互斥",
+              @"subTitle" : @"與“雙擊打開選單”互斥",
               @"detail" : @"",
               @"cellType" : @37,
               @"imageName" : @"ic_comment_outlined_20"
@@ -3460,7 +3460,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
           },
           @{
               @"identifier" : @"DYYYEnableDoubleTapMenu",
-              @"title" : @"啟用雙擊打開菜單",
+              @"title" : @"啟用雙擊打開選單",
               @"subTitle" : @"與“雙擊打開評論”互斥，下方自訂",
               @"detail" : @"",
               @"cellType" : @37,
@@ -3468,8 +3468,8 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
           },
           @{
               @"identifier" : @"DYYYDoubleTapMenuSettings",
-              @"title" : @"設定雙擊菜單項目",
-              @"subTitle" : @"自訂雙擊打開菜單需要顯示的項目",
+              @"title" : @"設定雙擊選單項目",
+              @"subTitle" : @"自訂雙擊打開選單需要顯示的項目",
               @"detail" : @"",
               @"cellType" : @20,
               @"imageName" : @"ic_squaresplit_outlined_20"
@@ -3538,8 +3538,8 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                     [doubleTapItems addObject:functionItem];
                 }
                 NSMutableArray *sections = [NSMutableArray array];
-                [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"設定雙擊菜單項目" items:doubleTapItems]];
-                AWESettingBaseViewController *subVC = [DYYYSettingsHelper createSubSettingsViewController:@"設定雙擊菜單項目" sections:sections];
+                [sections addObject:[DYYYSettingsHelper createSectionWithTitle:@"設定雙擊選單項目" items:doubleTapItems]];
+                AWESettingBaseViewController *subVC = [DYYYSettingsHelper createSubSettingsViewController:@"設定雙擊選單項目" sections:sections];
                 [rootVC.navigationController pushViewController:(UIViewController *)subVC animated:YES];
               };
           }
