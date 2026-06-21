@@ -84,7 +84,7 @@
         self.selectButton = [UIButton buttonWithType:UIButtonTypeSystem];
         self.selectButton.frame = CGRectMake(150, 0, 150, 55);
         self.selectButton.backgroundColor = [UIColor clearColor];
-        [self.selectButton setTitle:@"选择" forState:UIControlStateNormal];
+        [self.selectButton setTitle:@"選擇" forState:UIControlStateNormal];
         [self.selectButton
             setTitleColor:isDarkMode ? [UIColor colorWithRed:230 / 255.0 green:230 / 255.0 blue:235 / 255.0 alpha:1.0] : [UIColor colorWithRed:45 / 255.0 green:47 / 255.0 blue:56 / 255.0 alpha:1.0]
                  forState:UIControlStateNormal];
