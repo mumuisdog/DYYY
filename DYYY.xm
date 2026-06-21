@@ -3060,13 +3060,13 @@ static void DYYYDisableAVPlayerItemHDRMetadata(AVPlayerItem *item) {
             [messageContent appendFormat:@"%@", signature];
         }
 
-        NSString *title = nickname.length > 0 ? nickname : @"关注确认";
+        NSString *title = nickname.length > 0 ? nickname : @"關注確認";
 
         [DYYYBottomAlertView showAlertWithTitle:title
                                         message:messageContent
                                       avatarURL:avatarURL
                                cancelButtonText:@"取消"
-                              confirmButtonText:@"关注"
+                              confirmButtonText:@"關注"
                                    cancelAction:nil
                                     closeAction:nil
                                   confirmAction:^{
@@ -3242,7 +3242,7 @@ static void DYYYDisableAVPlayerItemHDRMetadata(AVPlayerItem *item) {
 
                 if (settingVC.modalPresentationStyle == UIModalPresentationFullScreen) {
                     UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-                    [closeButton setTitle:@"关闭" forState:UIControlStateNormal];
+                    [closeButton setTitle:@"關閉" forState:UIControlStateNormal];
                     closeButton.translatesAutoresizingMaskIntoConstraints = NO;
 
                     [settingVC.view addSubview:closeButton];
@@ -3325,8 +3325,8 @@ static void DYYYDisableAVPlayerItemHDRMetadata(AVPlayerItem *item) {
     if (DYYYGetBool(@"DYYYCollectTips") && [self.accessibilityLabel isEqualToString:@"收藏"]) {
 
         dispatch_async(dispatch_get_main_queue(), ^{
-          [DYYYBottomAlertView showAlertWithTitle:@"收藏确认"
-                                          message:@"是否确认/取消收藏？"
+          [DYYYBottomAlertView showAlertWithTitle:@"收藏確認"
+                                          message:@"是否確認/取消收藏？"
                                         avatarURL:nil
                                  cancelButtonText:nil
                                 confirmButtonText:nil
@@ -3479,10 +3479,10 @@ static void DYYYDisableAVPlayerItemHDRMetadata(AVPlayerItem *item) {
     [self layoutIfNeeded];
 
     NSString *scheduleStyle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYScheduleStyle"];
-    BOOL showRightRemainingTime = [scheduleStyle isEqualToString:@"进度条右侧剩余"];
-    BOOL showRightCompleteTime = [scheduleStyle isEqualToString:@"进度条右侧完整"];
-    BOOL showLeftRemainingTime = [scheduleStyle isEqualToString:@"进度条左侧剩余"];
-    BOOL showLeftCompleteTime = [scheduleStyle isEqualToString:@"进度条左侧完整"];
+    BOOL showRightRemainingTime = [scheduleStyle isEqualToString:@"進度條右側剩餘"];
+    BOOL showRightCompleteTime = [scheduleStyle isEqualToString:@"進度條右側完整"];
+    BOOL showLeftRemainingTime = [scheduleStyle isEqualToString:@"進度條左側剩餘"];
+    BOOL showLeftCompleteTime = [scheduleStyle isEqualToString:@"進度條左側完整"];
 
     BOOL shouldShowLeftLabel = !showRightRemainingTime && !showRightCompleteTime;
     BOOL shouldShowRightLabel = !showLeftRemainingTime && !showLeftCompleteTime;
@@ -3644,19 +3644,19 @@ static void DYYYDisableAVPlayerItemHDRMetadata(AVPlayerItem *item) {
         NSString *currentText = lbl.text ?: @"";
         if ([currentText containsString:location]) return;
 
-        if ([currentText containsString:@"IP属地："]) {
-            NSRange range = [currentText rangeOfString:@"IP属地："];
+        if ([currentText containsString:@"IP位置："]) {
+            NSRange range = [currentText rangeOfString:@"IP位置："];
             NSString *baseText = [currentText substringToIndex:range.location];
-            lbl.text = [NSString stringWithFormat:@"%@IP属地：%@", baseText, location];
+            lbl.text = [NSString stringWithFormat:@"%@IP位置：%@", baseText, location];
         } else if (currentText.length > 0) {
-            lbl.text = [NSString stringWithFormat:@"%@  IP属地：%@", currentText, location];
+            lbl.text = [NSString stringWithFormat:@"%@  IP位置：%@", currentText, location];
         }
 
         [DYYYUtils applyColorSettingsToLabel:lbl colorHexString:labelColorHex];
     };
 
     if (cityCode.length == 0 && regionCode.length == 0) {
-        updateLabelWithLocation(label, @"未知地区");
+        updateLabelWithLocation(label, @"未知地區");
         return label;
     }
 
@@ -3738,7 +3738,7 @@ static void DYYYDisableAVPlayerItemHDRMetadata(AVPlayerItem *item) {
     }
 
     if (!displayLocation) {
-        displayLocation = @"未知地区";
+        displayLocation = @"未知地區";
         updateLabelWithLocation(label, displayLocation);
         return label;
     }
@@ -3917,7 +3917,7 @@ static NSString *const kDYYYLongPressCopyEnabledKey = @"DYYYLongPressCopyTextEna
 
         if (description.length > 0) {
             [[UIPasteboard generalPasteboard] setString:description];
-            [DYYYToast showSuccessToastWithMessage:@"视频文案已复制"];
+            [DYYYToast showSuccessToastWithMessage:@"影片文案已複製"];
         }
     }
 }
@@ -4014,7 +4014,7 @@ static NSString *const kDYYYLongPressCopyEnabledKey = @"DYYYLongPressCopyTextEna
 - (void)setImage:(UIImage *)image forState:(UIControlState)state {
 
     UIImage *imageToApply = image;
-    if ([self.accessibilityLabel isEqualToString:@"拍摄"]) {
+    if ([self.accessibilityLabel isEqualToString:@"拍攝"]) {
         UIImage *customImage = DYYYLoadCustomImage(@"tab_plus.png", CGSizeZero);
         if (customImage) {
             imageToApply = customImage;
@@ -4223,7 +4223,7 @@ static NSString *const kDYYYLongPressCopyEnabledKey = @"DYYYLongPressCopyTextEna
     }
 
     [[UIPasteboard generalPasteboard] setString:descText];
-    [DYYYToast showSuccessToastWithMessage:@"评论已复制"];
+    [DYYYToast showSuccessToastWithMessage:@"評論已複製"];
 }
 %end
 
@@ -4392,7 +4392,7 @@ static NSArray<NSString *> *dyyy_qualityRank = nil;
     }
 
     if (!dyyy_qualityRank) {
-        dyyy_qualityRank = @[ @"蓝光帧彩", @"蓝光", @"超清", @"高清", @"标清" ];
+        dyyy_qualityRank = @[ @"藍光幀彩", @"藍光", @"超清", @"高清", @"標清" ];
     }
     NSArray *orderedNames = dyyy_qualityRank;
 
@@ -4843,7 +4843,7 @@ static BOOL dyyyShouldUseLastStickerURL = NO;
     if (hasAudio && DYYYGetBool(@"DYYYForceDownloadCommentAudio")) {
         NSString *audioContent = audio.content;
         
-        NSString *userName = @"未知用户";
+        NSString *userName = @"未知用戶";
         if (comment.author && [comment.author respondsToSelector:@selector(nickname)]) {
             NSString *nickname = [comment.author performSelector:@selector(nickname)];
             if (nickname && nickname.length > 0) {
@@ -4894,19 +4894,19 @@ static BOOL dyyyShouldUseLastStickerURL = NO;
             }
         }
         
-        NSString *hint = (currentIndex >= 0) ? @"正在保存当前图片..." : 
-            [NSString stringWithFormat:@"正在保存 %lu 张图片...", (unsigned long)imageList.count];
+        NSString *hint = (currentIndex >= 0) ? @"正在儲存當前圖片..." : 
+            [NSString stringWithFormat:@"正在儲存 %lu 張圖片...", (unsigned long)imageList.count];
         [DYYYUtils showToast:hint];
         
         [DYYYManager saveCommentImages:imageList
                             currentIndex:currentIndex
                             completion:^(NSInteger successCount, NSInteger livePhotoCount, NSInteger failedCount) {
-            NSMutableString *message = [NSMutableString stringWithFormat:@"成功保存 %ld 张", (long)successCount];
+            NSMutableString *message = [NSMutableString stringWithFormat:@"成功儲存 %ld 張", (long)successCount];
             if (livePhotoCount > 0) {
-                [message appendFormat:@"\n(含 %ld 张实况照片)", (long)livePhotoCount];
+                [message appendFormat:@"\n(含 %ld 張實況照片)", (long)livePhotoCount];
             }
             if (failedCount > 0) {
-                [message appendFormat:@"\n失败 %ld 张", (long)failedCount];
+                [message appendFormat:@"\n失敗 %ld 張", (long)failedCount];
             }
             [DYYYUtils showToast:message];
         }];
@@ -4934,9 +4934,9 @@ static BOOL dyyyShouldUseLastStickerURL = NO;
             elementTitle = [(UICommand *)element title];
         }
 
-        if ([elementTitle isEqualToString:@"添加到表情"]) {
+        if ([elementTitle isEqualToString:@"新增到表情"]) {
             hasAddStickerOption = YES;
-        } else if ([elementTitle isEqualToString:@"保存到相册"]) {
+        } else if ([elementTitle isEqualToString:@"儲存到照片App"]) {
             hasSaveLocalOption = YES;
         }
     }
@@ -4944,7 +4944,7 @@ static BOOL dyyyShouldUseLastStickerURL = NO;
     if (hasAddStickerOption && !hasSaveLocalOption) {
         NSMutableArray *newChildren = [children mutableCopy];
 
-        UIAction *saveAction = [%c(UIAction) actionWithTitle:@"保存到相册"
+        UIAction *saveAction = [%c(UIAction) actionWithTitle:@"儲存到照片App"
                                                                  image:nil
                                                             identifier:nil
                                                                handler:^(__kindof UIAction *_Nonnull action) {
@@ -4952,7 +4952,7 @@ static BOOL dyyyShouldUseLastStickerURL = NO;
                                                                  if (targetStickerView) {
                                                                      [DYYYManager saveAnimatedSticker:targetStickerView];
                                                                  } else {
-                                                                     [DYYYUtils showToast:@"无法获取表情视图"];
+                                                                     [DYYYUtils showToast:@"無法獲取表情視圖"];
                                                                  }
                                                                }];
 
@@ -5008,7 +5008,7 @@ static BOOL dyyyShouldUseLastStickerURL = NO;
     // 获取表情包URL
     AWEIMEmoticonModel *emoticonModel = self.model;
     if (!emoticonModel) {
-        [DYYYUtils showToast:@"无法获取表情包信息"];
+        [DYYYUtils showToast:@"無法獲取表情包資訊"];
         return;
     }
 
@@ -5032,7 +5032,7 @@ static BOOL dyyyShouldUseLastStickerURL = NO;
     }
 
     if (!urlString) {
-        [DYYYUtils showToast:@"无法获取表情包链接"];
+        [DYYYUtils showToast:@"無法獲取表情包連結"];
         return;
     }
 
@@ -5096,23 +5096,23 @@ static AWEIMCustomMenuModel *DYYYIMCreateDownloadMenuItem(AWEIMReusableCommonCel
     }
     __weak AWEIMReusableCommonCell *weakCell = cell;
     AWEIMCustomMenuModel *menuItem = [%c(AWEIMCustomMenuModel) new];
-    menuItem.title = @"保存表情";
+    menuItem.title = @"儲存表情";
     menuItem.imageName = @"im_emoticon_interactive_tab_new";
-    menuItem.trackerName = @"保存表情";
+    menuItem.trackerName = @"儲存表情";
     menuItem.willPerformMenuActionSelectorBlock = ^(id arg1) {
       AWEIMReusableCommonCell *strongCell = weakCell;
       if (!strongCell) {
-          [DYYYUtils showToast:@"无法获取表情包信息"];
+          [DYYYUtils showToast:@"無法獲取表情包資訊"];
           return;
       }
       AWEIMMessageComponentContext *context = (AWEIMMessageComponentContext *)strongCell.currentContext;
       if (!context || ![context.message isKindOfClass:%c(AWEIMGiphyMessage)]) {
-          [DYYYUtils showToast:@"无法获取表情包信息"];
+          [DYYYUtils showToast:@"無法獲取表情包資訊"];
           return;
       }
       NSURL *downloadURL = DYYYIMEmotionDownloadURLFromMessage((AWEIMGiphyMessage *)context.message);
       if (!downloadURL) {
-          [DYYYUtils showToast:@"无法获取表情包链接"];
+          [DYYYUtils showToast:@"無法獲取表情包連結"];
           return;
       }
       [DYYYManager downloadMedia:downloadURL
@@ -5140,7 +5140,7 @@ static NSArray *DYYYIMMenuItemsByAddingDownloadAction(NSArray *menuItems, id cel
         return menuItems;
     }
     for (AWEIMCustomMenuModel *item in menuItems) {
-        if ([item isKindOfClass:%c(AWEIMCustomMenuModel)] && [item.title isEqualToString:@"保存表情"]) {
+        if ([item isKindOfClass:%c(AWEIMCustomMenuModel)] && [item.title isEqualToString:@"儲存表情"]) {
             return menuItems;
         }
     }
@@ -5731,7 +5731,7 @@ static void DYYYApplyAvatarFollowPromptSettingsWithRetry(id owner) {
             NSString *song = btn.currentTitle;
             if (song.length) {
                 [UIPasteboard generalPasteboard].string = song;
-                [DYYYToast showSuccessToastWithMessage:@"歌曲名已复制"];
+                [DYYYToast showSuccessToastWithMessage:@"歌曲名已複製"];
             }
         }
     } else {
@@ -9073,14 +9073,14 @@ static NSHashTable *processedParentViews = nil;
             }
 
             if (awemeModel.albumImages.count > 1) {
-                downloadTitle = (currentImageModel.clipVideo != nil || awemeModel.isLivePhoto) ? @"保存当前实况" : @"保存当前图片";
+                downloadTitle = (currentImageModel.clipVideo != nil || awemeModel.isLivePhoto) ? @"儲存当前实况" : @"儲存当前图片";
             } else {
-                downloadTitle = (currentImageModel.clipVideo != nil || awemeModel.isLivePhoto) ? @"保存实况" : @"保存图片";
+                downloadTitle = (currentImageModel.clipVideo != nil || awemeModel.isLivePhoto) ? @"儲存实况" : @"儲存图片";
             }
         } else if (isNewLivePhoto) {
-            downloadTitle = @"保存实况";
+            downloadTitle = @"儲存实况";
         } else {
-            downloadTitle = @"保存视频";
+            downloadTitle = @"儲存视频";
         }
 
         AWEUserActionSheetView *actionSheet = [[NSClassFromString(@"AWEUserActionSheetView") alloc] init];
@@ -9127,7 +9127,7 @@ static NSHashTable *processedParentViews = nil;
                                                       completion:^(BOOL success) {
                                                         if (success) {
                                                         } else {
-                                                            [DYYYUtils showToast:@"图片保存已取消"];
+                                                            [DYYYUtils showToast:@"图片儲存已取消"];
                                                         }
                                                       }];
                                   } else {
@@ -9181,7 +9181,7 @@ static NSHashTable *processedParentViews = nil;
                     }
                 }
 
-                NSString *actionTitle = hasLivePhoto ? @"保存所有实况" : @"保存所有图片";
+                NSString *actionTitle = hasLivePhoto ? @"儲存所有实况" : @"儲存所有图片";
 
                 AWEUserSheetAction *downloadAllAction = [NSClassFromString(@"AWEUserSheetAction")
                     actionWithTitle:actionTitle
@@ -9237,7 +9237,7 @@ static NSHashTable *processedParentViews = nil;
         // 添加下载音频选项
         if (DYYYGetBool(@"DYYYDoubleTapDownloadAudio") || ![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDoubleTapDownloadAudio"]) {
 
-            AWEUserSheetAction *downloadAudioAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"保存音频"
+            AWEUserSheetAction *downloadAudioAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"儲存音频"
                                                                                                         imgName:nil
                                                                                                         handler:^{
                                                                                                           if (musicModel && musicModel.playURL && musicModel.playURL.originURLList.count > 0) {
@@ -9248,11 +9248,11 @@ static NSHashTable *processedParentViews = nil;
             [actions addObject:downloadAudioAction];
         }
 
-        // 添加接口保存选项
+        // 添加接口儲存选项
         if (DYYYGetBool(@"DYYYDoubleInterfaceDownload")) {
             NSString *apiKey = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYInterfaceDownload"];
             if (apiKey.length > 0) {
-                AWEUserSheetAction *apiDownloadAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"接口保存"
+                AWEUserSheetAction *apiDownloadAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"接口儲存"
                                                                                                           imgName:nil
                                                                                                           handler:^{
                                                                                                             NSString *shareLink = [awemeModel valueForKey:@"shareURL"];
@@ -10185,7 +10185,7 @@ static Class tabBarButtonClass = nil;
                     view.hidden = YES;
                     break;
                 }
-                // 在置 0 之前先保存真正的原始 alpha，避免后续 findAndHideViews 记录到 0
+                // 在置 0 之前先儲存真正的原始 alpha，避免后续 findAndHideViews 记录到 0
                 if (!objc_getAssociatedObject(view, &dyyyClearOriginalAlphaKey)) {
                     objc_setAssociatedObject(view, &dyyyClearOriginalAlphaKey, @(view.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
                 }
