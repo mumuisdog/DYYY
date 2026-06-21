@@ -9073,14 +9073,14 @@ static NSHashTable *processedParentViews = nil;
             }
 
             if (awemeModel.albumImages.count > 1) {
-                downloadTitle = (currentImageModel.clipVideo != nil || awemeModel.isLivePhoto) ? @"儲存当前实况" : @"儲存当前图片";
+                downloadTitle = (currentImageModel.clipVideo != nil || awemeModel.isLivePhoto) ? @"儲存目前實況" : @"儲存目前圖片";
             } else {
-                downloadTitle = (currentImageModel.clipVideo != nil || awemeModel.isLivePhoto) ? @"儲存实况" : @"儲存图片";
+                downloadTitle = (currentImageModel.clipVideo != nil || awemeModel.isLivePhoto) ? @"儲存實況" : @"儲存圖片";
             }
         } else if (isNewLivePhoto) {
-            downloadTitle = @"儲存实况";
+            downloadTitle = @"儲存實況";
         } else {
-            downloadTitle = @"儲存视频";
+            downloadTitle = @"儲存影片";
         }
 
         AWEUserActionSheetView *actionSheet = [[NSClassFromString(@"AWEUserActionSheetView") alloc] init];
@@ -9127,11 +9127,11 @@ static NSHashTable *processedParentViews = nil;
                                                       completion:^(BOOL success) {
                                                         if (success) {
                                                         } else {
-                                                            [DYYYUtils showToast:@"图片儲存已取消"];
+                                                            [DYYYUtils showToast:@"圖片儲存已取消"];
                                                         }
                                                       }];
                                   } else {
-                                      [DYYYUtils showToast:@"没有找到合适格式的图片"];
+                                      [DYYYUtils showToast:@"沒有找到合適格式的圖片"];
                                   }
                               }
                           } else if (isNewLivePhoto) {
@@ -9181,7 +9181,7 @@ static NSHashTable *processedParentViews = nil;
                     }
                 }
 
-                NSString *actionTitle = hasLivePhoto ? @"儲存所有实况" : @"儲存所有图片";
+                NSString *actionTitle = hasLivePhoto ? @"儲存所有實況" : @"儲存所有圖片";
 
                 AWEUserSheetAction *downloadAllAction = [NSClassFromString(@"AWEUserSheetAction")
                     actionWithTitle:actionTitle
@@ -9326,7 +9326,7 @@ static NSHashTable *processedParentViews = nil;
                                   completion:^(BOOL success, NSString *message) {
                                     if (success) {
                                     } else {
-                                        [DYYYUtils showToast:[NSString stringWithFormat:@"视频制作失败: %@", message]];
+                                        [DYYYUtils showToast:[NSString stringWithFormat:@"影片製作失敗: %@", message]];
                                     }
                                   }];
                             }];
@@ -9337,12 +9337,12 @@ static NSHashTable *processedParentViews = nil;
         // 添加复制文案选项
         if (DYYYGetBool(@"DYYYDoubleTapCopyDesc") || ![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDoubleTapCopyDesc"]) {
 
-            AWEUserSheetAction *copyTextAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"复制文案"
+            AWEUserSheetAction *copyTextAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"複製文案"
                                                                                                    imgName:nil
                                                                                                    handler:^{
                                                                                                      NSString *descText = [awemeModel valueForKey:@"descriptionString"];
                                                                                                      [[UIPasteboard generalPasteboard] setString:descText];
-                                                                                                     [DYYYToast showSuccessToastWithMessage:@"文案已复制"];
+                                                                                                     [DYYYToast showSuccessToastWithMessage:@"文案已複製"];
                                                                                                    }];
             [actions addObject:copyTextAction];
         }
@@ -9350,7 +9350,7 @@ static NSHashTable *processedParentViews = nil;
         // 添加打开评论区选项
         if (DYYYGetBool(@"DYYYDoubleTapComment") || ![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDoubleTapComment"]) {
 
-            AWEUserSheetAction *openCommentAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"打开评论"
+            AWEUserSheetAction *openCommentAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"打開評論"
                                                                                                       imgName:nil
                                                                                                       handler:^{
                                                                                                         [self performCommentAction];
@@ -9361,7 +9361,7 @@ static NSHashTable *processedParentViews = nil;
         // 添加分享选项
         if (DYYYGetBool(@"DYYYDoubleTapshowSharePanel") || ![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDoubleTapshowSharePanel"]) {
 
-            AWEUserSheetAction *showSharePanel = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"分享视频"
+            AWEUserSheetAction *showSharePanel = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"分享影片"
                                                                                                    imgName:nil
                                                                                                    handler:^{
                                                                                                      [self showSharePanel];
@@ -9372,7 +9372,7 @@ static NSHashTable *processedParentViews = nil;
         // 添加点赞视频选项
         if (DYYYGetBool(@"DYYYDoubleTapLike") || ![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDoubleTapLike"]) {
 
-            AWEUserSheetAction *likeAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"点赞视频"
+            AWEUserSheetAction *likeAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"點讚影片"
                                                                                                imgName:nil
                                                                                                handler:^{
                                                                                                  [self performLikeAction];
@@ -9383,7 +9383,7 @@ static NSHashTable *processedParentViews = nil;
         // 添加长按面板
         if (DYYYGetBool(@"DYYYDoubleTapshowDislikeOnVideo") || ![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDoubleTapshowDislikeOnVideo"]) {
 
-            AWEUserSheetAction *showDislikeOnVideo = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"长按面板"
+            AWEUserSheetAction *showDislikeOnVideo = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"長按面板"
                                                                                                        imgName:nil
                                                                                                        handler:^{
                                                                                                          [self showDislikeOnVideo];
@@ -10515,7 +10515,7 @@ static Class tabBarButtonClass = nil;
         speedButton.interactionController = currentController;
     }
     if (!DYYYApplyPlaybackSpeed(currentController, newSpeed)) {
-        [DYYYUtils showToast:@"无法找到视频控制器"];
+        [DYYYUtils showToast:@"無法找到影片控制器"];
     }
 }
 
