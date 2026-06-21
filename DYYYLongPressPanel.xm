@@ -522,7 +522,7 @@
         filterKeywords.action = ^{
           AWEUserModel *author = self.awemeModel.author;
           NSString *nickname = author.nickname ?: @"未知用戶";
-          Short short shortId = author.shortID ?: @"";
+          NSString *shortId = author.shortID ?: @"";
           // 创建当前用户的过滤格式 "nickname-shortid"
           NSString *currentUserFilter = [NSString stringWithFormat:@"%@-%@", nickname, shortId];
           // 获取保存的过滤用户列表
