@@ -87,7 +87,7 @@
     [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
       if (status != PHAuthorizationStatusAuthorized) {
           dispatch_async(dispatch_get_main_queue(), ^{
-            [DYYYUtils showToast:@"请允许访问相册权限后重试"];
+            [DYYYUtils showToast:@"請允許取用照片App權限後重試"];
             [[NSFileManager defaultManager] removeItemAtPath:mediaURL.path error:nil];
             [[DYYYManager shared] finalizeDownloadWithFileURL:mediaURL success:NO];
             if (completion) {
@@ -120,7 +120,7 @@
                                                        }];
                                   } else {
                                       dispatch_async(dispatch_get_main_queue(), ^{
-                                        [DYYYUtils showToast:@"转换失败"];
+                                        [DYYYUtils showToast:@"轉換失敗"];
                                         [[NSFileManager defaultManager] removeItemAtPath:mediaURL.path error:nil];
                                         reportResult(NO);
                                       });
@@ -140,7 +140,7 @@
                                                  }];
                             } else {
                                 dispatch_async(dispatch_get_main_queue(), ^{
-                                  [DYYYUtils showToast:@"转换失败"];
+                                  [DYYYUtils showToast:@"轉換失敗"];
                                   [[NSFileManager defaultManager] removeItemAtPath:mediaURL.path error:nil];
                                   reportResult(NO);
                                 });
@@ -167,7 +167,7 @@
               completionHandler:^(BOOL success, NSError *_Nullable error) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                   if (!success) {
-                      [DYYYUtils showToast:@"保存失败"];
+                      [DYYYUtils showToast:@"儲存失敗"];
                   }
                   [[NSFileManager defaultManager] removeItemAtPath:mediaURL.path error:nil];
                   reportResult(success);
@@ -190,7 +190,7 @@
           completionHandler:^(BOOL success, NSError *_Nullable error) {
             dispatch_async(dispatch_get_main_queue(), ^{
               if (!success) {
-                  [DYYYUtils showToast:@"保存失败"];
+                  [DYYYUtils showToast:@"儲存失敗"];
               }
               [[NSFileManager defaultManager] removeItemAtPath:mediaURL.path error:nil];
               reportResult(success);
@@ -559,7 +559,7 @@
         NSError *error = nil;
         [fileManager removeItemAtPath:livePhotoPath error:&error];
         if (error) {
-            NSLog(@"清理实况照片临时目录失败: %@", error.localizedDescription);
+            NSLog(@"清理原況照片臨時目錄失敗: %@", error.localizedDescription);
         }
     }
 
@@ -568,7 +568,7 @@
         NSError *error = nil;
         [fileManager removeItemAtPath:generalLivePhotoPath error:&error];
         if (error) {
-            NSLog(@"清理LivePhoto临时目录失败: %@", error.localizedDescription);
+            NSLog(@"清理LivePhoto臨時目錄失敗: %@", error.localizedDescription);
         }
     }
 
@@ -798,7 +798,7 @@
     if (downloadID.length == 0) {
         dispatch_async(dispatch_get_main_queue(), ^{
           if (!success) {
-              [DYYYUtils showToast:@"保存失败"];
+              [DYYYUtils showToast:@"儲存失敗"];
           }
         });
         return;
@@ -1017,7 +1017,7 @@
 
         if (error.code != NSURLErrorCancelled) {
             dispatch_async(dispatch_get_main_queue(), ^{
-              [DYYYUtils showToast:@"下载失败"];
+              [DYYYUtils showToast:@"下載失敗"];
             });
         }
 
@@ -1074,7 +1074,7 @@
         }];
     } else {
         dispatch_async(dispatch_get_main_queue(), ^{
-          [DYYYUtils showToast:@"当前iOS版本不支持实况照片，将分别保存图片和视频"];
+          [DYYYUtils showToast:@"目前iOS版本不支援原況照片，將分別儲存圖片和影片"];
         });
     }
 }
@@ -1308,11 +1308,11 @@
             // 普通图片 - 存储字符串而不是 NSURL
             [normalImages addObject:imageUrlStr];
         } @catch (NSException *e) {
-            NSLog(@"[DYYY] 解析评论图片失败: %@", e);
+            NSLog(@"[DYYY] 解析評論圖片失敗: %@", e);
         }
     }
     
-    NSLog(@"[DYYY] 解析完成: 普通图片=%lu, 实况照片=%lu", (unsigned long)normalImages.count, (unsigned long)livePhotos.count);
+    NSLog(@"[DYYY] 解析完成: 普通圖片=%lu, 原況照片=%lu", (unsigned long)normalImages.count, (unsigned long)livePhotos.count);
     
     // 如果都没有解析到有效URL，直接返回失败
     if (normalImages.count == 0 && livePhotos.count == 0) {
@@ -1386,7 +1386,7 @@
 
     if (!supportsLivePhoto) {
         dispatch_async(dispatch_get_main_queue(), ^{
-          [DYYYUtils showToast:@"当前iOS版本不支持实况照片"];
+          [DYYYUtils showToast:@"目前iOS版本不支援原況照片"];
           if (completion) {
               completion(0, livePhotos.count);
           }
@@ -1415,7 +1415,7 @@
       // 进度计算 - 为三个阶段分配权重
       NSInteger totalSteps = livePhotos.count * 10;  // 每个实况照片总共10步(4+4+2)
       __block NSInteger completedSteps = 0;
-      __block NSInteger phase = 0;  // 0:下载图片阶段，1:下载视频阶段，2:合成阶段
+      __block NSInteger phase = 0;  // 0:下载图片阶段，1:下載影片阶段，2:合成阶段
 
       // 创建临时目录
       NSString *livePhotoPath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"LivePhotoBatch"];
@@ -1566,7 +1566,7 @@
               dispatch_async(dispatch_get_main_queue(), ^{
                 progressView.allowSuccessAnimation = NO;
                 [progressView dismiss];
-                [DYYYUtils showToast:@"没有相册权限，无法保存实况照片"];
+                [DYYYUtils showToast:@"沒有照片App權限，無法儲存原況照片"];
 
                 [fileManager removeItemAtPath:livePhotoPath error:nil];
 
@@ -1580,7 +1580,7 @@
 
       // 第一阶段：批量下载所有图片
       dispatch_group_t imageDownloadGroup = dispatch_group_create();
-      updateProgress(@"正在下载图片...");
+      updateProgress(@"正在下載圖片...");
 
       for (NSInteger i = 0; i < livePhotos.count; i++) {
           NSDictionary *livePhoto = downloadedFiles[i];
@@ -1614,7 +1614,7 @@
                                                      }
 
                                                      completedSteps += 4;  // 图片下载占4步
-                                                     updateProgress([NSString stringWithFormat:@"已下载图片 %ld/%ld", (long)(i + 1), (long)livePhotos.count]);
+                                                     updateProgress([NSString stringWithFormat:@"已下載圖片 %ld/%ld", (long)(i + 1), (long)livePhotos.count]);
                                                      dispatch_group_leave(imageDownloadGroup);
                                                    }];
 
@@ -1624,7 +1624,7 @@
       // 所有图片下载完成后，开始下载视频
       dispatch_group_notify(imageDownloadGroup, dispatch_get_main_queue(), ^{
         phase = 1;  // 进入视频下载阶段
-        updateProgress(@"正在下载视频...");
+        updateProgress(@"正在下載影片...");
 
         dispatch_group_t videoDownloadGroup = dispatch_group_create();
 
@@ -1668,7 +1668,7 @@
                                                        }
 
                                                        completedSteps += 4;  // 视频下载占4步
-                                                       updateProgress([NSString stringWithFormat:@"已下载视频 %ld/%ld", (long)(i + 1), (long)livePhotos.count]);
+                                                       updateProgress([NSString stringWithFormat:@"已下載影片 %ld/%ld", (long)(i + 1), (long)livePhotos.count]);
                                                        dispatch_group_leave(videoDownloadGroup);
                                                      }];
 
@@ -1804,7 +1804,7 @@
 
 + (void)parseAndDownloadVideoWithShareLink:(NSString *)shareLink apiKey:(NSString *)apiKey {
     if (shareLink.length == 0 || apiKey.length == 0) {
-        [DYYYUtils showToast:@"分享链接或API密钥无效"];
+        [DYYYUtils showToast:@"分享連結或API金鑰無效"];
         return;
     }
 
@@ -1818,26 +1818,26 @@
                                                 completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
                                                   dispatch_async(dispatch_get_main_queue(), ^{
                                                     if (error) {
-                                                        [DYYYUtils showToast:[NSString stringWithFormat:@"接口请求失败: %@", error.localizedDescription]];
+                                                        [DYYYUtils showToast:[NSString stringWithFormat:@"接口請求失敗: %@", error.localizedDescription]];
                                                         return;
                                                     }
 
                                                     NSError *jsonError;
                                                     NSDictionary *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
                                                     if (jsonError) {
-                                                        [DYYYUtils showToast:@"解析接口返回数据失败"];
+                                                        [DYYYUtils showToast:@"解析接口回傳資料失敗"];
                                                         return;
                                                     }
 
                                                     NSInteger code = [json[@"code"] integerValue];
                                                     if (code != 0 && code != 200) {
-                                                        [DYYYUtils showToast:[NSString stringWithFormat:@"接口返回错误: %@", json[@"msg"] ?: @"未知错误"]];
+                                                        [DYYYUtils showToast:[NSString stringWithFormat:@"接口回傳錯誤: %@", json[@"msg"] ?: @"未知錯誤"]];
                                                         return;
                                                     }
 
                                                     NSDictionary *dataDict = json[@"data"];
                                                     if (!dataDict) {
-                                                        [DYYYUtils showToast:@"接口返回数据为空"];
+                                                        [DYYYUtils showToast:@"接口回傳資料為空"];
                                                         return;
                                                     }
 
@@ -1946,7 +1946,7 @@
                               audio:nil
                          completion:^(BOOL success) {
                            if (!success) {
-                               [DYYYUtils showToast:@"图片下载失败"];
+                               [DYYYUtils showToast:@"圖片下載失敗"];
                            }
                          }];
             } else {
@@ -1962,7 +1962,7 @@
         AWEUserActionSheetView *actionSheet = [[NSClassFromString(@"AWEUserActionSheetView") alloc] init];
         NSMutableArray *actions = [NSMutableArray array];
 
-        AWEUserSheetAction *videoAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"下载视频"
+        AWEUserSheetAction *videoAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"下載影片"
                                                                                             imgName:nil
                                                                                             handler:^{
                                                                                               NSURL *videoDownloadUrl = [NSURL URLWithString:singleVideoURL];
@@ -1981,7 +1981,7 @@
         [actions addObject:videoAction];
 
         if (coverURL && coverURL.length > 0) {
-            AWEUserSheetAction *coverAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"下载封面图"
+            AWEUserSheetAction *coverAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"下載封面圖"
                                                                                                 imgName:nil
                                                                                                 handler:^{
                                                                                                   NSURL *imageDownloadUrl = [NSURL URLWithString:coverURL];
@@ -1997,7 +1997,7 @@
         }
 
         if (musicURL && musicURL.length > 0) {
-            AWEUserSheetAction *musicAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"下载背景音乐"
+            AWEUserSheetAction *musicAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"下載背景音樂"
                                                                                                 imgName:nil
                                                                                                 handler:^{
                                                                                                   NSURL *audioDownloadUrl = [NSURL URLWithString:musicURL];
@@ -2023,7 +2023,7 @@
         }
 
         if (allImages.count > 0 || singleVideoURL.length > 0) {
-            AWEUserSheetAction *batchDownloadAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"批量下载所有资源"
+            AWEUserSheetAction *batchDownloadAction = [NSClassFromString(@"AWEUserSheetAction") actionWithTitle:@"批次下載所有資源"
                                                                                                         imgName:nil
                                                                                                         handler:^{
                                                                                                           NSMutableArray *singleVideoArray = nil;
@@ -2071,23 +2071,23 @@
     if (allImages.count > 0 || hasVideos) {
         [self batchDownloadResources:videos images:allImages];
     } else {
-        [DYYYUtils showToast:@"没有找到可下载的资源"];
+        [DYYYUtils showToast:@"沒有找到可下載的資源"];
     }
 }
 
-#define DYYYLogVideo(format, ...) NSLog((@"[DYYY视频合成] " format), ##__VA_ARGS__)
+#define DYYYLogVideo(format, ...) NSLog((@"[DYYY影片合成] " format), ##__VA_ARGS__)
 // 创建视频合成器从多种媒体源
 + (void)createVideoFromMedia:(NSArray<NSString *> *)imageURLs
                   livePhotos:(NSArray<NSDictionary *> *)livePhotos
                       bgmURL:(NSString *)bgmURL
                     progress:(void (^)(NSInteger current, NSInteger total, NSString *status))progressBlock
                   completion:(void (^)(BOOL success, NSString *message))completion {
-    DYYYLogVideo(@"开始创建视频 - 图片数量: %lu, 实况照片数量: %lu, 背景音乐: %@", (unsigned long)imageURLs.count, (unsigned long)livePhotos.count, bgmURL.length > 0 ? @"有" : @"无");
+    DYYYLogVideo(@"開始建立影片 - 圖片數量: %lu, 原況照片數量: %lu, 背景音樂: %@", (unsigned long)imageURLs.count, (unsigned long)livePhotos.count, bgmURL.length > 0 ? @"有" : @"無");
 
     if ((imageURLs.count == 0 && livePhotos.count == 0) || (imageURLs == nil && livePhotos == nil)) {
-        DYYYLogVideo(@"错误: 没有提供媒体资源");
+        DYYYLogVideo(@"錯誤: 沒有提供媒體資源");
         if (completion) {
-            completion(NO, @"没有提供媒体资源");
+            completion(NO, @"沒有提供媒體資源");
         }
         return;
     }
@@ -2098,10 +2098,10 @@
       [progressView show];
 
       progressView.cancelBlock = ^{
-        DYYYLogVideo(@"用户取消了视频合成");
+        DYYYLogVideo(@"使用者取消了影片合成");
         [self cancelAllDownloads];
         if (completion) {
-            completion(NO, @"用户取消了操作");
+            completion(NO, @"使用者取消了操作");
         }
       };
 
@@ -2109,20 +2109,20 @@
       NSString *mediaPath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"VideoComposition"];
       NSFileManager *fileManager = [NSFileManager defaultManager];
       if ([fileManager fileExistsAtPath:mediaPath]) {
-          DYYYLogVideo(@"正在清理旧的临时目录: %@", mediaPath);
+          DYYYLogVideo(@"正在清理舊的暫存目錄: %@", mediaPath);
           [fileManager removeItemAtPath:mediaPath error:nil];
       }
 
       NSError *dirError = nil;
       [fileManager createDirectoryAtPath:mediaPath withIntermediateDirectories:YES attributes:nil error:&dirError];
       if (dirError) {
-          DYYYLogVideo(@"创建临时目录失败: %@", dirError);
+          DYYYLogVideo(@"建立暫存目錄失敗: %@", dirError);
           if (completion) {
-              completion(NO, @"创建临时文件夹失败");
+              completion(NO, @"建立暫存資料夾失敗");
           }
           return;
       }
-      DYYYLogVideo(@"成功创建临时目录: %@", mediaPath);
+      DYYYLogVideo(@"成功建立暫存目錄: %@", mediaPath);
 
       // 计算总共需要下载的文件数和合成步骤
       NSInteger totalImages = imageURLs.count;
@@ -2142,7 +2142,7 @@
         float progress = (float)completedSteps / totalSteps;
         dispatch_async(dispatch_get_main_queue(), ^{
           [progressView setProgress:progress];
-          DYYYLogVideo(@"进度更新: %.2f%% - %@", progress * 100, status);
+          DYYYLogVideo(@"進度更新: %.2f%% - %@", progress * 100, status);
           if (progressBlock) {
               progressBlock(completedSteps, totalSteps, status);
           }
@@ -2151,16 +2151,16 @@
 
       // 第一阶段：下载所有普通图片
       dispatch_group_t imageDownloadGroup = dispatch_group_create();
-      updateProgress(@"正在下载图片...");
+      updateProgress(@"正在下載圖片...");
 
       for (NSInteger i = 0; i < imageURLs.count; i++) {
           NSString *imageURLString = imageURLs[i];
           NSURL *imageURL = [NSURL URLWithString:imageURLString];
 
           if (!imageURL) {
-              DYYYLogVideo(@"图片URL无效: %@", imageURLString);
+              DYYYLogVideo(@"圖片URL無效: %@", imageURLString);
               completedSteps++;
-              updateProgress(@"图片URL无效");
+              updateProgress(@"圖片URL無效");
               continue;
           }
 
@@ -2169,7 +2169,7 @@
           // 创建文件路径
           NSString *uniqueID = [NSUUID UUID].UUIDString;
           NSString *imagePath = [mediaPath stringByAppendingPathComponent:[NSString stringWithFormat:@"image_%@.jpg", uniqueID]];
-          DYYYLogVideo(@"开始下载图片 %ld/%ld: %@", (long)(i + 1), (long)imageURLs.count, imageURLString);
+          DYYYLogVideo(@"開始下載圖片 %ld/%ld: %@", (long)(i + 1), (long)imageURLs.count, imageURLString);
 
           // 配置下载会话
           NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
@@ -2178,21 +2178,21 @@
           NSURLSessionDataTask *imageTask = [session dataTaskWithURL:imageURL
                                                    completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
                                                      if (error) {
-                                                         DYYYLogVideo(@"下载图片失败 %ld/%ld: %@", (long)(i + 1), (long)imageURLs.count, error);
+                                                         DYYYLogVideo(@"下載圖片失敗 %ld/%ld: %@", (long)(i + 1), (long)imageURLs.count, error);
                                                      } else if (!data) {
-                                                         DYYYLogVideo(@"下载图片数据为空 %ld/%ld", (long)(i + 1), (long)imageURLs.count);
+                                                         DYYYLogVideo(@"下載圖片資料為空 %ld/%ld", (long)(i + 1), (long)imageURLs.count);
                                                      } else {
                                                          NSInteger dataSize = data.length;
                                                          if ([data writeToFile:imagePath atomically:YES]) {
-                                                             DYYYLogVideo(@"成功下载并保存图片 %ld/%ld: %@ (大小: %.2f KB)", (long)(i + 1), (long)imageURLs.count, imagePath, dataSize / 1024.0);
+                                                             DYYYLogVideo(@"成功下載並儲存圖片 %ld/%ld: %@ (大小: %.2f KB)", (long)(i + 1), (long)imageURLs.count, imagePath, dataSize / 1024.0);
                                                              [imageFilePaths addObject:imagePath];
                                                          } else {
-                                                             DYYYLogVideo(@"保存图片文件失败 %ld/%ld: %@", (long)(i + 1), (long)imageURLs.count, imagePath);
+                                                             DYYYLogVideo(@"儲存圖片檔案失敗 %ld/%ld: %@", (long)(i + 1), (long)imageURLs.count, imagePath);
                                                          }
                                                      }
 
                                                      completedSteps++;
-                                                     updateProgress([NSString stringWithFormat:@"已下载图片 %ld/%ld", (long)(i + 1), (long)imageURLs.count]);
+                                                     updateProgress([NSString stringWithFormat:@"已下載圖片 %ld/%ld", (long)(i + 1), (long)imageURLs.count]);
                                                      dispatch_group_leave(imageDownloadGroup);
                                                    }];
 
@@ -2203,9 +2203,9 @@
       dispatch_group_t livePhotoDownloadGroup = dispatch_group_create();
 
       dispatch_group_notify(imageDownloadGroup, dispatch_get_main_queue(), ^{
-        DYYYLogVideo(@"第一阶段完成，已下载 %ld 张图片", (long)imageFilePaths.count);
-        updateProgress(@"正在下载实况照片...");
-        DYYYLogVideo(@"开始第二阶段: 下载实况照片 (%ld 项)", (long)livePhotos.count);
+        DYYYLogVideo(@"第一階段完成，已下載 %ld 張圖片", (long)imageFilePaths.count);
+        updateProgress(@"正在下載原況照片...");
+        DYYYLogVideo(@"開始第二階段: 下載原況照片 (%ld 項)", (long)livePhotos.count);
 
         for (NSInteger i = 0; i < livePhotos.count; i++) {
             NSDictionary *livePhoto = livePhotos[i];
@@ -2215,9 +2215,9 @@
             NSURL *videoURL = [NSURL URLWithString:videoURLString];
 
             if (!imageURL || !videoURL) {
-                DYYYLogVideo(@"实况照片URL无效: 图片=%@, 视频=%@", imageURLString, videoURLString);
+                DYYYLogVideo(@"原況照片URL無效: 圖片=%@, 影片=%@", imageURLString, videoURLString);
                 completedSteps += 2;
-                updateProgress(@"实况照片URL无效");
+                updateProgress(@"原況照片URL無效");
                 continue;
             }
 
@@ -2230,22 +2230,22 @@
             NSURLSessionConfiguration *imgConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
             NSURLSession *imgSession = [NSURLSession sessionWithConfiguration:imgConfig];
 
-            DYYYLogVideo(@"开始下载实况照片图片部分 %ld/%ld: %@", (long)(i + 1), (long)livePhotos.count, imageURLString);
+            DYYYLogVideo(@"開始下載原況照片圖片部分 %ld/%ld: %@", (long)(i + 1), (long)livePhotos.count, imageURLString);
             NSURLSessionDataTask *imageTask =
                 [imgSession dataTaskWithURL:imageURL
                           completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
                             if (error) {
-                                DYYYLogVideo(@"下载实况照片图片部分失败 %ld/%ld: %@", (long)(i + 1), (long)livePhotos.count, error);
+                                DYYYLogVideo(@"下載原況照片圖片部分失敗 %ld/%ld: %@", (long)(i + 1), (long)livePhotos.count, error);
                             } else if (!data) {
-                                DYYYLogVideo(@"下载实况照片图片数据为空 %ld/%ld", (long)(i + 1), (long)livePhotos.count);
+                                DYYYLogVideo(@"下載原況照片圖片資料為空 %ld/%ld", (long)(i + 1), (long)livePhotos.count);
                             } else if ([data writeToFile:imagePath atomically:YES]) {
-                                DYYYLogVideo(@"成功保存实况照片图片部分 %ld/%ld: %@ (大小: %.2f KB)", (long)(i + 1), (long)livePhotos.count, imagePath, data.length / 1024.0);
+                                DYYYLogVideo(@"成功儲存原況照片圖片部分 %ld/%ld: %@ (大小: %.2f KB)", (long)(i + 1), (long)livePhotos.count, imagePath, data.length / 1024.0);
                             } else {
-                                DYYYLogVideo(@"保存实况照片图片文件失败 %ld/%ld: %@", (long)(i + 1), (long)livePhotos.count, imagePath);
+                                DYYYLogVideo(@"儲存原況照片圖片檔案失敗 %ld/%ld: %@", (long)(i + 1), (long)livePhotos.count, imagePath);
                             }
 
                             completedSteps++;
-                            updateProgress([NSString stringWithFormat:@"已下载实况照片(图片) %ld/%ld", (long)(i + 1), (long)livePhotos.count]);
+                            updateProgress([NSString stringWithFormat:@"已下載原況照片(圖片) %ld/%ld", (long)(i + 1), (long)livePhotos.count]);
                             dispatch_group_leave(livePhotoDownloadGroup);
                           }];
 
@@ -2254,26 +2254,26 @@
             NSURLSessionConfiguration *vidConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
             NSURLSession *vidSession = [NSURLSession sessionWithConfiguration:vidConfig];
 
-            DYYYLogVideo(@"开始下载实况照片视频部分 %ld/%ld: %@", (long)(i + 1), (long)livePhotos.count, videoURLString);
+            DYYYLogVideo(@"開始下載原況照片影片部分 %ld/%ld: %@", (long)(i + 1), (long)livePhotos.count, videoURLString);
             NSURLSessionDataTask *videoTask =
                 [vidSession dataTaskWithURL:videoURL
                           completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
                             if (error) {
-                                DYYYLogVideo(@"下载实况照片视频部分失败 %ld/%ld: %@", (long)(i + 1), (long)livePhotos.count, error);
+                                DYYYLogVideo(@"下載原況照片影片部分失敗 %ld/%ld: %@", (long)(i + 1), (long)livePhotos.count, error);
                             } else if (!data) {
-                                DYYYLogVideo(@"下载实况照片视频数据为空 %ld/%ld", (long)(i + 1), (long)livePhotos.count);
+                                DYYYLogVideo(@"下載原況照片影片資料為空 %ld/%ld", (long)(i + 1), (long)livePhotos.count);
                             } else if ([data writeToFile:videoPath atomically:YES]) {
-                                DYYYLogVideo(@"成功保存实况照片视频部分 %ld/%ld: %@ (大小: %.2f MB)", (long)(i + 1), (long)livePhotos.count, videoPath, data.length / (1024.0 * 1024.0));
+                                DYYYLogVideo(@"成功儲存原況照片影片部分 %ld/%ld: %@ (大小: %.2f MB)", (long)(i + 1), (long)livePhotos.count, videoPath, data.length / (1024.0 * 1024.0));
                                 @synchronized(livePhotoFilePaths) {
                                     [livePhotoFilePaths addObject:@{@"image" : imagePath, @"video" : videoPath}];
-                                    DYYYLogVideo(@"成功记录实况照片对: 图片=%@, 视频=%@", imagePath, videoPath);
+                                    DYYYLogVideo(@"成功記錄原況照片對: 圖片=%@, 影片=%@", imagePath, videoPath);
                                 }
                             } else {
-                                DYYYLogVideo(@"保存实况照片视频文件失败 %ld/%ld: %@", (long)(i + 1), (long)livePhotos.count, videoPath);
+                                DYYYLogVideo(@"儲存原況照片影片檔案失敗 %ld/%ld: %@", (long)(i + 1), (long)livePhotos.count, videoPath);
                             }
 
                             completedSteps++;
-                            updateProgress([NSString stringWithFormat:@"已下载实况照片(视频) %ld/%ld", (long)(i + 1), (long)livePhotos.count]);
+                            updateProgress([NSString stringWithFormat:@"已下載原況照片(影片) %ld/%ld", (long)(i + 1), (long)livePhotos.count]);
                             dispatch_group_leave(livePhotoDownloadGroup);
                           }];
 
@@ -2285,17 +2285,17 @@
         dispatch_group_t bgmDownloadGroup = dispatch_group_create();
 
         dispatch_group_notify(livePhotoDownloadGroup, dispatch_get_main_queue(), ^{
-          DYYYLogVideo(@"第二阶段完成，已下载 %ld 组实况照片", (long)livePhotoFilePaths.count);
+          DYYYLogVideo(@"第二階段完成，已下載 %ld 組原況照片", (long)livePhotoFilePaths.count);
 
           if (bgmURL.length > 0) {
-              DYYYLogVideo(@"开始第三阶段: 下载背景音乐 %@", bgmURL);
-              updateProgress(@"正在下载背景音乐...");
+              DYYYLogVideo(@"開始第三階段: 下載背景音樂 %@", bgmURL);
+              updateProgress(@"正在下載背景音樂...");
               NSURL *bgmURL_obj = [NSURL URLWithString:bgmURL];
 
               if (!bgmURL_obj) {
-                  DYYYLogVideo(@"背景音乐URL无效: %@", bgmURL);
+                  DYYYLogVideo(@"背景音樂URL無效: %@", bgmURL);
                   completedSteps++;
-                  updateProgress(@"背景音乐URL无效");
+                  updateProgress(@"背景音樂URL無效");
               } else {
                   dispatch_group_enter(bgmDownloadGroup);
 
@@ -2310,18 +2310,18 @@
                   NSURLSessionDataTask *audioTask = [session dataTaskWithURL:bgmURL_obj
                                                            completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
                                                              if (error) {
-                                                                 DYYYLogVideo(@"下载背景音乐失败: %@", error);
+                                                                 DYYYLogVideo(@"下載背景音樂失敗: %@", error);
                                                              } else if (!data) {
-                                                                 DYYYLogVideo(@"下载背景音乐数据为空");
+                                                                 DYYYLogVideo(@"下載背景音樂資料為空");
                                                              } else if ([data writeToFile:audioPath atomically:YES]) {
-                                                                 DYYYLogVideo(@"成功保存背景音乐: %@ (大小: %.2f MB)", audioPath, data.length / (1024.0 * 1024.0));
+                                                                 DYYYLogVideo(@"成功儲存背景音樂: %@ (大小: %.2f MB)", audioPath, data.length / (1024.0 * 1024.0));
                                                                  bgmFilePath = audioPath;
                                                              } else {
-                                                                 DYYYLogVideo(@"保存背景音乐文件失败: %@", audioPath);
+                                                                 DYYYLogVideo(@"儲存背景音樂檔案失敗: %@", audioPath);
                                                              }
 
                                                              completedSteps++;
-                                                             updateProgress(@"背景音乐下载完成");
+                                                             updateProgress(@"背景音樂下載完成");
                                                              dispatch_group_leave(bgmDownloadGroup);
                                                            }];
 
@@ -2331,23 +2331,23 @@
 
           // 第四阶段：合成视频
           dispatch_group_notify(bgmDownloadGroup, dispatch_get_main_queue(), ^{
-            DYYYLogVideo(@"第三阶段完成，背景音乐状态: %@", bgmFilePath ? @"已下载" : @"无或下载失败");
-            DYYYLogVideo(@"开始第四阶段: 合成视频");
-            updateProgress(@"正在合成视频...");
+            DYYYLogVideo(@"第三階段完成，背景音樂狀態: %@", bgmFilePath ? @"已下載" : @"無或下載失敗");
+            DYYYLogVideo(@"開始第四階段: 合成影片");
+            updateProgress(@"正在合成影片...");
 
             // 如果没有成功下载任何媒体，则退出
             if (imageFilePaths.count == 0 && livePhotoFilePaths.count == 0) {
-                DYYYLogVideo(@"错误: 没有成功下载任何媒体文件，取消合成");
+                DYYYLogVideo(@"錯誤: 沒有成功下載任何媒體檔案，取消合成");
                 progressView.allowSuccessAnimation = NO;
                 [progressView dismiss];
                 if (completion) {
-                    completion(NO, @"没有成功下载任何媒体文件");
+                    completion(NO, @"沒有成功下載任何媒體檔案");
                 }
                 [fileManager removeItemAtPath:mediaPath error:nil];
                 return;
             }
 
-            DYYYLogVideo(@"媒体文件统计: %ld张图片, %ld组实况照片, 背景音乐: %@", (long)imageFilePaths.count, (long)livePhotoFilePaths.count, bgmFilePath ? @"有" : @"无");
+            DYYYLogVideo(@"媒體檔案統計: %ld張圖片, %ld組原況照片, 背景音樂: %@", (long)imageFilePaths.count, (long)livePhotoFilePaths.count, bgmFilePath ? @"有" : @"无");
 
             NSString *outputPath = [mediaPath stringByAppendingPathComponent:[NSString stringWithFormat:@"final_%@.mp4", [NSUUID UUID].UUIDString]];
             DYYYLogVideo(@"视频输出路径: %@", outputPath);
@@ -2360,14 +2360,14 @@
                     completion:^(BOOL success) {
                       completedSteps++;
                       if (success) {
-                          DYYYLogVideo(@"视频合成成功");
+                          DYYYLogVideo(@"影片合成成功");
                       } else {
-                          DYYYLogVideo(@"视频合成失败");
+                          DYYYLogVideo(@"影片合成失敗");
                       }
-                      updateProgress(@"视频合成完成");
+                      updateProgress(@"影片合成完成");
 
                       if (success) {
-                          DYYYLogVideo(@"开始保存视频到相册");
+                          DYYYLogVideo(@"開始儲存影片到照片App");
                           [[PHPhotoLibrary sharedPhotoLibrary]
                               performChanges:^{
                                 [PHAssetChangeRequest creationRequestForAssetFromVideoAtFileURL:[NSURL fileURLWithPath:outputPath]];
@@ -2380,18 +2380,18 @@
                                   [progressView dismiss];
 
                                   if (success) {
-                                      DYYYLogVideo(@"视频已成功保存到相册");
+                                      DYYYLogVideo(@"影片已成功儲存到照片App");
                                       if (completion) {
-                                          completion(YES, @"视频已成功保存到相册");
+                                          completion(YES, @"影片已成功儲存到照片App");
                                       }
                                   } else {
-                                      DYYYLogVideo(@"保存视频到相册失败: %@", error);
+                                      DYYYLogVideo(@"儲存影片到照片App失敗: %@", error);
                                       if (completion) {
-                                          completion(NO, [NSString stringWithFormat:@"保存视频到相册失败: %@", error.localizedDescription]);
+                                          completion(NO, [NSString stringWithFormat:@"儲存影片到照片App失敗: %@", error.localizedDescription]);
                                       }
                                   }
 
-                                  DYYYLogVideo(@"清理临时文件: %@", mediaPath);
+                                  DYYYLogVideo(@"清理暫存檔案: %@", mediaPath);
                                   [fileManager removeItemAtPath:mediaPath error:nil];
                                 });
                               }];
@@ -2400,10 +2400,10 @@
                             progressView.allowSuccessAnimation = NO;
                             [progressView dismiss];
                             if (completion) {
-                                completion(NO, @"视频合成失败");
+                                completion(NO, @"影片合成失敗");
                             }
 
-                            DYYYLogVideo(@"清理临时文件: %@", mediaPath);
+                            DYYYLogVideo(@"清理暫存檔案: %@", mediaPath);
                             [fileManager removeItemAtPath:mediaPath error:nil];
                           });
                       }
@@ -2422,8 +2422,8 @@
           completion:(void (^)(BOOL success))completion {
     // 视频尺寸（标准1080p）
     CGSize videoSize = CGSizeMake(1080, 1920);
-    DYYYLogVideo(@"开始合成视频 - 目标尺寸: %.0fx%.0f", videoSize.width, videoSize.height);
-    DYYYLogVideo(@"媒体源: %ld张图片, %ld组实况照片, 背景音乐: %@", (long)imageFiles.count, (long)livePhotoFiles.count, bgmPath ? @"有" : @"无");
+    DYYYLogVideo(@"開始合成影片 - 目標尺寸: %.0fx%.0f", videoSize.width, videoSize.height);
+    DYYYLogVideo(@"媒體源: %ld張圖片, %ld組原況照片, 背景音樂: %@", (long)imageFiles.count, (long)livePhotoFiles.count, bgmPath ? @"有" : @"無");
 
     dispatch_group_t processingGroup = dispatch_group_create();
 
@@ -2434,16 +2434,16 @@
     for (NSInteger i = 0; i < imageFiles.count; i++) {
         NSString *imagePath = imageFiles[i];
         if (![[NSFileManager defaultManager] fileExistsAtPath:imagePath]) {
-            DYYYLogVideo(@"错误: 图片文件不存在: %@", imagePath);
+            DYYYLogVideo(@"錯誤: 圖片檔案不存在: %@", imagePath);
             continue;
         }
 
         UIImage *image = [UIImage imageWithContentsOfFile:imagePath];
         if (!image) {
-            DYYYLogVideo(@"错误: 无法加载图片: %@", imagePath);
+            DYYYLogVideo(@"錯誤: 無法載入圖片: %@", imagePath);
             continue;
         }
-        DYYYLogVideo(@"处理图片 %ld/%ld: 尺寸 %.0fx%.0f", (long)(i + 1), (long)imageFiles.count, image.size.width, image.size.height);
+        DYYYLogVideo(@"處理圖片 %ld/%ld: 尺寸 %.0fx%.0f", (long)(i + 1), (long)imageFiles.count, image.size.width, image.size.height);
 
         // 创建临时视频文件路径
         NSString *tempVideoPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"temp_img_%@.mp4", [NSUUID UUID].UUIDString]];
@@ -2458,10 +2458,10 @@
                           if (success) {
                               @synchronized(mediaSegments) {
                                   [mediaSegments addObject:@{@"type" : @"image", @"path" : tempVideoPath, @"duration" : @5.0}];
-                                  DYYYLogVideo(@"成功创建图片视频片段 %ld/%ld: %@", (long)(i + 1), (long)imageFiles.count, tempVideoPath);
+                                  DYYYLogVideo(@"成功建立圖片影片片段 %ld/%ld: %@", (long)(i + 1), (long)imageFiles.count, tempVideoPath);
                               }
                           } else {
-                              DYYYLogVideo(@"错误: 创建图片视频片段失败 %ld/%ld", (long)(i + 1), (long)imageFiles.count);
+                              DYYYLogVideo(@"錯誤: 建立圖片影片片段失敗 %ld/%ld", (long)(i + 1), (long)imageFiles.count);
                           }
                           dispatch_group_leave(processingGroup);
                         }];
@@ -2473,23 +2473,23 @@
         NSString *imagePath = livePhoto[@"image"];
         NSString *videoPath = livePhoto[@"video"];
 
-        DYYYLogVideo(@"处理实况照片 %ld/%ld: 图片=%@, 视频=%@", (long)(i + 1), (long)livePhotoFiles.count, imagePath, videoPath);
+        DYYYLogVideo(@"處理原況照片 %ld/%ld: 圖片=%@, 影片=%@", (long)(i + 1), (long)livePhotoFiles.count, imagePath, videoPath);
 
         if (![[NSFileManager defaultManager] fileExistsAtPath:videoPath]) {
-            DYYYLogVideo(@"错误: 实况照片视频不存在: %@", videoPath);
+            DYYYLogVideo(@"錯誤: 原況照片影片不存在: %@", videoPath);
             continue;
         }
 
         [mediaSegments addObject:@{@"type" : @"video", @"path" : videoPath}];
-        DYYYLogVideo(@"成功添加实况照片视频片段 %ld/%ld", (long)(i + 1), (long)livePhotoFiles.count);
+        DYYYLogVideo(@"成功新增原況照片影片片段 %ld/%ld", (long)(i + 1), (long)livePhotoFiles.count);
     }
 
     // 等待所有临时视频处理完成
     dispatch_group_notify(processingGroup, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-      DYYYLogVideo(@"所有媒体处理完成，共有 %ld 个可用片段", (long)mediaSegments.count);
+      DYYYLogVideo(@"所有媒體處理完成，共有 %ld 個可用片段", (long)mediaSegments.count);
 
       if (mediaSegments.count == 0) {
-          DYYYLogVideo(@"错误: 没有有效的媒体片段可以合成");
+          DYYYLogVideo(@"錯誤: 沒有有效的媒體片段可以合成");
           if (completion) {
               dispatch_async(dispatch_get_main_queue(), ^{
                 completion(NO);
@@ -2499,7 +2499,7 @@
       }
 
       // 创建AVMutableComposition作为容器
-      DYYYLogVideo(@"开始创建视频合成容器");
+      DYYYLogVideo(@"開始建立影片合成容器");
       AVMutableComposition *composition = [AVMutableComposition composition];
       AVMutableVideoComposition *videoComposition = [AVMutableVideoComposition videoComposition];
       videoComposition.frameDuration = CMTimeMake(1, 30);  // 30fps
@@ -2508,7 +2508,7 @@
       // 创建视频轨道
       AVMutableCompositionTrack *videoTrack = [composition addMutableTrackWithMediaType:AVMediaTypeVideo preferredTrackID:kCMPersistentTrackID_Invalid];
       if (!videoTrack) {
-          DYYYLogVideo(@"错误: 无法创建视频轨道");
+          DYYYLogVideo(@"錯誤: 無法建立影片軌道");
           if (completion) {
               dispatch_async(dispatch_get_main_queue(), ^{
                 completion(NO);
@@ -2520,7 +2520,7 @@
       // 创建音频轨道
       AVMutableCompositionTrack *audioTrack = [composition addMutableTrackWithMediaType:AVMediaTypeAudio preferredTrackID:kCMPersistentTrackID_Invalid];
       if (!audioTrack) {
-          DYYYLogVideo(@"错误: 无法创建音频轨道");
+          DYYYLogVideo(@"錯誤: 無法建立音訊軌道");
           if (completion) {
               dispatch_async(dispatch_get_main_queue(), ^{
                 completion(NO);
@@ -2532,7 +2532,7 @@
       // 添加背景音乐
       __block CMTime currentTime = kCMTimeZero;
       if (bgmPath && [[NSFileManager defaultManager] fileExistsAtPath:bgmPath]) {
-          DYYYLogVideo(@"添加背景音乐: %@", bgmPath);
+          DYYYLogVideo(@"新增背景音樂: %@", bgmPath);
           AVAsset *audioAsset = [AVAsset assetWithURL:[NSURL fileURLWithPath:bgmPath]];
           AVAssetTrack *audioAssetTrack = [[audioAsset tracksWithMediaType:AVMediaTypeAudio] firstObject];
 
@@ -2550,7 +2550,7 @@
               CMTime currentAudioTime = kCMTimeZero;
 
               if (CMTimeCompare(audioDuration, totalDuration) < 0) {
-                  DYYYLogVideo(@"背景音乐时长(%.2f秒)小于视频时长(%.2f秒)，将循环播放", CMTimeGetSeconds(audioDuration), CMTimeGetSeconds(totalDuration));
+                  DYYYLogVideo(@"背景音樂時長(%.2f秒)小於影片時長(%.2f秒)，將循環播放", CMTimeGetSeconds(audioDuration), CMTimeGetSeconds(totalDuration));
 
                   while (CMTimeCompare(currentAudioTime, totalDuration) < 0) {
                       // 确定当前片段的时长（如果到达视频末尾则截断）
@@ -2566,55 +2566,55 @@
                       [audioTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, segmentDuration) ofTrack:audioAssetTrack atTime:currentAudioTime error:&audioError];
 
                       if (audioError) {
-                          DYYYLogVideo(@"添加背景音乐循环片段失败: %@", audioError);
+                          DYYYLogVideo(@"新增背景音樂循環片段失敗: %@", audioError);
                           break;
                       }
 
-                      DYYYLogVideo(@"添加背景音乐循环片段 - 位置: %.2f秒, 时长: %.2f秒", CMTimeGetSeconds(currentAudioTime), CMTimeGetSeconds(segmentDuration));
+                      DYYYLogVideo(@"新增背景音樂循環片段 - 位置: %.2f秒, 時長: %.2f秒", CMTimeGetSeconds(currentAudioTime), CMTimeGetSeconds(segmentDuration));
 
                       // 更新当前音频时间点
                       currentAudioTime = CMTimeAdd(currentAudioTime, segmentDuration);
                   }
 
-                  DYYYLogVideo(@"成功添加循环背景音乐，总时长: %.2f秒", CMTimeGetSeconds(currentAudioTime));
+                  DYYYLogVideo(@"成功新增循環背景音樂，總時長: %.2f秒", CMTimeGetSeconds(currentAudioTime));
               } else {
                   // 音乐长度足够，直接添加
                   NSError *audioError = nil;
                   [audioTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, totalDuration) ofTrack:audioAssetTrack atTime:kCMTimeZero error:&audioError];
 
                   if (audioError) {
-                      DYYYLogVideo(@"添加背景音乐失败: %@", audioError);
+                      DYYYLogVideo(@"新增背景音樂失敗: %@", audioError);
                   } else {
-                      DYYYLogVideo(@"成功添加背景音乐，时长: %.2f秒", CMTimeGetSeconds(totalDuration));
+                      DYYYLogVideo(@"成功新增背景音樂，時長: %.2f秒", CMTimeGetSeconds(totalDuration));
                   }
               }
           } else {
-              DYYYLogVideo(@"错误: 背景音乐没有有效的音轨");
+              DYYYLogVideo(@"錯誤: 背景音樂沒有有效的音軌");
           }
       }
 
       NSMutableArray *instructions = [NSMutableArray array];
 
       // 处理所有媒体片段（按顺序）
-      DYYYLogVideo(@"开始按顺序处理 %ld 个媒体片段", (long)mediaSegments.count);
+      DYYYLogVideo(@"開始按順序處理 %ld 個媒體片段", (long)mediaSegments.count);
       for (NSInteger i = 0; i < mediaSegments.count; i++) {
           NSDictionary *segment = mediaSegments[i];
           NSString *segmentType = segment[@"type"];
           NSString *segmentPath = segment[@"path"];
 
-          DYYYLogVideo(@"处理片段 %ld/%ld: 类型=%@, 路径=%@", (long)(i + 1), (long)mediaSegments.count, segmentType, segmentPath);
+          DYYYLogVideo(@"處理片段 %ld/%ld: 類型=%@, 路徑=%@", (long)(i + 1), (long)mediaSegments.count, segmentType, segmentPath);
 
           AVAsset *asset = [AVAsset assetWithURL:[NSURL fileURLWithPath:segmentPath]];
           NSArray<AVAssetTrack *> *videoTracks = [asset tracksWithMediaType:AVMediaTypeVideo];
 
           if (videoTracks.count == 0) {
-              DYYYLogVideo(@"错误: 媒体片段没有视频轨道: %@", segmentPath);
+              DYYYLogVideo(@"錯誤: 媒體片段沒有影片軌道: %@", segmentPath);
               continue;
           }
 
           AVAssetTrack *assetVideoTrack = videoTracks.firstObject;
           CMTime assetDuration = asset.duration;
-          DYYYLogVideo(@"片段 %ld/%ld: 时长=%.2f秒, 尺寸=%.0fx%.0f", (long)(i + 1), (long)mediaSegments.count, CMTimeGetSeconds(assetDuration), assetVideoTrack.naturalSize.width,
+          DYYYLogVideo(@"片段 %ld/%ld: 時長=%.2f秒, 尺寸=%.0fx%.0f", (long)(i + 1), (long)mediaSegments.count, CMTimeGetSeconds(assetDuration), assetVideoTrack.naturalSize.width,
                        assetVideoTrack.naturalSize.height);
 
           // 插入视频片段
@@ -2622,10 +2622,10 @@
           [videoTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, assetDuration) ofTrack:assetVideoTrack atTime:currentTime error:&insertError];
 
           if (insertError) {
-              DYYYLogVideo(@"插入视频片段失败: %@", insertError);
+              DYYYLogVideo(@"插入影片片段失敗: %@", insertError);
               continue;
           } else {
-              DYYYLogVideo(@"成功插入视频片段 %ld/%ld 到位置 %.2f秒", (long)(i + 1), (long)mediaSegments.count, CMTimeGetSeconds(currentTime));
+              DYYYLogVideo(@"成功插入影片片段 %ld/%ld 到位置 %.2f秒", (long)(i + 1), (long)mediaSegments.count, CMTimeGetSeconds(currentTime));
           }
 
           // 创建视频合成指令
@@ -2640,7 +2640,7 @@
 
           instruction.layerInstructions = @[ layerInstruction ];
           [instructions addObject:instruction];
-          DYYYLogVideo(@"添加合成指令: 时间范围=%.2f到%.2f秒", CMTimeGetSeconds(currentTime), CMTimeGetSeconds(CMTimeAdd(currentTime, assetDuration)));
+          DYYYLogVideo(@"新增合成指令: 時間範圍=%.2f到%.2f秒", CMTimeGetSeconds(currentTime), CMTimeGetSeconds(CMTimeAdd(currentTime, assetDuration)));
 
           // 更新时间点
           currentTime = CMTimeAdd(currentTime, assetDuration);
@@ -2648,11 +2648,11 @@
 
       // 设置合成指令
       videoComposition.instructions = instructions;
-      DYYYLogVideo(@"设置了 %ld 个视频合成指令，总时长: %.2f秒", (long)instructions.count, CMTimeGetSeconds(currentTime));
+      DYYYLogVideo(@"設定了 %ld 個影片合成指令，總時長: %.2f秒", (long)instructions.count, CMTimeGetSeconds(currentTime));
 
       // 检查是否有内容需要导出
       if (instructions.count == 0 || CMTimeGetSeconds(currentTime) < 0.1) {
-          DYYYLogVideo(@"错误: 没有足够的内容可以导出");
+          DYYYLogVideo(@"錯誤: 沒有足夠的內容可以匯出");
           if (completion) {
               dispatch_async(dispatch_get_main_queue(), ^{
                 completion(NO);
@@ -2662,17 +2662,17 @@
           for (NSDictionary *segment in mediaSegments) {
               if ([segment[@"type"] isEqualToString:@"image"]) {
                   [[NSFileManager defaultManager] removeItemAtPath:segment[@"path"] error:nil];
-                  DYYYLogVideo(@"清理临时图片视频文件: %@", segment[@"path"]);
+                  DYYYLogVideo(@"清理暫存圖片影片檔案: %@", segment[@"path"]);
               }
           }
           return;
       }
 
       // 设置导出会话
-      DYYYLogVideo(@"创建视频导出会话，使用最高质量编码");
+      DYYYLogVideo(@"建立影片匯出會話，使用最高品質編碼");
       AVAssetExportSession *exportSession = [[AVAssetExportSession alloc] initWithAsset:composition presetName:AVAssetExportPresetHighestQuality];
       if (!exportSession) {
-          DYYYLogVideo(@"错误: 创建导出会话失败");
+          DYYYLogVideo(@"錯誤: 建立匯出會話失敗");
           if (completion) {
               dispatch_async(dispatch_get_main_queue(), ^{
                 completion(NO);
@@ -2687,27 +2687,27 @@
       exportSession.shouldOptimizeForNetworkUse = YES;
 
       // 导出视频
-      DYYYLogVideo(@"开始导出视频到: %@", outputPath);
+      DYYYLogVideo(@"開始匯出影片到: %@", outputPath);
       [exportSession exportAsynchronouslyWithCompletionHandler:^{
         for (NSDictionary *segment in mediaSegments) {
             if ([segment[@"type"] isEqualToString:@"image"]) {
                 NSError *removeError = nil;
                 [[NSFileManager defaultManager] removeItemAtPath:segment[@"path"] error:&removeError];
                 if (removeError) {
-                    DYYYLogVideo(@"清理临时文件失败: %@, 错误: %@", segment[@"path"], removeError);
+                    DYYYLogVideo(@"清理暫存檔案失敗: %@, 錯誤: %@", segment[@"path"], removeError);
                 } else {
-                    DYYYLogVideo(@"清理临时图片视频文件: %@", segment[@"path"]);
+                    DYYYLogVideo(@"清理暫存圖片影片檔案: %@", segment[@"path"]);
                 }
             }
         }
         switch (exportSession.status) {
             case AVAssetExportSessionStatusCompleted: {
-                DYYYLogVideo(@"视频导出成功: %@", outputPath);
+                DYYYLogVideo(@"影片匯出成功: %@", outputPath);
 
                 NSDictionary *fileAttrs = [[NSFileManager defaultManager] attributesOfItemAtPath:outputPath error:nil];
                 if (fileAttrs) {
                     unsigned long long fileSize = [fileAttrs fileSize];
-                    DYYYLogVideo(@"导出视频大小: %.2f MB", fileSize / (1024.0 * 1024.0));
+                    DYYYLogVideo(@"匯出影片大小: %.2f MB", fileSize / (1024.0 * 1024.0));
                 }
 
                 if (completion) {
@@ -2719,7 +2719,7 @@
             }
 
             case AVAssetExportSessionStatusFailed: {
-                DYYYLogVideo(@"导出视频失败: %@", exportSession.error);
+                DYYYLogVideo(@"匯出影片失敗: %@", exportSession.error);
                 if (completion) {
                     dispatch_async(dispatch_get_main_queue(), ^{
                       completion(NO);
@@ -2729,7 +2729,7 @@
             }
 
             case AVAssetExportSessionStatusCancelled: {
-                DYYYLogVideo(@"导出视频被取消");
+                DYYYLogVideo(@"匯出影片被取消");
                 if (completion) {
                     dispatch_async(dispatch_get_main_queue(), ^{
                       completion(NO);
@@ -2739,7 +2739,7 @@
             }
 
             default: {
-                DYYYLogVideo(@"导出视频结束，状态码: %ld", (long)exportSession.status);
+                DYYYLogVideo(@"匯出影片結束，狀態碼: %ld", (long)exportSession.status);
                 if (completion) {
                     dispatch_async(dispatch_get_main_queue(), ^{
                       completion(NO);
@@ -2762,7 +2762,7 @@
     // 设置视频写入器
     AVAssetWriter *videoWriter = [[AVAssetWriter alloc] initWithURL:[NSURL fileURLWithPath:outputPath] fileType:AVFileTypeMPEG4 error:&error];
     if (error) {
-        NSLog(@"创建视频写入器失败: %@", error);
+        NSLog(@"建立影片寫入器失敗: %@", error);
         if (completion)
             completion(NO);
         return;
@@ -2841,7 +2841,7 @@
               CMTime frameTime = CMTimeMake(i, frameRate);
               success = [adaptor appendPixelBuffer:pixelBuffer withPresentationTime:frameTime];
               if (!success) {
-                  NSLog(@"无法写入像素缓冲区");
+                  NSLog(@"無法寫入像素緩衝區");
                   break;
               }
           } else {
@@ -2862,7 +2862,7 @@
             if (completion)
                 completion(YES);
         } else {
-            NSLog(@"写入视频失败: %@", videoWriter.error);
+            NSLog(@"寫入影片失敗: %@", videoWriter.error);
             if (completion)
                 completion(NO);
         }
@@ -2873,13 +2873,13 @@
 // 动画贴纸和GIF相关方法迁移自 DYYYUtils.m
 + (void)saveAnimatedSticker:(YYAnimatedImageView *)targetStickerView {
     if (!targetStickerView) {
-        [DYYYUtils showToast:@"无法获取表情视图"];
+        [DYYYUtils showToast:@"無法取得表情視圖"];
         return;
     }
     [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
       dispatch_async(dispatch_get_main_queue(), ^{
         if (status != PHAuthorizationStatusAuthorized) {
-            [DYYYUtils showToast:@"需要相册权限才能保存"];
+            [DYYYUtils showToast:@"需要照片App權限才能儲存"];
             return;
         }
         if ([DYYYUtils isBDImageWithHeifURL:targetStickerView.image]) {
@@ -2891,7 +2891,7 @@
           CGFloat duration = [DYYYUtils getDurationFromYYAnimatedImageView:targetStickerView];
           if (!images || images.count == 0) {
               dispatch_async(dispatch_get_main_queue(), ^{
-                [DYYYUtils showToast:@"无法获取表情帧"];
+                [DYYYUtils showToast:@"無法取得表情幀"];
               });
               return;
           }
@@ -2908,10 +2908,10 @@
             [DYYYUtils saveGIFToPhotoLibrary:tempPath
                                   completion:^(BOOL saved, NSError *error) {
                                if (saved) {
-                                   [DYYYToast showSuccessToastWithMessage:@"已保存到相册"];
+                                   [DYYYToast showSuccessToastWithMessage:@"已儲存到照片App"];
                                } else {
-                                   NSString *errorMsg = error ? error.localizedDescription : @"未知错误";
-                                   [DYYYUtils showToast:[NSString stringWithFormat:@"保存失败: %@", errorMsg]];
+                                   NSString *errorMsg = error ? error.localizedDescription : @"未知錯誤";
+                                   [DYYYUtils showToast:[NSString stringWithFormat:@"儲存失敗: %@", errorMsg]];
                                }
                              }];
           });
@@ -2923,13 +2923,13 @@
     UIImage *image = stickerView.image;
     NSURL *heifURL = [image performSelector:@selector(bd_webURL)];
     if (!heifURL) {
-        [DYYYUtils showToast:@"无法获取表情URL"];
+        [DYYYUtils showToast:@"無法取得表情URL"];
         return;
     }
     [DYYYUtils convertHeicToGif:heifURL
                      completion:^(NSURL *gifURL, BOOL success) {
                          if (!success || !gifURL) {
-                             [DYYYUtils showToast:@"表情转换失败"];
+                             [DYYYUtils showToast:@"表情轉換失敗"];
                              return;
                          }
                          [[PHPhotoLibrary sharedPhotoLibrary]
@@ -2940,15 +2940,15 @@
                              completionHandler:^(BOOL success, NSError *_Nullable error) {
                                dispatch_async(dispatch_get_main_queue(), ^{
                                  if (success) {
-                                     [DYYYToast showSuccessToastWithMessage:@"已保存到相册"];
+                                     [DYYYToast showSuccessToastWithMessage:@"已儲存到照片App"];
                                  } else {
-                                     NSString *errorMsg = error ? error.localizedDescription : @"未知错误";
-                                     [DYYYUtils showToast:[NSString stringWithFormat:@"保存失败: %@", errorMsg]];
+                                     NSString *errorMsg = error ? error.localizedDescription : @"未知錯誤";
+                                     [DYYYUtils showToast:[NSString stringWithFormat:@"儲存失敗: %@", errorMsg]];
                                  }
                                  NSError *removeError = nil;
                                  [[NSFileManager defaultManager] removeItemAtURL:gifURL error:&removeError];
                                  if (removeError) {
-                                     NSLog(@"删除临时转换文件失败: %@", removeError);
+                                     NSLog(@"刪除暫存轉換檔案失敗: %@", removeError);
                                  }
                                });
                              }];
@@ -2959,7 +2959,7 @@
                           createTime:(NSNumber *)createTime {
     if (!audioContent || audioContent.length == 0) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [DYYYUtils showToast:@"语音内容为空"];
+            [DYYYUtils showToast:@"語音內容為空"];
         });
         return;
     }
@@ -2970,16 +2970,16 @@
     
     if (error || !audioDict) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [DYYYUtils showToast:@"语音数据解析失败"];
+            [DYYYUtils showToast:@"語音數據解析失敗"];
         });
-        NSLog(@"[DYYY] 解析语音 JSON 失败: %@", error);
+        NSLog(@"[DYYY] 解析語音 JSON 失敗: %@", error);
         return;
     }
     
     NSArray *videoList = audioDict[@"video_list"];
     if (!videoList || videoList.count == 0) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [DYYYUtils showToast:@"未找到语音URL"];
+            [DYYYUtils showToast:@"未找到語音URL"];
         });
         return;
     }
@@ -2992,7 +2992,7 @@
     
     if (!audioURLString || audioURLString.length == 0) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [DYYYUtils showToast:@"语音URL无效"];
+            [DYYYUtils showToast:@"語音URL無效"];
         });
         return;
     }
@@ -3000,13 +3000,13 @@
     NSURL *audioURL = [NSURL URLWithString:audioURLString];
     if (!audioURL) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [DYYYUtils showToast:@"语音URL格式错误"];
+            [DYYYUtils showToast:@"語音URL格式錯誤"];
         });
         return;
     }
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        [DYYYUtils showToast:@"正在下载语音..."];
+        [DYYYUtils showToast:@"正在下載語音..."];
     });
     
     NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
@@ -3015,15 +3015,15 @@
     NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithURL:audioURL completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
         if (error) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                [DYYYUtils showToast:[NSString stringWithFormat:@"下载失败: %@", error.localizedDescription]];
+                [DYYYUtils showToast:[NSString stringWithFormat:@"下載失敗: %@", error.localizedDescription]];
             });
-            NSLog(@"[DYYY] 下载语音失败: %@", error);
+            NSLog(@"[DYYY] 下載語音失敗: %@", error);
             return;
         }
         
         if (!location) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                [DYYYUtils showToast:@"下载失败：无效的文件"];
+                [DYYYUtils showToast:@"下載失敗：無效的檔案"];
             });
             return;
         }
@@ -3050,7 +3050,7 @@
         
         if (moveError) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                [DYYYUtils showToast:@"文件保存失败"];
+                [DYYYUtils showToast:@"檔案儲存失敗"];
             });
             NSLog(@"[DYYY] 移动文件失败: %@", moveError);
             return;
@@ -3061,7 +3061,7 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             UIViewController *topVC = [DYYYUtils topView];
             if (!topVC) {
-                [DYYYUtils showToast:@"无法显示分享界面"];
+                [DYYYUtils showToast:@"無法顯示分享介面"];
                 return;
             }
             
@@ -3073,7 +3073,7 @@
                 if (completed) {
                     [DYYYUtils showToast:@"分享成功"];
                 } else if (activityError) {
-                    [DYYYUtils showToast:@"分享失败"];
+                    [DYYYUtils showToast:@"分享失敗"];
                 }
             };
             
