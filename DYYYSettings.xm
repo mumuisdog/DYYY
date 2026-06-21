@@ -315,6 +315,7 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
     self.searchTextField.autocorrectionType = UITextAutocorrectionTypeNo;
     self.searchTextField.spellCheckingType = UITextSpellCheckingTypeNo;
     self.searchTextField.delegate = self;
+    self.searchTextField.accessibilityLabel = @"DYYY設定搜尋";
 
     UIView *leftView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 38, 30)];
     UIImageView *leftIconView = [[UIImageView alloc] initWithFrame:CGRectMake(14, 5, 18, 18)];
