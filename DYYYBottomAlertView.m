@@ -22,7 +22,7 @@
     }
 
     if (confirmButtonText.length == 0) {
-        confirmButtonText = @"确定";
+        confirmButtonText = @"確定";
     }
 
     UIImageView *imageView = nil;
