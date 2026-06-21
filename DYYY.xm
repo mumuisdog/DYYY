@@ -3000,13 +3000,13 @@ static void DYYYDisableAVPlayerItemHDRMetadata(AVPlayerItem *item) {
             [messageContent appendFormat:@"%@", signature];
         }
 
-        NSString *title = nickname.length > 0 ? nickname : @"关注确认";
+        NSString *title = nickname.length > 0 ? nickname : @"關注確認";
 
         [DYYYBottomAlertView showAlertWithTitle:title
                                         message:messageContent
                                       avatarURL:avatarURL
                                cancelButtonText:@"取消"
-                              confirmButtonText:@"关注"
+                              confirmButtonText:@"關注"
                                    cancelAction:nil
                                     closeAction:nil
                                   confirmAction:^{
