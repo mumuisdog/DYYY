@@ -17,6 +17,8 @@ BOOL isFloatSpeedButtonEnabled = NO;
 BOOL speedButtonForceHidden = NO;
 BOOL dyyyInteractionViewVisible = NO;
 
+static NSString *const kDYYYDefaultSpeedSettingsString = @"0.75,1.0,1.25,1.5,2.0,2.5,3.0";
+
 static void DYYYApplySpeedButtonHiddenState(UIView *button, BOOL hidden) {
     if (!button) {
         return;
@@ -76,31 +78,23 @@ static BOOL DYYYSpeedValuesMatch(double lhs, double rhs) {
     return fabs(lhs - rhs) <= 0.001;
 }
 
-static NSArray<NSString *> *DYYYAdjustedSpeedOptionsForMissingDefaultSpeed(NSArray<NSString *> *currentSpeeds, double defaultSpeed) {
-    if (DYYYSpeedValuesMatch(defaultSpeed, 1.25)) {
-        return @[ @"1.25", @"2.0" ];
-    }
-    if (DYYYSpeedValuesMatch(defaultSpeed, 1.5)) {
-        return @[ @"1.5", @"2.0" ];
-    }
-    if (DYYYSpeedValuesMatch(defaultSpeed, 2.0)) {
-        return @[ @"1.0", @"1.25", @"1.5", @"2.0" ];
-    }
-
-    NSMutableArray<NSString *> *adjustedSpeeds = [currentSpeeds mutableCopy];
-    [adjustedSpeeds addObject:DYYYFormatSpeedOption(defaultSpeed)];
-    return adjustedSpeeds;
+NSString *DYYYDefaultSpeedSettingsString(void) {
+    return kDYYYDefaultSpeedSettingsString;
 }
 
-NSArray *getSpeedOptions() {
-    NSString *speedConfig = [[NSUserDefaults standardUserDefaults] stringForKey:@"DYYYSpeedSettings"] ?: @"1.0,1.25,1.5,2.0";
+static NSString *DYYYSpeedSettingsStringFromValue(id value) {
+    if ([value isKindOfClass:[NSString class]]) {
+        return [(NSString *)value stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    }
+    if ([value respondsToSelector:@selector(stringValue)]) {
+        return [[value stringValue] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    }
+    return nil;
+}
+
+static NSArray<NSString *> *DYYYParsedSpeedOptionsFromString(NSString *speedConfig) {
     NSMutableArray<NSString *> *validSpeeds = [NSMutableArray array];
     NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    double configuredDefaultSpeed = [defaults objectForKey:@"DYYYDefaultSpeed"] ? [defaults doubleForKey:@"DYYYDefaultSpeed"] : 1.0;
-    BOOL shouldIncludeDefaultSpeed = [defaults boolForKey:@"DYYYEnableFloatSpeedButton"] && [defaults boolForKey:@"DYYYAutoRestoreSpeed"] && isfinite(configuredDefaultSpeed) && configuredDefaultSpeed > 0.0;
-    BOOL containsDefaultSpeed = NO;
-    NSArray<NSString *> *fallbackSpeeds = @[ @"1.0", @"1.25", @"1.5", @"2.0" ];
 
     for (NSString *component in [speedConfig componentsSeparatedByString:@","]) {
         NSString *trimmedValue = [component stringByTrimmingCharactersInSet:whitespace];
@@ -111,27 +105,69 @@ NSArray *getSpeedOptions() {
         NSScanner *scanner = [NSScanner scannerWithString:trimmedValue];
         double speed = 0.0;
         if ([scanner scanDouble:&speed] && scanner.isAtEnd && isfinite(speed) && speed > 0.0) {
-            [validSpeeds addObject:trimmedValue];
-            if (shouldIncludeDefaultSpeed && DYYYSpeedValuesMatch(speed, configuredDefaultSpeed)) {
-                containsDefaultSpeed = YES;
-            }
+            [validSpeeds addObject:DYYYFormatSpeedOption(speed)];
         }
     }
+    return validSpeeds;
+}
 
+static double DYYYSpeedPreferenceValue(NSString *key, double fallback) {
+    id value = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+    double speed = [value respondsToSelector:@selector(doubleValue)] ? [value doubleValue] : fallback;
+    if (!isfinite(speed) || speed <= 0.0) {
+        return fallback;
+    }
+    return speed;
+}
+
+static BOOL DYYYSpeedOptionsContainSpeed(NSArray<NSString *> *speedOptions, double speed) {
+    if (!isfinite(speed) || speed <= 0.0) {
+        return YES;
+    }
+
+    for (NSString *speedString in speedOptions) {
+        if (DYYYSpeedValuesMatch([speedString doubleValue], speed)) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+static BOOL DYYYSpeedOptionsCoverRequiredPlaybackSpeeds(NSArray<NSString *> *speedOptions) {
+    double defaultSpeed = DYYYSpeedPreferenceValue(@"DYYYDefaultSpeed", 1.0);
+    double longPressSpeed = DYYYSpeedPreferenceValue(@"DYYYLongPressSpeed", 2.0);
+    return DYYYSpeedOptionsContainSpeed(speedOptions, defaultSpeed) &&
+           DYYYSpeedOptionsContainSpeed(speedOptions, longPressSpeed);
+}
+
+BOOL DYYYNormalizeSpeedSettingsForRequiredSpeeds(void) {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *speedConfig = DYYYSpeedSettingsStringFromValue([defaults objectForKey:@"DYYYSpeedSettings"]);
+    NSArray<NSString *> *validSpeeds = DYYYParsedSpeedOptionsFromString(speedConfig ?: @"");
+    BOOL shouldUseDefaultSettings = speedConfig.length == 0 ||
+                                    validSpeeds.count == 0 ||
+                                    !DYYYSpeedOptionsCoverRequiredPlaybackSpeeds(validSpeeds);
+
+    if (!shouldUseDefaultSettings) {
+        return NO;
+    }
+
+    if (![speedConfig isEqualToString:kDYYYDefaultSpeedSettingsString]) {
+        [defaults setObject:kDYYYDefaultSpeedSettingsString forKey:@"DYYYSpeedSettings"];
+        return YES;
+    }
+    return NO;
+}
+
+NSArray *getSpeedOptions() {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    DYYYNormalizeSpeedSettingsForRequiredSpeeds();
+
+    NSString *speedConfig = DYYYSpeedSettingsStringFromValue([defaults objectForKey:@"DYYYSpeedSettings"]) ?: kDYYYDefaultSpeedSettingsString;
+    NSArray<NSString *> *validSpeeds = DYYYParsedSpeedOptionsFromString(speedConfig);
     if (validSpeeds.count == 0) {
-        [validSpeeds addObjectsFromArray:fallbackSpeeds];
-        if (shouldIncludeDefaultSpeed) {
-            for (NSString *speedString in fallbackSpeeds) {
-                if (DYYYSpeedValuesMatch([speedString doubleValue], configuredDefaultSpeed)) {
-                    containsDefaultSpeed = YES;
-                    break;
-                }
-            }
-        }
-    }
-
-    if (shouldIncludeDefaultSpeed && !containsDefaultSpeed) {
-        return DYYYAdjustedSpeedOptionsForMissingDefaultSpeed(validSpeeds, configuredDefaultSpeed);
+        [defaults setObject:kDYYYDefaultSpeedSettingsString forKey:@"DYYYSpeedSettings"];
+        validSpeeds = DYYYParsedSpeedOptionsFromString(kDYYYDefaultSpeedSettingsString);
     }
 
     return validSpeeds;
