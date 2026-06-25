@@ -19,6 +19,8 @@ extern BOOL dyyyCommentViewVisible;
 extern char dyyyClearOriginalAlphaKey;
 
 BOOL DYYYIsDynamicAlphaView(UIView *view);
+void DYYYApplyClearTargetViewHiddenState(UIView *view);
+void DYYYRestoreClearTargetViewStateIfNeeded(UIView *view);
 
 UIWindow *getKeyWindow(void);
 
