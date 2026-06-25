@@ -162,6 +162,9 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(nonatomic, assign) BOOL isShowLandscapeEntryView;
 - (BOOL)isLive;
 - (BOOL)contentFilter;
+- (BOOL)checkIsAd;
+- (BOOL)isHardAdModel;
+- (BOOL)isHardAd;
 - (BOOL)awe_enableHDR;
 - (id)awe_HDRValueFor:(long long)value enableHDR:(BOOL)enableHDR;
 - (AWESearchAwemeExtraModel *)searchExtraModel;
@@ -170,6 +173,20 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @interface AWEHotListDataController : NSObject
 - (NSNumber *)dyyy_numberValueForLowLikesFilter:(id)rawValue;
 - (NSNumber *)dyyy_resolvedDiggCountForAweme:(AWEAwemeModel *)aweme;
+@end
+
+@interface AWEListDataController : NSObject
+@property(nonatomic, strong) NSMutableArray *dataSource;
+@property(nonatomic, strong) NSMutableArray *filteredDataSource;
+@end
+
+@interface AWEMixVideoListDataController : AWEListDataController
+@end
+
+@interface AWEMixVideoDetailPlayListDataController : AWEListDataController
+@end
+
+@interface AWEMixVideoRelatedListDataController : AWEMixVideoListDataController
 @end
 
 @interface AWEFeedCommentConfigModel : NSObject
@@ -1227,7 +1244,28 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @interface AWEFeedRootViewController : UIViewController
 - (BOOL)prefersStatusBarHidden;
 @end
+@interface AWELiveAudienceContainerController : NSObject
+@property(nonatomic, strong) id roomModel;
+@property(nonatomic, strong) UIViewController *audienceVC;
+- (UIViewController *)audienceViewController;
+@end
+
+@interface AWELiveAudienceViewController : NSObject
+@property(nonatomic, strong) id roomModel;
+@property(nonatomic, strong) UIViewController *audienceViewController;
+@end
+
+@interface IESLiveInnerFeedLiveRoomCell : UICollectionViewCell
+@property(nonatomic, strong) id itemModel;
+@property(nonatomic, strong) id roomAisle;
+@property(nonatomic, strong) UIViewController *audienceVC;
+@end
+
 @interface IESLiveAudienceViewController : UIViewController
+@property(nonatomic, strong) id containerContext;
+@property(nonatomic, strong) id roomDI;
+@property(nonatomic, strong) id roomConfig;
+@property(nonatomic, strong) id roomAisle;
 - (BOOL)prefersStatusBarHidden;
 @end
 @interface AWEAwemeDetailTableViewController : UIViewController
@@ -1423,7 +1461,10 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 @property(nonatomic) AWEURLModel *playAddr;
 @end
 
-@interface AWENormalModeTabBarGeneralPlusButton : UIView
+@interface AWENormalModeTabBarPlusButton : UIView
+@end
+
+@interface AWENormalModeTabBarGeneralPlusButton : AWENormalModeTabBarPlusButton
 @end
 
 @interface AWEMixVideoPanelMoreView : UIView
