@@ -3,6 +3,7 @@
 #import <MobileCoreServices/MobileCoreServices.h>
 #import <math.h>
 #import <UIKit/UIKit.h>
+#import <objc/message.h>
 #import <objc/runtime.h>
 
 #import "DYYYABTestHook.h"
@@ -37,6 +38,15 @@ void *kViewModelKey = &kViewModelKey;
 static id dyyyRemoteConfigChangedToken = nil;
 static char kDYYYWeatherViewGestureInstalledKey;
 static char kDYYYWeatherSubviewGestureInstalledKey;
+
+static NSString *DYYYCurrentSpeedSettingsDisplayString(void) {
+    id value = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYSpeedSettings"];
+    if ([value isKindOfClass:[NSString class]] && [(NSString *)value length] > 0) {
+        return (NSString *)value;
+    }
+    return DYYYDefaultSpeedSettingsString();
+}
+
 static char kDYYYSettingsSearchCoordinatorKey;
 static BOOL DYYYBuildingSettingsSearchIndex = NO;
 static BOOL DYYYSettingsSearchIndexBuilt = NO;
@@ -248,6 +258,33 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
     [DYYYSettingsHelper applyDependencyRulesForItem:item];
 }
 
+static BOOL DYYYSettingsUsesDouyinLightBackground(void) {
+    return [DYYYUtils usesDouyinLightBackground];
+}
+
+static UIColor *DYYYSettingsColorFromARGB(NSUInteger argb) {
+    CGFloat alpha = ((argb >> 24) & 0xFF) / 255.0;
+    CGFloat red = ((argb >> 16) & 0xFF) / 255.0;
+    CGFloat green = ((argb >> 8) & 0xFF) / 255.0;
+    CGFloat blue = (argb & 0xFF) / 255.0;
+    return [UIColor colorWithRed:red green:green blue:blue alpha:alpha];
+}
+
+static UIColor *DYYYSettingsSearchContainerColor(BOOL usesLightBackground) {
+    // AWEUIColor BGCardSolid: d=FF1D1F2A, dl=FFFFFFFF.
+    return DYYYSettingsColorFromARGB(usesLightBackground ? 0xFFFFFFFF : 0xFF1D1F2A);
+}
+
+static UIColor *DYYYSettingsSearchTextColor(BOOL usesLightBackground) {
+    // AWEUIColor TextPrimary: d=E6FFFFFF, dl=FF161823.
+    return DYYYSettingsColorFromARGB(usesLightBackground ? 0xFF161823 : 0xE6FFFFFF);
+}
+
+static UIColor *DYYYSettingsSearchPlaceholderColor(BOOL usesLightBackground) {
+    // AWEUIColor TextSecondary: d=C0FFFFFF, dl=C0161823.
+    return DYYYSettingsColorFromARGB(usesLightBackground ? 0xC0161823 : 0xC0FFFFFF);
+}
+
 @interface DYYYSettingsSearchCoordinator : NSObject <UITextFieldDelegate, UIGestureRecognizerDelegate>
 @property(nonatomic, weak) AWESettingBaseViewController *settingsVC;
 @property(nonatomic, weak) UINavigationController *navigationController;
@@ -262,11 +299,13 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
 @property(nonatomic, strong) UITextField *searchTextField;
 @property(nonatomic, strong) UIScreenEdgePanGestureRecognizer *searchBackGestureRecognizer;
 @property(nonatomic, strong) UIView *centerPlaceholderView;
+@property(nonatomic, strong) UIImageView *leftIconView;
 @property(nonatomic, strong) UIImageView *centerIconView;
 @property(nonatomic, strong) UILabel *centerPlaceholderLabel;
 - (instancetype)initWithSettingsVC:(AWESettingBaseViewController *)settingsVC viewModel:(AWESettingsViewModel *)viewModel originalSections:(NSArray *)sections searchEntries:(NSArray<NSDictionary *> *)entries;
 - (void)installSearchHeader;
 - (void)installNavigationInterceptors;
+- (void)applyThemeColors;
 - (void)updateLayout;
 - (void)updateNavigationGestureState;
 - (void)restoreNavigationGestureState;
@@ -298,7 +337,6 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
     self.headerView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 
     self.containerView = [[UIView alloc] initWithFrame:CGRectMake(16, 8, self.headerView.bounds.size.width - 32, 44)];
-    self.containerView.backgroundColor = [UIColor whiteColor];
     self.containerView.layer.cornerRadius = 12;
     self.containerView.layer.masksToBounds = YES;
     self.containerView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
@@ -307,8 +345,6 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
     self.searchTextField = [[UITextField alloc] initWithFrame:self.containerView.bounds];
     self.searchTextField.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     self.searchTextField.backgroundColor = [UIColor clearColor];
-    self.searchTextField.textColor = [UIColor colorWithRed:22.0 / 255.0 green:24.0 / 255.0 blue:35.0 / 255.0 alpha:1.0];
-    self.searchTextField.tintColor = self.searchTextField.textColor;
     self.searchTextField.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
     self.searchTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
     self.searchTextField.returnKeyType = UIReturnKeySearch;
@@ -318,11 +354,10 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
     self.searchTextField.accessibilityLabel = @"DYYY設定搜尋";
 
     UIView *leftView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 38, 30)];
-    UIImageView *leftIconView = [[UIImageView alloc] initWithFrame:CGRectMake(14, 5, 18, 18)];
-    leftIconView.image = [UIImage systemImageNamed:@"magnifyingglass"];
-    leftIconView.tintColor = [UIColor colorWithWhite:0 alpha:0.38];
-    leftIconView.contentMode = UIViewContentModeScaleAspectFit;
-    [leftView addSubview:leftIconView];
+    self.leftIconView = [[UIImageView alloc] initWithFrame:CGRectMake(14, 5, 18, 18)];
+    self.leftIconView.image = [UIImage systemImageNamed:@"magnifyingglass"];
+    self.leftIconView.contentMode = UIViewContentModeScaleAspectFit;
+    [leftView addSubview:self.leftIconView];
     self.searchTextField.leftView = leftView;
     self.searchTextField.leftViewMode = UITextFieldViewModeNever;
     [self.searchTextField addTarget:self action:@selector(searchTextDidChange:) forControlEvents:UIControlEventEditingChanged];
@@ -333,17 +368,15 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
     [self.containerView addSubview:self.centerPlaceholderView];
 
     self.centerIconView = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"magnifyingglass"]];
-    self.centerIconView.tintColor = [UIColor colorWithWhite:0 alpha:0.38];
     self.centerIconView.contentMode = UIViewContentModeScaleAspectFit;
     [self.centerPlaceholderView addSubview:self.centerIconView];
 
     self.centerPlaceholderLabel = [[UILabel alloc] initWithFrame:CGRectZero];
     self.centerPlaceholderLabel.text = @"搜尋設定項";
-    self.centerPlaceholderLabel.textColor = [UIColor colorWithWhite:0 alpha:0.38];
     self.centerPlaceholderLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
     [self.centerPlaceholderView addSubview:self.centerPlaceholderLabel];
 
-    [self updateSearchPlaceholderVisibility];
+    [self applyThemeColors];
     [self updateLayout];
     tableView.tableHeaderView = self.headerView;
     [self installNavigationInterceptors];
@@ -352,9 +385,11 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
 
 - (void)updateLayout {
     UITableView *tableView = self.settingsVC.tableView;
-    if (!tableView || !self.headerView || !self.containerView || !self.centerPlaceholderView || !self.centerIconView || !self.centerPlaceholderLabel) {
+    if (!tableView || !self.headerView || !self.containerView || !self.centerPlaceholderView || !self.leftIconView || !self.centerIconView || !self.centerPlaceholderLabel) {
         return;
     }
+
+    [self applyThemeColors];
 
     CGFloat width = tableView.bounds.size.width;
     if (width <= 0) {
@@ -393,8 +428,31 @@ static void DYYYRefreshSearchItemValue(AWESettingItemModel *item) {
 - (void)updateSearchPlaceholderVisibility {
     BOOL showCenteredPlaceholder = !self.searchTextField.isEditing && [self trimmedSearchText].length == 0;
     self.centerPlaceholderView.hidden = !showCenteredPlaceholder;
-    self.searchTextField.placeholder = showCenteredPlaceholder ? nil : @"搜尋設定項";
+    if (showCenteredPlaceholder) {
+        self.searchTextField.placeholder = nil;
+        self.searchTextField.attributedPlaceholder = nil;
+    } else {
+        UIColor *placeholderColor = self.centerPlaceholderLabel.textColor ?: DYYYSettingsSearchPlaceholderColor(DYYYSettingsUsesDouyinLightBackground());
+        self.searchTextField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:@"搜尋設定項"
+                                                                                     attributes:@{NSForegroundColorAttributeName : placeholderColor}];
+    }
     self.searchTextField.leftViewMode = showCenteredPlaceholder ? UITextFieldViewModeNever : UITextFieldViewModeAlways;
+}
+
+- (void)applyThemeColors {
+    BOOL usesLightBackground = DYYYSettingsUsesDouyinLightBackground();
+    UIColor *containerColor = DYYYSettingsSearchContainerColor(usesLightBackground);
+    UIColor *textColor = DYYYSettingsSearchTextColor(usesLightBackground);
+    UIColor *placeholderColor = DYYYSettingsSearchPlaceholderColor(usesLightBackground);
+
+    self.containerView.backgroundColor = containerColor;
+    self.searchTextField.textColor = textColor;
+    self.searchTextField.tintColor = textColor;
+    self.searchTextField.keyboardAppearance = usesLightBackground ? UIKeyboardAppearanceDefault : UIKeyboardAppearanceDark;
+    self.leftIconView.tintColor = placeholderColor;
+    self.centerIconView.tintColor = placeholderColor;
+    self.centerPlaceholderLabel.textColor = placeholderColor;
+    [self updateSearchPlaceholderVisibility];
 }
 
 - (NSArray *)sectionsForSearchText:(NSString *)searchText {
@@ -620,6 +678,7 @@ static void DYYYBuildSettingsSearchIndexIfNeeded(NSArray<AWESettingItemModel *> 
 - (void)viewWillAppear:(BOOL)animated {
     %orig;
     DYYYSettingsSearchCoordinator *coordinator = objc_getAssociatedObject(self, &kDYYYSettingsSearchCoordinatorKey);
+    [coordinator applyThemeColors];
     [coordinator installNavigationInterceptors];
     [coordinator updateNavigationGestureState];
 }
@@ -1046,11 +1105,12 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                 [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYDefaultSpeed"
                                                    optionsArray:speedOptions
                                                      headerText:@"選擇預設倍速"
-                                                 onPresentingVC:topView()
-                                               selectionChanged:^(NSString *selectedValue) {
-                                                 item.detail = selectedValue;
-                                                 [item refreshCell];
-                                               }];
+                                               onPresentingVC:topView()
+                                             selectionChanged:^(NSString *selectedValue) {
+                                               item.detail = selectedValue;
+                                               DYYYNormalizeSpeedSettingsForRequiredSpeeds();
+                                               [item refreshCell];
+                                             }];
               };
           }
 
@@ -1064,11 +1124,12 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                 [DYYYOptionsSelectionView showWithPreferenceKey:@"DYYYLongPressSpeed"
                                                    optionsArray:speedOptions
                                                      headerText:@"選擇右側長按倍速"
-                                                 onPresentingVC:topView()
-                                               selectionChanged:^(NSString *selectedValue) {
-                                                 item.detail = selectedValue;
-                                                 [item refreshCell];
-                                               }];
+                                               onPresentingVC:topView()
+                                             selectionChanged:^(NSString *selectedValue) {
+                                               item.detail = selectedValue;
+                                               DYYYNormalizeSpeedSettingsForRequiredSpeeds();
+                                               [item refreshCell];
+                                             }];
               };
           }
 
@@ -1122,7 +1183,13 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
             @"detail" : @"",
             @"cellType" : @37, 
             @"imageName" : @"ic_video_outlined_20"},
-            
+          @{@"identifier" : @"DYYYShowLiveDuration",
+            @"title" : @"顯示開播時長",
+            @"subTitle" : @"在直播間左上角顯示主播已開播時間",
+            @"detail" : @"",
+            @"cellType" : @37,
+            @"imageName" : @"ic_clock_outlined_20"},
+
           @{@"identifier" : @"DYYYCommentExactTime",
             @"title" : @"評論具體時間",
             @"subTitle" : @"開啟後評論區將顯示具體的發布時間而非相對時間",
@@ -1782,12 +1849,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
             @"cellType" : @6,
             @"imageName" : @"ic_eyeslash_outlined_16"},
           @{@"identifier" : @"DYYYHideAvatarButton",
-            @"title" : @"隱藏頭像按鈕",
-            @"detail" : @"",
-            @"cellType" : @6,
-            @"imageName" : @"ic_eyeslash_outlined_16"},
-          @{@"identifier" : @"DYYYHideAvatarRing",
-            @"title" : @"隱藏頭像光圈",
+            @"title" : @"隱藏頭像及周邊",
             @"detail" : @"",
             @"cellType" : @6,
             @"imageName" : @"ic_eyeslash_outlined_16"},
@@ -3621,18 +3683,16 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
       AWESettingItemModel *speedSettingsItem = [[%c(AWESettingItemModel) alloc] init];
       speedSettingsItem.identifier = @"DYYYSpeedSettings";
       speedSettingsItem.title = @"快捷倍速數值設定";
+      speedSettingsItem.subTitle = @"需同時命中包含設定預設倍速和設定長按倍速的數值，否則預設恢復成0.75,1.0,1.25,1.5,2.0,2.5,3.0";
       speedSettingsItem.type = 0;
       speedSettingsItem.svgIconImageName = @"ic_speed_outlined_20";
-      speedSettingsItem.cellType = 26;
+      speedSettingsItem.cellType = 20;
       speedSettingsItem.colorStyle = 0;
       speedSettingsItem.isEnable = YES;
 
       // 获取已保存的倍速数值设置
-      NSString *savedSpeedSettings = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYSpeedSettings"];
-      // 如果没有设置过，使用默认值
-      if (!savedSpeedSettings || savedSpeedSettings.length == 0) {
-          savedSpeedSettings = @"1.0,1.25,1.5,2.0";
-      }
+      DYYYNormalizeSpeedSettingsForRequiredSpeeds();
+      NSString *savedSpeedSettings = DYYYCurrentSpeedSettingsDisplayString();
       speedSettingsItem.detail = [NSString stringWithFormat:@"%@", savedSpeedSettings];
       speedSettingsItem.cellTappedBlock = ^{
         [DYYYSettingsHelper showTextInputAlert:@"設定快捷倍速數值"
@@ -3642,7 +3702,8 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
                                        // 保存用户输入的倍速值
                                        NSString *trimmedText = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
                                        [[NSUserDefaults standardUserDefaults] setObject:trimmedText forKey:@"DYYYSpeedSettings"];
-                                       speedSettingsItem.detail = trimmedText;
+                                       DYYYNormalizeSpeedSettingsForRequiredSpeeds();
+                                       speedSettingsItem.detail = DYYYCurrentSpeedSettingsDisplayString();
                                        [speedSettingsItem refreshCell];
                                        [FloatingSpeedButton reloadConfiguration];
                                      }
@@ -3739,6 +3800,9 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
         if (originalSpeedSwitchChangedBlock) {
             originalSpeedSwitchChangedBlock();
         }
+        DYYYNormalizeSpeedSettingsForRequiredSpeeds();
+        speedSettingsItem.detail = DYYYCurrentSpeedSettingsDisplayString();
+        [speedSettingsItem refreshCell];
         [FloatingSpeedButton reloadConfiguration];
         refreshSpeedDependentItems();
       };
