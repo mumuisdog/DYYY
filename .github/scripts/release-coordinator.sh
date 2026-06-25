@@ -4,7 +4,10 @@ set -euo pipefail
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 workflow_file=${WORKFLOW_FILE:-build.yml}
-branch=${GITHUB_REF_NAME:-main}
+source_run_id=${SOURCE_BUILD_RUN_ID:-${GITHUB_RUN_ID:-}}
+source_run_number=${SOURCE_BUILD_RUN_NUMBER:-${GITHUB_RUN_NUMBER:-}}
+source_sha=${SOURCE_BUILD_SHA:-${GITHUB_SHA:-}}
+branch=${SOURCE_BUILD_BRANCH:-${GITHUB_REF_NAME:-main}}
 max_wait_seconds=${RELEASE_COORDINATOR_MAX_WAIT_SECONDS:-3600}
 poll_interval_seconds=${RELEASE_COORDINATOR_POLL_INTERVAL_SECONDS:-30}
 settle_seconds=${RELEASE_COORDINATOR_SETTLE_SECONDS:-30}
@@ -67,7 +70,7 @@ newer_run_is_build_relevant() {
         return 0
     fi
 
-    "${script_dir}/build-relevance.sh" range "$GITHUB_SHA" "$head_sha"
+    "${script_dir}/build-relevance.sh" range "$source_sha" "$head_sha"
 }
 
 has_newer_build_relevant_run() {
@@ -87,8 +90,8 @@ has_newer_build_relevant_run() {
         fi
     done < <(
         jq -r \
-            --argjson current_run_number "$GITHUB_RUN_NUMBER" \
-            --arg current_run_id "$GITHUB_RUN_ID" \
+            --argjson current_run_number "$source_run_number" \
+            --arg current_run_id "$source_run_id" \
             '.workflow_runs[]
              | select((.id | tostring) != $current_run_id)
              | select(.run_number > $current_run_number)
@@ -104,8 +107,8 @@ active_older_run_count() {
     local runs_json=$1
 
     jq -r \
-        --argjson current_run_number "$GITHUB_RUN_NUMBER" \
-        --arg current_run_id "$GITHUB_RUN_ID" \
+        --argjson current_run_number "$source_run_number" \
+        --arg current_run_id "$source_run_id" \
         '.workflow_runs
          | map(select((.id | tostring) != $current_run_id)
                | select(.run_number < $current_run_number)
@@ -183,9 +186,9 @@ main() {
     local elapsed
 
     require_env GITHUB_REPOSITORY
-    require_env GITHUB_RUN_ID
-    require_env GITHUB_RUN_NUMBER
-    require_env GITHUB_SHA
+    require_env source_run_id
+    require_env source_run_number
+    require_env source_sha
 
     while true; do
         runs_json=$(workflow_runs_json)
