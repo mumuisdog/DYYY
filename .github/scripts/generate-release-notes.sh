@@ -6,9 +6,10 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "${script_dir}/build-relevance.sh"
 
 notes_file="${1:-release-notes.md}"
-head_sha="${GITHUB_SHA:-HEAD}"
+head_sha="${RELEASE_HEAD_SHA:-${GITHUB_SHA:-HEAD}}"
 repository="${GITHUB_REPOSITORY:-$(git config --get remote.origin.url | sed -E 's#(git@github.com:|https://github.com/)##; s#\.git$##')}"
 server_url="${GITHUB_SERVER_URL:-https://github.com}"
+release_title="${RELEASE_TITLE:-Release}"
 
 feat_file=$(mktemp)
 fix_file=$(mktemp)
@@ -20,7 +21,8 @@ chore_file=$(mktemp)
 revert_file=$(mktemp)
 records_file=$(mktemp)
 skip_file=$(mktemp)
-trap 'rm -f "$feat_file" "$fix_file" "$perf_file" "$refactor_file" "$docs_file" "$style_file" "$chore_file" "$revert_file" "$records_file" "$skip_file"' EXIT
+contributors_file=$(mktemp)
+trap 'rm -f "$feat_file" "$fix_file" "$perf_file" "$refactor_file" "$docs_file" "$style_file" "$chore_file" "$revert_file" "$records_file" "$skip_file" "$contributors_file"' EXIT
 
 trim_text() {
     local value=$1
@@ -422,7 +424,92 @@ commit_touches_control() {
     commit_touches_path "$hash" "control"
 }
 
-previous_tag=$(git tag --list 'DYYY_*-build.*' --sort=-version:refname | head -n 1)
+latest_release_tag() {
+    local latest_tag
+
+    if ! command -v gh >/dev/null 2>&1 ||
+       [[ -z "${GH_TOKEN:-}" || -z "$repository" ]]; then
+        return
+    fi
+
+    latest_tag=$(gh api "repos/${repository}/releases/latest" \
+        --jq '.tag_name // empty' 2>/dev/null || true)
+    printf '%s' "$latest_tag"
+}
+
+tag_points_to_commit() {
+    local tag=$1
+
+    git cat-file -e "${tag}^{commit}" 2>/dev/null
+}
+
+ensure_release_tag_available() {
+    local tag=$1
+
+    if tag_points_to_commit "$tag"; then
+        return 0
+    fi
+
+    git fetch --force --no-tags origin "refs/tags/${tag}:refs/tags/${tag}" \
+        >/dev/null 2>&1 || return 1
+    tag_points_to_commit "$tag"
+}
+
+contributor_for_commit() {
+    local hash=$1
+    local author_email
+    local github_login
+    local noreply_with_id='^[0-9]+\+([^@]+)@users\.noreply\.github\.com$'
+    local noreply_plain='^([^@]+)@users\.noreply\.github\.com$'
+
+    if command -v gh >/dev/null 2>&1 &&
+       [[ -n "${GH_TOKEN:-}" && -n "$repository" ]]; then
+        github_login=$(gh api "repos/${repository}/commits/${hash}" \
+            --jq '.author.login // .committer.login // empty' 2>/dev/null || true)
+        if [[ -n "$github_login" ]]; then
+            printf '@%s' "$github_login"
+            return
+        fi
+    fi
+
+    author_email=$(git show -s --format=%ae "$hash")
+
+    if [[ "$author_email" =~ $noreply_with_id ]]; then
+        printf '@%s' "${BASH_REMATCH[1]}"
+        return
+    fi
+    if [[ "$author_email" =~ $noreply_plain ]]; then
+        printf '@%s' "${BASH_REMATCH[1]}"
+        return
+    fi
+}
+
+record_contributor_for_commit() {
+    local hash=$1
+    local contributor
+
+    contributor=$(contributor_for_commit "$hash")
+    if [[ -n "$contributor" ]] &&
+       ! grep -Fxq -- "$contributor" "$contributors_file"; then
+        printf '%s\n' "$contributor" >> "$contributors_file"
+    fi
+}
+
+previous_tag=$(latest_release_tag)
+if [[ -n "$previous_tag" ]] &&
+   ! ensure_release_tag_available "$previous_tag"; then
+    previous_tag=""
+fi
+
+if [[ -z "$previous_tag" ]]; then
+    previous_tag=$(git tag --list 'DYYY_*' --sort=-version:refname | head -n 1)
+fi
+
+if [[ -n "$previous_tag" ]] &&
+   ! tag_points_to_commit "$previous_tag"; then
+    previous_tag=""
+fi
+
 if [[ -n "$previous_tag" ]]; then
     commit_range="${previous_tag}..${head_sha}"
 elif [[ -n "${PUSH_BEFORE:-}" && "$PUSH_BEFORE" != "$zero_sha" ]] &&
@@ -463,12 +550,11 @@ while IFS=$'\t' read -r hash subject commit_type; do
     summary_title=$(summarize_commit_title "$hash" "$subject" "$commit_type")
     entry="- \`${commit_type}\` **${summary_title}** ([\`${short_hash}\`](${server_url}/${repository}/commit/${hash}))"
     printf '%s\n' "$entry" >> "$(section_file_for_type "$commit_type")"
+    record_contributor_for_commit "$hash"
 done < "$records_file"
 
 cat > "$notes_file" <<EOF
-# 更新日志
-
-本次构建包含 ${relevant_count} 项插件、版本或构建配置变更，以下为详细更新内容：
+## ${release_title} 更新日志
 EOF
 
 append_section() {
@@ -476,7 +562,7 @@ append_section() {
     local section_file=$2
 
     if [[ -s "$section_file" ]]; then
-        printf '\n## %s\n\n' "$title" >> "$notes_file"
+        printf '\n### %s\n\n' "$title" >> "$notes_file"
         cat "$section_file" >> "$notes_file"
     fi
 }
@@ -490,15 +576,20 @@ append_section "代码格式" "$style_file"
 append_section "杂项/其他" "$chore_file"
 append_section "回滚" "$revert_file"
 
-if (( relevant_count == 0 )); then
-    printf '\n本次手动构建未检测到新的插件、版本或构建配置变更。\n' >> "$notes_file"
+contributor_count=$(awk 'NF { count++ } END { print count + 0 }' "$contributors_file")
+if (( contributor_count >= 2 )); then
+    printf '\n## Contributors\n\n' >> "$notes_file"
+    first_contributor=true
+    while IFS= read -r contributor; do
+        [[ -n "$contributor" ]] || continue
+        if [[ "$first_contributor" == "true" ]]; then
+            first_contributor=false
+        else
+            printf ', ' >> "$notes_file"
+        fi
+        printf '%s' "$contributor" >> "$notes_file"
+    done < "$contributors_file"
+    printf '\n' >> "$notes_file"
 fi
-
-cat >> "$notes_file" <<'EOF'
-
----
-
-本 Release 随附 Rootful、Rootless、Roothide 三个 Deb 安装包，并额外提供从 arm64e Deb 提取的 dylib，便于按需单独取用。
-EOF
 
 cat "$notes_file"
