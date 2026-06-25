@@ -83,6 +83,8 @@ static char dyyyProgressOriginalHiddenKey;
 static char dyyyProgressOriginalInteractionKey;
 static char dyyyProgressOriginalLayerOpacityKey;
 char dyyyClearOriginalAlphaKey;
+static char dyyyClearOriginalHiddenKey;
+static char dyyyClearStateCapturedKey;
 
 // AWEAwemePlayVideoPauseIcon 的 alpha 由抖音业务层动态控制（播放=0、暂停=1），
 // 对这类视图使用 hidden 属性隐藏而非修改 alpha，避免与业务层 alpha 控制冲突。
@@ -93,6 +95,52 @@ BOOL DYYYIsDynamicAlphaView(UIView *view) {
         pauseIconClass = NSClassFromString(@"AWEAwemePlayVideoPauseIcon");
     });
     return pauseIconClass && [view isKindOfClass:pauseIconClass];
+}
+
+static BOOL DYYYHasCapturedClearTargetViewState(UIView *view) {
+    return view && objc_getAssociatedObject(view, &dyyyClearStateCapturedKey) != nil;
+}
+
+static void DYYYCaptureClearTargetViewStateIfNeeded(UIView *view) {
+    if (!view || DYYYHasCapturedClearTargetViewState(view)) {
+        return;
+    }
+
+    objc_setAssociatedObject(view, &dyyyClearStateCapturedKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(view, &dyyyClearOriginalAlphaKey, @(view.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(view, &dyyyClearOriginalHiddenKey, @(view.hidden), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+void DYYYApplyClearTargetViewHiddenState(UIView *view) {
+    if (!view) {
+        return;
+    }
+
+    DYYYCaptureClearTargetViewStateIfNeeded(view);
+    if (DYYYIsDynamicAlphaView(view)) {
+        view.hidden = YES;
+    } else {
+        view.alpha = 0.0;
+    }
+}
+
+void DYYYRestoreClearTargetViewStateIfNeeded(UIView *view) {
+    if (!view || !DYYYHasCapturedClearTargetViewState(view)) {
+        return;
+    }
+
+    NSNumber *originalHidden = objc_getAssociatedObject(view, &dyyyClearOriginalHiddenKey);
+    NSNumber *originalAlpha = objc_getAssociatedObject(view, &dyyyClearOriginalAlphaKey);
+    if (originalHidden) {
+        view.hidden = originalHidden.boolValue;
+    }
+    if (originalAlpha) {
+        view.alpha = originalAlpha.floatValue;
+    }
+
+    objc_setAssociatedObject(view, &dyyyClearOriginalHiddenKey, nil, OBJC_ASSOCIATION_ASSIGN);
+    objc_setAssociatedObject(view, &dyyyClearOriginalAlphaKey, nil, OBJC_ASSOCIATION_ASSIGN);
+    objc_setAssociatedObject(view, &dyyyClearStateCapturedKey, nil, OBJC_ASSOCIATION_ASSIGN);
 }
 
 static DYYYClearProgressMode DYYYCurrentClearProgressMode(void) {
@@ -287,6 +335,11 @@ void hideClearButton(void) {
 static void forceResetAllUIElements(void) {
     DYYYPerformClearButtonMutation(^{
         initTargetClassNames();
+        NSArray<UIView *> *trackedViews = [hideButton.hiddenViewsList copy];
+        for (UIView *view in trackedViews) {
+            DYYYRestoreClearTargetViewStateIfNeeded(view);
+        }
+
         for (UIWindow *window in [UIApplication sharedApplication].windows) {
             for (NSString *className in targetClassNames) {
                 Class viewClass = NSClassFromString(className);
@@ -295,17 +348,7 @@ static void forceResetAllUIElements(void) {
                 NSMutableArray *views = [NSMutableArray array];
                 findViewsOfClassHelper(window, viewClass, views);
                 for (UIView *view in views) {
-                    if (DYYYIsDynamicAlphaView(view)) {
-                        // 动态 alpha 视图：只恢复 hidden，alpha 由业务层自行管控
-                        view.hidden = NO;
-                    } else {
-                        // 静态视图：恢复记录的原 alpha
-                        NSNumber *originalAlpha = objc_getAssociatedObject(view, &dyyyClearOriginalAlphaKey);
-                        view.alpha = originalAlpha ? originalAlpha.floatValue : 1.0;
-                        if (originalAlpha) {
-                            objc_setAssociatedObject(view, &dyyyClearOriginalAlphaKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-                        }
-                    }
+                    DYYYRestoreClearTargetViewStateIfNeeded(view);
                 }
             }
         }
@@ -790,7 +833,6 @@ void reloadClearButtonConfiguration(void) {
 - (void)hideUIElements {
     DYYYPerformClearButtonMutation(^{
         initTargetClassNames();
-        [self.hiddenViewsList removeAllObjects];
         [self findAndHideViews:targetClassNames];
         [self hideAWEPlayInteractionProgressContainerView];
         self.isElementsHidden = YES;
@@ -811,7 +853,9 @@ void reloadClearButtonConfiguration(void) {
 - (void)recursivelyHideAWEPlayInteractionProgressContainerViewInView:(UIView *)view {
     if (DYYYIsClearProgressView(view)) {
         DYYYApplyClearProgressViewState(view, DYYYCurrentClearProgressMode());
-        [self.hiddenViewsList addObject:view];
+        if (![self.hiddenViewsList containsObject:view]) {
+            [self.hiddenViewsList addObject:view];
+        }
     }
 
     for (UIView *subview in view.subviews) {
@@ -836,17 +880,10 @@ void reloadClearButtonConfiguration(void) {
                             continue;
                         }
                     }
-                    // 记录进入清屏前的原始 alpha，仅首次记录（避免周期性检查重复调用时被覆盖为 0）
-                    if (DYYYIsDynamicAlphaView(view)) {
-                        // 动态 alpha 视图：用 hidden 隐藏，不干预 alpha，让业务层继续自由控制
-                        view.hidden = YES;
-                    } else {
-                        if (!objc_getAssociatedObject(view, &dyyyClearOriginalAlphaKey)) {
-                            objc_setAssociatedObject(view, &dyyyClearOriginalAlphaKey, @(view.alpha), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-                        }
-                        view.alpha = 0.0;
+                    DYYYApplyClearTargetViewHiddenState(view);
+                    if (![self.hiddenViewsList containsObject:view]) {
+                        [self.hiddenViewsList addObject:view];
                     }
-                    [self.hiddenViewsList addObject:view];
                 }
             }
         }
