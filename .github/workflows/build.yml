@@ -35,7 +35,7 @@ on:
 
 permissions:
   actions: read
-  contents: write
+  contents: read
 
 jobs:
   changes:
@@ -59,7 +59,7 @@ jobs:
             echo "Build-relevant plugin, package, or Makefile changes detected."
           else
             echo "should_build=false" >> "$GITHUB_OUTPUT"
-            echo "Only non-build Makefile settings changed; skipping Deb build and Release."
+            echo "Only non-build Makefile settings changed; skipping Deb build."
           fi
 
   build:
@@ -130,8 +130,8 @@ jobs:
             [ -f "$f" ] && [[ "$f" != *"-root"*".deb" ]] && mv "$f" "${f%.deb}-roothide.deb"
           done
           
-      - name: Prepare release metadata
-        id: release
+      - name: Prepare package metadata
+        id: package
         run: |
           timestamp=$(TZ=Asia/Shanghai date +%Y%m%d%H%M%S)
           version=$(awk -F': ' '$1 == "Version" { print $2; exit }' control)
@@ -141,8 +141,6 @@ jobs:
           fi
           echo "timestamp=$timestamp" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "tag=DYYY_${version}-build.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
-          echo "title=DYYY_${version}#${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
 
       - name: Verify Deb packages
         shell: bash
@@ -165,41 +163,17 @@ jobs:
             fi
           done
 
-          printf 'Release asset: %s\n' "${deb_files[@]}"
+          printf 'Package artifact: %s\n' "${deb_files[@]}"
 
       - name: Extract arm64e dylib
         env:
-          PACKAGE_VERSION: ${{ steps.release.outputs.version }}
+          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
         run: .github/scripts/extract-release-dylib.sh
 
-      - name: Upload release package artifacts
+      - name: Upload package artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: DYYY-${{ steps.release.outputs.timestamp }}
+          name: DYYY-${{ steps.package.outputs.timestamp }}
           path: |
             ${{ github.workspace }}/packages/*.deb
             ${{ github.workspace }}/packages/*.dylib
-
-      - name: Coordinate Release publication
-        id: release_gate
-        env:
-          GH_TOKEN: ${{ github.token }}
-          WORKFLOW_FILE: build.yml
-        run: .github/scripts/release-coordinator.sh
-
-      - name: Generate release notes
-        if: steps.release_gate.outputs.should_publish == 'true'
-        run: .github/scripts/generate-release-notes.sh
-
-      - name: Publish GitHub Release
-        if: steps.release_gate.outputs.should_publish == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ steps.release.outputs.tag }}
-          RELEASE_TITLE: ${{ steps.release.outputs.title }}
-        run: |
-          gh release create "$RELEASE_TAG" packages/*.deb packages/*.dylib \
-            --target "$GITHUB_SHA" \
-            --title "$RELEASE_TITLE" \
-            --notes-file release-notes.md \
-            --latest
