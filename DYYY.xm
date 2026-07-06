@@ -3761,10 +3761,6 @@ static void DYYYDisableAVPlayerItemHDRMetadata(AVPlayerItem *item) {
     if (cityCode.length > 0) {
         displayLocation = [CityManager.sharedInstance getCityNameWithCode:cityCode];
 
-        if (!displayLocation && regionCode.length > 0) {
-            displayLocation = [CityManager.sharedInstance getCountryNameWithCode:regionCode];
-        }
-
         if (!displayLocation) {
             @synchronized(inFlight) {
                 if ([inFlight containsObject:cityCode]) {
@@ -3782,26 +3778,49 @@ static void DYYYDisableAVPlayerItemHDRMetadata(AVPlayerItem *item) {
                     NSString *apiLocation = nil;
 
                     if (!error && locationInfo) {
-                        NSString *cityName = locationInfo[@"adminName1"];
+                        NSString *localName = locationInfo[@"name"];
+                        NSString *adminName1 = locationInfo[@"adminName1"];
                         NSString *countryName = locationInfo[@"countryName"];
 
-                        if (cityName && countryName) {
-                            if ([cityName isEqualToString:countryName]) {
-                                apiLocation = countryName;
+                        if (![localName isKindOfClass:[NSString class]]) {
+                            localName = nil;
+                        }
+                        if (![adminName1 isKindOfClass:[NSString class]]) {
+                            adminName1 = nil;
+                        }
+                        if (![countryName isKindOfClass:[NSString class]]) {
+                            countryName = nil;
+                        }
+
+                        if (countryName.length > 0) {
+                            if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:localName]) {
+                                if ([adminName1 isEqualToString:localName]) {
+                                    apiLocation = [NSString stringWithFormat:@"%@ %@", countryName, localName];
+                                } else {
+                                    apiLocation = [NSString stringWithFormat:@"%@ %@ %@", countryName, adminName1, localName];
+                                }
+                            } else if (localName.length > 0 && ![countryName isEqualToString:localName]) {
+                                apiLocation = [NSString stringWithFormat:@"%@ %@", countryName, localName];
+                            } else if (adminName1.length > 0 && ![countryName isEqualToString:adminName1]) {
+                                apiLocation = [NSString stringWithFormat:@"%@ %@", countryName, adminName1];
                             } else {
-                                apiLocation = [NSString stringWithFormat:@"%@ %@", countryName, cityName];
+                                apiLocation = countryName;
                             }
-                        } else if (countryName) {
-                            apiLocation = countryName;
-                        } else if (cityName) {
-                            apiLocation = cityName;
+                        } else if (localName.length > 0) {
+                            apiLocation = localName;
+                        } else if (adminName1.length > 0) {
+                            apiLocation = adminName1;
                         }
                     }
 
-                    if (apiLocation) {
+                    if (apiLocation.length > 0) {
                         [locationCache setObject:apiLocation forKey:cacheKey];
                         updateLabelWithLocation(label, apiLocation);
-                    }
+                    } else {
+                        if (regionCode.length > 0) {
+                            NSString *fallbackCountry = [CityManager.sharedInstance getCountryNameWithCode:regionCode];
+                            updateLabelWithLocation(label, fallbackCountry);
+                        }
                 });
             }];
 
