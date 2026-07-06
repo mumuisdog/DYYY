@@ -542,6 +542,51 @@ static NSString *DYYYJSONStringFromObject(id object) {
     return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }
 
+static NSString *DYYYDisplayLocationFromGeoNamesInfo(NSDictionary *locationInfo) {
+    if (![locationInfo isKindOfClass:[NSDictionary class]]) {
+        return nil;
+    }
+
+    NSString *countryName = locationInfo[@"countryName"];
+    NSString *adminName1 = locationInfo[@"adminName1"];
+    NSString *localName = locationInfo[@"name"];
+
+    if (![countryName isKindOfClass:[NSString class]]) {
+        countryName = nil;
+    }
+    if (![adminName1 isKindOfClass:[NSString class]]) {
+        adminName1 = nil;
+    }
+    if (![localName isKindOfClass:[NSString class]]) {
+        localName = nil;
+    }
+
+    if (countryName.length > 0) {
+        if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:localName]) {
+            if ([adminName1 isEqualToString:localName]) {
+                return [NSString stringWithFormat:@"%@ %@", countryName, localName];
+            }
+            return [NSString stringWithFormat:@"%@ %@ %@", countryName, adminName1, localName];
+        }
+        if (localName.length > 0 && ![countryName isEqualToString:localName]) {
+            return [NSString stringWithFormat:@"%@ %@", countryName, localName];
+        }
+        if (adminName1.length > 0 && ![countryName isEqualToString:adminName1]) {
+            return [NSString stringWithFormat:@"%@ %@", countryName, adminName1];
+        }
+        return countryName;
+    }
+
+    if (localName.length > 0) {
+        return localName;
+    }
+    if (adminName1.length > 0) {
+        return adminName1;
+    }
+
+    return nil;
+}
+
 static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLocation, NSString *colorHexString) {
     if (!label) {
         return;
@@ -619,22 +664,7 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
 
         // 3. 处理缓存数据或发起网络请求
         if (cachedData) {
-            NSString *countryName = cachedData[@"countryName"];
-            NSString *adminName1 = cachedData[@"adminName1"];
-            NSString *localName = cachedData[@"name"];
-            NSString *displayLocation = @"未知";
-
-            if (countryName.length > 0) {
-                if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:@"中国"] && ![countryName isEqualToString:localName]) {
-                    displayLocation = [NSString stringWithFormat:@"%@ %@ %@", countryName, adminName1, localName];
-                } else if (localName.length > 0 && ![countryName isEqualToString:localName]) {
-                    displayLocation = [NSString stringWithFormat:@"%@ %@", countryName, localName];
-                } else {
-                    displayLocation = countryName;
-                }
-            } else if (localName.length > 0) {
-                displayLocation = localName;
-            }
+            NSString *displayLocation = DYYYDisplayLocationFromGeoNamesInfo(cachedData) ?: @"未知";
 
             if (displayLocation.length == 0 || [displayLocation isEqualToString:@"未知"]) {
                 NSString *fallbackLocation = [DYYYUtils fallbackLocationFromIPAttribution:model];
@@ -668,21 +698,10 @@ static void DYYYApplyDisplayLocationToLabel(UILabel *label, NSString *displayLoc
                                         }
                                     } else if (locationInfo) {
                                         BOOL shouldCacheLocation = NO;
-                                        NSString *countryName = locationInfo[@"countryName"];
-                                        NSString *adminName1 = locationInfo[@"adminName1"];
-                                        NSString *localName = locationInfo[@"name"];
 
-                                        if (countryName.length > 0) {
-                                            if (adminName1.length > 0 && localName.length > 0 && ![countryName isEqualToString:@"中国"] && ![countryName isEqualToString:localName]) {
-                                                displayLocation = [NSString stringWithFormat:@"%@ %@ %@", countryName, adminName1, localName];
-                                            } else if (localName.length > 0 && ![countryName isEqualToString:localName]) {
-                                                displayLocation = [NSString stringWithFormat:@"%@ %@", countryName, localName];
-                                            } else {
-                                                displayLocation = countryName;
-                                            }
-                                            shouldCacheLocation = YES;
-                                        } else if (localName.length > 0) {
-                                            displayLocation = localName;
+                                        NSString *resolvedLocation = DYYYDisplayLocationFromGeoNamesInfo(locationInfo);
+                                        if (resolvedLocation.length > 0) {
+                                            displayLocation = resolvedLocation;
                                             shouldCacheLocation = YES;
                                         }
 
