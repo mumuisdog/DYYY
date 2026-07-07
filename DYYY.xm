@@ -3821,6 +3821,7 @@ static void DYYYDisableAVPlayerItemHDRMetadata(AVPlayerItem *item) {
                             NSString *fallbackCountry = [CityManager.sharedInstance getCountryNameWithCode:regionCode];
                             updateLabelWithLocation(label, fallbackCountry);
                         }
+                    }
                 });
             }];
 
